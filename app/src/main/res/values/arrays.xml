@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="course_weekdays">
+        <item>周一</item>
+        <item>周二</item>
+        <item>周三</item>
+        <item>周四</item>
+        <item>周五</item>
+        <item>周六</item>
+        <item>周日</item>
+    </string-array>
+
+    <string-array name="course_week_types">
+        <item>每周</item>
+        <item>单周</item>
+        <item>双周</item>
+    </string-array>
+
+    <string-array name="course_color_labels">
+        <item>青绿</item>
+        <item>蓝色</item>
+        <item>琥珀</item>
+        <item>红色</item>
+        <item>紫色</item>
+        <item>绿色</item>
+    </string-array>
+
+    <string-array name="task_type_labels">
+        <item>作业</item>
+        <item>实验</item>
+        <item>考试</item>
+        <item>复习</item>
+        <item>项目</item>
+        <item>其他</item>
+    </string-array>
+
+    <string-array name="task_priority_labels">
+        <item>低</item>
+        <item>普通</item>
+        <item>高</item>
+    </string-array>
+</resources>

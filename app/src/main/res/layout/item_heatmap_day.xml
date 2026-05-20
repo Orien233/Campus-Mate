@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="36dp"
+    android:layout_height="36dp"
+    android:layout_margin="3dp"
+    android:foreground="?attr/selectableItemBackground">
+
+    <TextView
+        android:id="@+id/heatmapDayText"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+</FrameLayout>
