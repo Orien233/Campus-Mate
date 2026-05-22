@@ -16,6 +16,7 @@ object CampusMateContract {
     const val PATH_IMPORT_LOGS = "import_logs"
     const val PATH_USER_PROFILE = "user_profile"
     const val PATH_STUDY_BUDDIES = "study_buddies"
+    const val PATH_WEATHER_CACHE = "weather_cache"
 
     object Courses : BaseColumns {
         const val TABLE_NAME = "courses"
@@ -191,6 +192,24 @@ object CampusMateContract {
         const val SOURCE_QR = 0
         const val SOURCE_NFC = 1
         const val SOURCE_MANUAL = 2
+
+        fun buildItemUri(id: Long): Uri = CONTENT_URI.buildUpon().appendPath(id.toString()).build()
+    }
+
+    object WeatherCache : BaseColumns {
+        const val TABLE_NAME = "weather_cache"
+        val CONTENT_URI: Uri = BASE_CONTENT_URI.buildUpon().appendPath(PATH_WEATHER_CACHE).build()
+        const val CONTENT_TYPE = "vnd.android.cursor.dir/vnd.$AUTHORITY.$PATH_WEATHER_CACHE"
+        const val CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.$AUTHORITY.$PATH_WEATHER_CACHE"
+
+        const val COLUMN_CITY = "city"
+        const val COLUMN_WEATHER_TEXT = "weather_text"
+        const val COLUMN_TEMPERATURE = "temperature"
+        const val COLUMN_HUMIDITY = "humidity"
+        const val COLUMN_WIND = "wind"
+        const val COLUMN_SOURCE = "source"
+        const val COLUMN_RAW_JSON = "raw_json"
+        const val COLUMN_UPDATED_AT = "updated_at"
 
         fun buildItemUri(id: Long): Uri = CONTENT_URI.buildUpon().appendPath(id.toString()).build()
     }

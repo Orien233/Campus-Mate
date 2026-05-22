@@ -8,6 +8,12 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-feature
+        android:name="android.hardware.nfc"
+        android:required="false" />
 
     <application
         android:name=".app.CampusMateApplication"
@@ -41,6 +47,24 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
+        <activity
+            android:name=".ui.nfc.NfcReceiveActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.CampusMate">
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="application/vnd.campusmate.profile" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.nfc.NfcShareActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.CampusMate" />
         <activity
             android:name=".ui.buddy.BuddyDetailActivity"
             android:exported="false"

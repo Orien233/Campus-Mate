@@ -38,8 +38,11 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var rootView: View
     private lateinit var dailyGoalInputLayout: TextInputLayout
     private lateinit var dailyGoalInput: TextInputEditText
+    private lateinit var weatherCityInputLayout: TextInputLayout
+    private lateinit var weatherCityInput: TextInputEditText
     private lateinit var reminderSwitch: SwitchMaterial
     private lateinit var immersiveSwitch: SwitchMaterial
+    private lateinit var mockWeatherSwitch: SwitchMaterial
     private lateinit var notificationStatusText: TextView
     private lateinit var exactAlarmStatusText: TextView
     private lateinit var dndStatusText: TextView
@@ -80,8 +83,11 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         rootView = view.findViewById(R.id.settingsRoot)
         dailyGoalInputLayout = view.findViewById(R.id.dailyGoalInputLayout)
         dailyGoalInput = view.findViewById(R.id.dailyGoalInput)
+        weatherCityInputLayout = view.findViewById(R.id.weatherCityInputLayout)
+        weatherCityInput = view.findViewById(R.id.weatherCityInput)
         reminderSwitch = view.findViewById(R.id.reminderSwitch)
         immersiveSwitch = view.findViewById(R.id.immersiveSwitch)
+        mockWeatherSwitch = view.findViewById(R.id.mockWeatherSwitch)
         notificationStatusText = view.findViewById(R.id.notificationStatusText)
         exactAlarmStatusText = view.findViewById(R.id.exactAlarmStatusText)
         dndStatusText = view.findViewById(R.id.dndStatusText)
@@ -89,13 +95,30 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     private fun bindCurrentSettings() {
         dailyGoalInput.setText(settingsRepository.getDailyGoalMinutes().toString())
+        weatherCityInput.setText(settingsRepository.getWeatherCity())
         reminderSwitch.isChecked = settingsRepository.isReminderEnabled()
         immersiveSwitch.isChecked = settingsRepository.isImmersiveModeEnabled()
+        mockWeatherSwitch.isChecked = settingsRepository.isMockWeatherEnabled()
     }
 
     private fun setupActions(view: View) {
         view.findViewById<MaterialButton>(R.id.saveDailyGoalButton).setOnClickListener {
             saveDailyGoal()
+        }
+        view.findViewById<MaterialButton>(R.id.saveWeatherCityButton).setOnClickListener {
+            saveWeatherCity()
+        }
+        mockWeatherSwitch.setOnCheckedChangeListener { _, checked ->
+            settingsRepository.setMockWeatherEnabled(checked)
+            showMessage(
+                getString(
+                    if (checked) {
+                        R.string.settings_weather_mock_enabled_result
+                    } else {
+                        R.string.settings_weather_remote_enabled_result
+                    }
+                )
+            )
         }
         reminderSwitch.setOnCheckedChangeListener { _, checked ->
             settingsRepository.setReminderEnabled(checked)
@@ -152,6 +175,17 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         dailyGoalInputLayout.error = null
         settingsRepository.setDailyGoalMinutes(value)
         showMessage(getString(R.string.settings_daily_goal_saved, value))
+    }
+
+    private fun saveWeatherCity() {
+        val city = weatherCityInput.text?.toString()?.trim().orEmpty()
+        if (city.isBlank()) {
+            weatherCityInputLayout.error = getString(R.string.settings_weather_city_invalid)
+            return
+        }
+        weatherCityInputLayout.error = null
+        settingsRepository.setWeatherCity(city)
+        showMessage(getString(R.string.settings_weather_city_saved, city))
     }
 
     private fun requestOrOpenNotificationSettings() {

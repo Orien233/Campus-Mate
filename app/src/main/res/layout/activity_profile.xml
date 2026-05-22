@@ -109,6 +109,24 @@
                 app:icon="@drawable/ic_scan" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/nfcShareButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_s"
+                android:text="@string/profile_nfc_share_action"
+                app:icon="@drawable/ic_nfc" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nfcReceiveButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_s"
+                android:text="@string/profile_nfc_receive_action"
+                app:icon="@drawable/ic_nfc" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/buddyListButton"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"

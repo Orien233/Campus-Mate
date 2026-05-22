@@ -17,12 +17,14 @@ class CampusMateDbHelper(context: Context) :
         db.execSQL(SQL_CREATE_IMPORT_LOGS)
         db.execSQL(SQL_CREATE_USER_PROFILE)
         db.execSQL(SQL_CREATE_STUDY_BUDDIES)
+        db.execSQL(SQL_CREATE_WEATHER_CACHE)
         db.execSQL(SQL_INDEX_COURSES_TIME)
         db.execSQL(SQL_INDEX_TASKS_COURSE)
         db.execSQL(SQL_INDEX_TASKS_DUE)
         db.execSQL(SQL_INDEX_RECORDS_DATE)
         db.execSQL(SQL_INDEX_BUDDIES_GITHUB)
         db.execSQL(SQL_INDEX_BUDDIES_EMAIL)
+        db.execSQL(SQL_INDEX_WEATHER_CITY)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -32,11 +34,15 @@ class CampusMateDbHelper(context: Context) :
             db.execSQL(SQL_INDEX_BUDDIES_GITHUB)
             db.execSQL(SQL_INDEX_BUDDIES_EMAIL)
         }
+        if (oldVersion < 3) {
+            db.execSQL(SQL_CREATE_WEATHER_CACHE)
+            db.execSQL(SQL_INDEX_WEATHER_CITY)
+        }
     }
 
     companion object {
         const val DATABASE_NAME = "campus_mate.db"
-        const val DATABASE_VERSION = 2
+        const val DATABASE_VERSION = 3
 
         private const val SQL_CREATE_COURSES = """
             CREATE TABLE courses (
@@ -156,6 +162,20 @@ class CampusMateDbHelper(context: Context) :
             )
         """
 
+        private const val SQL_CREATE_WEATHER_CACHE = """
+            CREATE TABLE IF NOT EXISTS weather_cache (
+                _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                city TEXT,
+                weather_text TEXT,
+                temperature TEXT,
+                humidity TEXT,
+                wind TEXT,
+                source TEXT,
+                raw_json TEXT,
+                updated_at INTEGER
+            )
+        """
+
         private const val SQL_INDEX_COURSES_TIME =
             "CREATE INDEX idx_courses_time ON courses(weekday, start_section, end_section, start_week, end_week, is_deleted)"
         private const val SQL_INDEX_TASKS_COURSE =
@@ -168,5 +188,7 @@ class CampusMateDbHelper(context: Context) :
             "CREATE INDEX IF NOT EXISTS idx_buddies_github ON study_buddies(github)"
         private const val SQL_INDEX_BUDDIES_EMAIL =
             "CREATE INDEX IF NOT EXISTS idx_buddies_email ON study_buddies(email)"
+        private const val SQL_INDEX_WEATHER_CITY =
+            "CREATE INDEX IF NOT EXISTS idx_weather_city ON weather_cache(city, updated_at)"
     }
 }

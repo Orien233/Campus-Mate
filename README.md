@@ -14,15 +14,15 @@ CampusMate 是一个面向 Android 移动应用开发课程设计的本地单机
   -> 设置页与演示数据
 ```
 
-V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地能力。当前阶段新增学习名片、二维码生成和扫码添加学习伙伴，仍然不保存教务系统账号密码，不绕过验证码，不上传用户隐私数据。
+V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地能力。当前阶段新增校园天气卡片，使用手动城市配置、缓存和 Mock 降级，不保存账号密码，不自动定位，不上传用户隐私数据。
 
 ## 当前版本状态
 
-- 当前版本：V1.1-stage-9
-- 当前阶段：学习名片 + 二维码
+- 当前版本：V1.1-stage-11
+- 当前阶段：校园天气卡片
 - 主闭环状态：已跑通
-- 当前扩展功能状态：阶段 9 已完成，阶段 10-18 待实现
-- 数据库版本：2
+- 当前扩展功能状态：阶段 9-11 已完成，阶段 12-18 待实现
+- 数据库版本：3
 - applicationId：`com.example.campusmate`
 - minSdk：35
 - targetSdk：36
@@ -44,8 +44,8 @@ V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地
 - 学习名片：已完成，本地保存个人资料，不需要登录。
 - 二维码：已完成，使用公开 JSON 生成 QR 图片，扫码后先预览再确认添加。
 - 学习伙伴：已完成，扫码确认后保存到 `study_buddies`，支持列表、详情和删除。
-- NFC：待实现，阶段 10 处理。
-- 天气：待实现，阶段 11 处理。
+- NFC：已完成，复用学习名片公开 JSON，支持 NFC NDEF 写入/接收、预览确认和不支持设备降级。
+- 天气：已完成，首页天气卡片、设置页城市配置、Mock/远程数据源、30 分钟缓存和失败降级。
 - WebView 当前页面课表 HTML 提取增强：部分完成，已有提取工具类，完整 Activity 流程待阶段 12。
 - 图片附件：待实现，阶段 13 处理。
 - 学习计划：待实现，阶段 14 处理。
@@ -55,14 +55,13 @@ V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地
 
 ## 待实现功能清单
 
-- NFC 尚未实现，当前二维码与未来 NFC 会复用同一套公开 profile JSON。
-- 天气 API 尚未实现，当前没有 `weather_cache` 表，阶段 11 会加入 Mock 降级。
+- NFC 已实现基础 NDEF 交换；当前分享页主要面向可写 NFC 标签或兼容 NDEF 发送源，直接手机对手机 Android Beam 在当前 SDK 下不可用。
 - WebView 真实教务系统课表提取尚未接入完整 UI，当前仅有 `WebViewScheduleExtractor` 工具类。
 - 图片附件尚未实现，当前没有 `task_attachments` 表，也未申请图片读取权限。
 - 学习计划尚未实现，当前没有 `study_plans` 表。
 - NotificationListenerService 未实现，当前只提供勿扰模式授权入口。
 - JSON 导出/导入尚未实现，当前不会导出本地数据文件。
-- 完整演示模式尚未实现，当前演示数据不包含学习伙伴、附件、天气和计划。
+- 完整演示模式尚未实现，当前演示数据不包含完整学习伙伴、附件和计划；天气通过 Mock 卡片稳定展示。
 - 头像当前只保存可选 `avatar_uri` 文本，不做相册选择；相册/拍照会在阶段 13 统一处理。
 
 ## 项目结构说明
@@ -100,7 +99,8 @@ app/src/main/java/com/example/campusmate
 │       ├── StudyBuddyRepository.kt
 │       ├── StudyRecordRepository.kt
 │       ├── TaskRepository.kt
-│       └── UserProfileRepository.kt
+│       ├── UserProfileRepository.kt
+│       └── WeatherRepository.kt
 ├── domain
 │   ├── focus
 │   │   ├── FaceDownDetector.kt
@@ -116,6 +116,17 @@ app/src/main/java/com/example/campusmate
 │   │   ├── BootReminderReceiver.kt
 │   │   ├── ReminderReceiver.kt
 │   │   └── ReminderScheduler.kt
+│   ├── nfc
+│   │   ├── NfcCardPayload.kt
+│   │   ├── NfcPayloadParser.kt
+│   │   ├── NfcPayloadWriter.kt
+│   │   └── NfcUtils.kt
+│   ├── weather
+│   │   ├── MockWeatherDataSource.kt
+│   │   ├── RemoteWeatherDataSource.kt
+│   │   ├── WeatherDataSource.kt
+│   │   ├── WeatherParser.kt
+│   │   └── WeatherResult.kt
 │   └── statistics
 │       └── HeatmapCalculator.kt
 ├── ui
@@ -128,6 +139,9 @@ app/src/main/java/com/example/campusmate
 │   ├── focus
 │   ├── import_
 │   ├── main
+│   ├── nfc
+│   │   ├── NfcReceiveActivity.kt
+│   │   └── NfcShareActivity.kt
 │   ├── profile
 │   │   ├── EditProfileActivity.kt
 │   │   ├── ProfileActivity.kt
@@ -166,6 +180,10 @@ app/src/androidTest/java/com/example/campusmate/ 仪器测试
 - `util` 层：负责日期、通知、权限和 Cursor 读取等通用能力。
 - `ui/profile`：学习名片、资料编辑、二维码生成、二维码扫描和公开 JSON 展示。
 - `ui/buddy`：学习伙伴列表、详情和删除。
+- `domain/nfc`：负责 NFC NDEF MIME payload 构建、解析、标签写入和设备能力判断。
+- `ui/nfc`：负责 NFC 分享确认、NFC 接收预览、降级提示和确认保存学习伙伴。
+- `domain/weather`：负责天气数据源抽象、Mock 数据、远程请求和 JSON 解析。
+- `WeatherRepository`：负责天气缓存、30 分钟新鲜度判断、远程/缓存/Mock 降级编排。
 
 ## 模块协作模式
 
@@ -227,7 +245,7 @@ EditProfileActivity
   -> UserProfileRepository
   -> user_profile 表
   -> StudyCardActivity 生成公开 JSON
-  -> QR 分享
+  -> QR / NFC 分享
   -> ScanQrActivity 接收并解析
   -> 用户预览确认
   -> StudyBuddyRepository
@@ -252,6 +270,33 @@ EditProfileActivity
 
 邮箱和手机号只有在用户打开公开开关时才会进入 JSON。二维码扫描后不会自动添加，必须在预览页点击确认。
 
+### E2. NFC 学习名片数据流
+
+分享：
+
+```text
+NfcShareActivity
+  -> UserProfileRepository.buildPublicProfileJson()
+  -> NfcPayloadWriter.createProfileMessage()
+  -> 用户确认
+  -> NFC foreground dispatch
+  -> 写入可写 NFC 标签 / 兼容 NDEF 接收源
+```
+
+接收：
+
+```text
+NfcReceiveActivity
+  -> NDEF_DISCOVERED / foreground dispatch
+  -> NfcPayloadParser
+  -> UserProfileRepository.parsePublicProfileJson(source=NFC)
+  -> 预览确认
+  -> StudyBuddyRepository.addBuddy()
+  -> study_buddies.source = 1
+```
+
+NFC 与二维码使用同一套公开 JSON。设备不支持 NFC 时页面显示降级提示，可继续使用二维码交换；NFC 未开启时提供系统 NFC 设置入口。当前 compile SDK 已不提供旧 Android Beam API，因此分享页以 NDEF 标签写入和兼容 NDEF 接收源为主。
+
 ### F. 天气数据流
 
 ```text
@@ -264,7 +309,7 @@ DashboardFragment
   -> Dashboard 天气卡片展示
 ```
 
-该数据流为阶段 11 计划，当前尚未实现。
+设置页通过 `SettingsRepository` 保存城市名和 Mock 天气开关。Dashboard 默认使用 Mock 天气；关闭 Mock 后会尝试远程请求 `wttr.in` JSON，成功后写入 `weather_cache`，30 分钟内优先使用缓存，网络失败时回退缓存或 Mock。项目不申请定位权限，不自动获取用户位置。
 
 ### G. 图片附件数据流
 
@@ -341,7 +386,12 @@ SettingsFragment
 - `study_buddies`
   - 作用：保存扫码确认添加的学习伙伴。
   - 关键字段：`nickname`、`school`、`major`、`grade`、`bio`、`github`、`email`、`phone`、`source`、`added_at`、`note`。
-  - 关系：来源 `source=0` 表示二维码，`source=1` 预留 NFC，`source=2` 预留手动添加。
+  - 关系：来源 `source=0` 表示二维码，`source=1` 表示 NFC，`source=2` 预留手动添加。
+
+- `weather_cache`
+  - 作用：缓存校园天气数据。
+  - 关键字段：`city`、`weather_text`、`temperature`、`humidity`、`wind`、`source`、`raw_json`、`updated_at`。
+  - 关系：由 `WeatherRepository` 读写，供 Dashboard 天气卡片展示；与用户位置无关。
 
 当前尚未创建、后续阶段计划加入的表：
 
@@ -349,11 +399,6 @@ SettingsFragment
   - 作用：保存任务图片或文件附件 Uri。
   - 关键字段：`task_id`、`uri`、`type`、`title`、`created_at`。
   - 关系：阶段 13 将关联 `study_tasks._id`。
-
-- `weather_cache`
-  - 作用：缓存校园天气数据。
-  - 关键字段：`city`、`weather_text`、`temperature`、`humidity`、`wind`、`source`、`raw_json`、`updated_at`。
-  - 关系：阶段 11 将由 `WeatherRepository` 读写，供 Dashboard 天气卡片展示。
 
 - `study_plans`
   - 作用：保存本地规则生成的学习计划。
@@ -377,6 +422,8 @@ content://com.example.campusmate.provider/user_profile
 content://com.example.campusmate.provider/user_profile/#
 content://com.example.campusmate.provider/study_buddies
 content://com.example.campusmate.provider/study_buddies/#
+content://com.example.campusmate.provider/weather_cache
+content://com.example.campusmate.provider/weather_cache/#
 ```
 
 ## 权限说明
@@ -388,6 +435,8 @@ content://com.example.campusmate.provider/study_buddies/#
 - `RECEIVE_BOOT_COMPLETED`：开机后恢复未来任务提醒。
 - `SCHEDULE_EXACT_ALARM`：尽量准时触发任务提醒；不可用时降级为普通时间窗口。
 - `CAMERA`：阶段 9 新增，用于扫描学习名片二维码。
+- `NFC`：阶段 10 新增，用于 NFC NDEF 学习名片写入和接收；设备不支持或未开启时降级到二维码。
+- `INTERNET`：阶段 11 新增，用于可选远程天气请求和后续 WebView；天气默认可使用 Mock，不依赖网络。
 
 当前通过系统设置入口引导但不强制依赖：
 
@@ -395,8 +444,6 @@ content://com.example.campusmate.provider/study_buddies/#
 
 后续阶段计划涉及但当前未声明：
 
-- `NFC`：阶段 10 NFC 学习名片交换。
-- `INTERNET`：阶段 11 天气请求、阶段 12 WebView 访问网页。
 - `READ_MEDIA_IMAGES`：Android 13+ 阶段 13 读取图片附件。
 - `READ_EXTERNAL_STORAGE`：Android 12 及以下阶段 13 读取图片附件。
 
@@ -453,12 +500,67 @@ $env:ANDROID_USER_HOME='E:\Zdragon\CampusMate\.android-user'
 - 在预览页点击确认添加，确认学习伙伴列表出现该伙伴。
 - 打开学习伙伴详情，确认可以查看来源和删除。
 - 拒绝相机权限时，扫码页应提示权限不可用且不崩溃。
-- NFC 不支持时降级将在阶段 10 测试。
-- 天气无网络缓存降级将在阶段 11 测试。
+- 打开学习名片页的 NFC 分享入口，确认不支持 NFC 的设备显示二维码降级提示。
+- NFC 未开启时，确认页面提供系统 NFC 设置入口。
+- 支持 NFC 的真机上进入分享页，确认公开 JSON 与二维码名片一致，并可尝试写入可写 NFC 标签。
+- 使用接收页读取 CampusMate NDEF payload，确认出现预览页且必须手动确认后才保存学习伙伴。
+- 在设置页修改天气城市，例如北京、上海、天津或 Tokyo。
+- 首页查看天气卡片，确认城市、天气、温度、湿度、风和更新时间展示正常。
+- 点击刷新天气，确认不会阻塞页面。
+- 打开 Mock 天气开关时，确认无网络也能稳定展示 Mock 数据。
+- 关闭 Mock 天气后，确认网络失败时回退缓存或 Mock，不崩溃。
 - 拍照附件保存将在阶段 13 测试。
 - JSON 导出导入将在阶段 17 测试。
 
 ## Changelog
+
+### V1.1-stage-11 - 校园天气卡片
+
+已完成：
+
+- 新增 `weather_cache` 表，数据库版本从 2 升级到 3，迁移只创建新表和索引。
+- 扩展 `CampusMateContract` 和 `CampusMateProvider`，新增 `weather_cache` Uri。
+- 新增 `domain/weather`：`WeatherDataSource`、`RemoteWeatherDataSource`、`MockWeatherDataSource`、`WeatherParser`、`WeatherResult`。
+- 新增 `WeatherRepository`，负责缓存读取、缓存写入、30 分钟新鲜度判断和远程/缓存/Mock 降级。
+- Dashboard 增加校园天气卡片和手动刷新按钮。
+- Settings 增加城市配置和 Mock 天气开关。
+- Manifest 新增 `INTERNET` 权限；不申请定位权限。
+- 新增 `WeatherParserInstrumentedTest`。
+- README 更新到 V1.1-stage-11。
+
+待完成：
+
+- WebView 当前页面课表 HTML 提取完整 UI。
+- 任务图片附件。
+- 本地规则式学习计划。
+- 专注期间通知弱化 / 勿扰增强。
+- 项目技术点展示页。
+- JSON 导出 / 导入备份。
+- 完整演示模式增强。
+
+### V1.1-stage-10 - NFC 贴贴交友 / NFC 学习名片
+
+已完成：
+
+- 新增 `domain/nfc` 模块：`NfcCardPayload`、`NfcPayloadParser`、`NfcPayloadWriter`、`NfcUtils`。
+- 新增 `ui/nfc` 页面：`NfcShareActivity`、`NfcReceiveActivity`。
+- NFC 使用与二维码相同的公开 JSON，不新增隐私字段，不保存账号密码。
+- 新增 `android.permission.NFC` 和 `android.hardware.nfc required=false`。
+- `NfcReceiveActivity` 增加 `NDEF_DISCOVERED` MIME intent-filter：`application/vnd.campusmate.profile`。
+- 学习名片页增加 NFC 分享和 NFC 接收入口。
+- NFC 接收后先展示预览，用户确认后才保存到 `study_buddies`，并写入 `source=1`。
+- 不支持 NFC 或 NFC 未开启时显示降级提示，可继续使用二维码交换。
+- README 更新到 V1.1-stage-10。
+
+待完成：
+
+- WebView 当前页面课表 HTML 提取完整 UI。
+- 任务图片附件。
+- 本地规则式学习计划。
+- 专注期间通知弱化 / 勿扰增强。
+- 项目技术点展示页。
+- JSON 导出 / 导入备份。
+- 完整演示模式增强。
 
 ### V1.1-stage-9 - 学习名片与二维码
 
@@ -478,7 +580,6 @@ $env:ANDROID_USER_HOME='E:\Zdragon\CampusMate\.android-user'
 待完成：
 
 - NFC 名片交换。
-- 校园天气卡片。
 - WebView 当前页面课表 HTML 提取完整 UI。
 - 任务图片附件。
 - 本地规则式学习计划。
@@ -504,9 +605,10 @@ $env:ANDROID_USER_HOME='E:\Zdragon\CampusMate\.android-user'
 - 部分 Android 13+ 设备需要手动授予通知权限，否则任务提醒通知不会显示。
 - 二维码扫描需要相机权限和可用相机；模拟器摄像头不可用时只能测试二维码生成。
 - 头像当前只保存 `avatar_uri` 文本，不做相册选择和图片裁剪。
-- NFC 功能需要真机测试，当前尚未实现。
+- NFC 功能需要支持 NFC 的真机和可写 NFC 标签或兼容 NDEF 发送源测试；当前环境未做真机贴近验证。
+- 当前 compile SDK 已移除旧 Android Beam 手机对手机推送 API，NFC 分享页采用 NDEF 标签写入方式，接收页可解析标准 CampusMate NDEF payload。
 - WebView 解析真实教务系统依赖页面结构，当前完整增强流程尚未实现。
-- 天气 API Key 未配置时的 Mock 降级将在阶段 11 实现。
+- 天气默认使用 Mock 数据保证演示稳定；远程天气依赖网络，失败时会回退缓存或 Mock。
 - NotificationListenerService 属于后续实验功能，当前未实现且默认不读取其他 App 通知。
 - 数据导入当前尚未实现；未来阶段计划采用追加策略，不默认覆盖已有数据。
 
@@ -514,7 +616,7 @@ $env:ANDROID_USER_HOME='E:\Zdragon\CampusMate\.android-user'
 
 下一阶段目标：
 
-- 阶段名称：V1.1-stage-10 NFC 贴贴交友。
-- 准备实现的功能：NFC 分享自己的学习名片、接收 CampusMate NDEF payload、预览确认后保存学习伙伴、NFC 不支持或未开启时降级到二维码。
-- 预期修改的模块：`domain/nfc`、`ui/nfc`、`AndroidManifest.xml`、`UserProfileRepository` / `StudyBuddyRepository` 的复用入口、设置页或学习名片页入口。
-- 可能涉及的权限：`android.permission.NFC`。
+- 阶段名称：V1.1-stage-12 WebView 课表导入增强。
+- 准备实现的功能：WebView 手动登录教务系统、用户确认后提取当前页面 HTML、交给 JsoupScheduleParser、解析失败降级到粘贴 HTML / sample HTML / 手动添加。
+- 预期修改的模块：`ui/import_`、`domain/import_`、`AndroidManifest.xml`、README。
+- 可能涉及的权限：`android.permission.INTERNET`。

@@ -20,6 +20,11 @@
     <string name="dashboard_quick_start_focus">开始专注</string>
     <string name="dashboard_quick_add_task">添加任务</string>
     <string name="dashboard_quick_import_schedule">导入课表</string>
+    <string name="dashboard_weather_title">校园天气</string>
+    <string name="dashboard_weather_empty">正在加载天气...</string>
+    <string name="dashboard_weather_detail">%1$s · 湿度 %2$s · 风 %3$s</string>
+    <string name="dashboard_weather_update">更新：%1$s · 来源：%2$s</string>
+    <string name="dashboard_weather_refresh">刷新天气</string>
     <string name="duration_minutes">%1$d 分钟</string>
     <string name="placeholder_next_stage">该入口将在后续阶段接入</string>
 
@@ -39,6 +44,14 @@
     <string name="settings_preferences">偏好</string>
     <string name="settings_reminder_enabled">任务提醒</string>
     <string name="settings_immersive_enabled">专注页沉浸模式</string>
+    <string name="settings_weather">校园天气</string>
+    <string name="settings_weather_body">手动设置城市，不申请定位权限。演示时可使用 Mock 天气保证稳定。</string>
+    <string name="settings_weather_city">天气城市</string>
+    <string name="settings_weather_city_saved">天气城市已保存为 %1$s</string>
+    <string name="settings_weather_city_invalid">请填写城市名</string>
+    <string name="settings_weather_mock_enabled">使用 Mock 天气（演示稳定）</string>
+    <string name="settings_weather_mock_enabled_result">天气将使用 Mock 数据</string>
+    <string name="settings_weather_remote_enabled_result">天气将优先请求网络，失败时回退缓存或 Mock</string>
     <string name="settings_reminder_enabled_result">提醒已开启，已恢复 %1$d 个未来提醒</string>
     <string name="settings_reminder_disabled_result">提醒已关闭，未来提醒已取消</string>
     <string name="settings_immersive_enabled_result">沉浸模式已开启</string>
@@ -296,4 +309,23 @@
     <string name="scan_qr_permission_denied">未授予相机权限，无法扫描二维码</string>
     <string name="settings_profile_tools">学习名片</string>
     <string name="settings_profile_tools_body">本地编辑个人资料，生成二维码学习名片，也可以扫码添加学习伙伴。</string>
+
+    <string name="profile_nfc_share_action">NFC 分享名片</string>
+    <string name="profile_nfc_receive_action">接收 NFC 名片</string>
+    <string name="nfc_share_title">NFC 学习名片</string>
+    <string name="nfc_receive_title">接收 NFC 名片</string>
+    <string name="nfc_not_supported">当前设备不支持 NFC，可使用二维码交换。</string>
+    <string name="nfc_not_enabled">NFC 未开启，请先到系统设置中打开 NFC。</string>
+    <string name="nfc_open_settings">打开 NFC 设置</string>
+    <string name="nfc_share_confirm_title">将要分享的信息</string>
+    <string name="nfc_share_confirm_body">确认后进入 NFC 分享状态。分享内容与二维码学习名片一致，只包含公开 JSON。</string>
+    <string name="nfc_share_ready">NFC 分享已准备好，请贴近可写 NFC 标签。</string>
+    <string name="nfc_share_failed">无法生成 NFC 名片，请先完善学习名片。</string>
+    <string name="nfc_share_tag_write_success">NFC 标签写入成功。</string>
+    <string name="nfc_share_tag_write_failed">NFC 标签写入失败，请确认标签可写且容量足够。</string>
+    <string name="nfc_receive_waiting">请用另一台设备贴近发送 CampusMate 学习名片。</string>
+    <string name="nfc_receive_parse_failed">未识别到有效的 CampusMate NFC 学习名片。</string>
+    <string name="nfc_receive_preview_title">NFC 名片预览</string>
+    <string name="nfc_receive_confirm_add">确认添加伙伴</string>
+    <string name="nfc_public_json_title">NFC 公开 JSON</string>
 </resources>
