@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="@dimen/space_s">
+
+    <TextView
+        android:id="@+id/dayRecordsSummaryText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/campus_text_secondary"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/dayRecordsEmptyText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="@dimen/space_l"
+        android:text="@string/statistics_day_no_records"
+        android:textColor="@color/campus_text_secondary"
+        android:textSize="15sp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/dayRecordsRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="320dp"
+        android:layout_marginTop="@dimen/space_s" />
+</LinearLayout>

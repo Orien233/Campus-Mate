@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.CampusMate" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/campus_primary</item>
+        <item name="colorPrimaryDark">@color/campus_primary_dark</item>
+        <item name="colorSecondary">@color/campus_secondary</item>
+        <item name="colorAccent">@color/campus_accent</item>
+        <item name="android:colorAccent">@color/campus_accent</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">@color/campus_background</item>
+        <item name="android:navigationBarColor">@color/campus_surface</item>
+        <item name="android:windowBackground">@color/campus_background</item>
+        <item name="toolbarStyle">@style/Widget.CampusMate.Toolbar</item>
+        <item name="bottomNavigationStyle">@style/Widget.CampusMate.BottomNavigation</item>
+        <item name="materialCardViewStyle">@style/Widget.CampusMate.Card</item>
+    </style>
+
+    <style name="Widget.CampusMate.Toolbar" parent="Widget.MaterialComponents.Toolbar">
+        <item name="titleTextColor">@color/campus_text_primary</item>
+        <item name="android:background">@color/campus_surface</item>
+    </style>
+
+    <style name="Widget.CampusMate.BottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="itemIconTint">@color/campus_primary</item>
+        <item name="itemTextColor">@color/campus_primary</item>
+        <item name="backgroundTint">@color/campus_surface</item>
+    </style>
+
+    <style name="Widget.CampusMate.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="cardCornerRadius">8dp</item>
+        <item name="cardElevation">1dp</item>
+        <item name="strokeColor">@color/campus_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+</resources>

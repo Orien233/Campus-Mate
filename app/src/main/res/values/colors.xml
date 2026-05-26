@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="campus_primary">#1B6B5F</color>
+    <color name="campus_primary_dark">#0F4E45</color>
+    <color name="campus_secondary">#2F5D9E</color>
+    <color name="campus_accent">#E8A23A</color>
+    <color name="campus_background">#F7F8FA</color>
+    <color name="campus_surface">#FFFFFFFF</color>
+    <color name="campus_text_primary">#1E2528</color>
+    <color name="campus_text_secondary">#627077</color>
+    <color name="campus_outline">#D9E0E3</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>
