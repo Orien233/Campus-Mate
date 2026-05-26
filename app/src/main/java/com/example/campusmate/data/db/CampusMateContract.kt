@@ -17,6 +17,7 @@ object CampusMateContract {
     const val PATH_USER_PROFILE = "user_profile"
     const val PATH_STUDY_BUDDIES = "study_buddies"
     const val PATH_WEATHER_CACHE = "weather_cache"
+    const val PATH_STUDY_PLANS = "study_plans"
 
     object Courses : BaseColumns {
         const val TABLE_NAME = "courses"
@@ -210,6 +211,37 @@ object CampusMateContract {
         const val COLUMN_SOURCE = "source"
         const val COLUMN_RAW_JSON = "raw_json"
         const val COLUMN_UPDATED_AT = "updated_at"
+
+        fun buildItemUri(id: Long): Uri = CONTENT_URI.buildUpon().appendPath(id.toString()).build()
+    }
+
+    object StudyPlans : BaseColumns {
+        const val TABLE_NAME = "study_plans"
+        val CONTENT_URI: Uri = BASE_CONTENT_URI.buildUpon().appendPath(PATH_STUDY_PLANS).build()
+        const val CONTENT_TYPE = "vnd.android.cursor.dir/vnd.$AUTHORITY.$PATH_STUDY_PLANS"
+        const val CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.$AUTHORITY.$PATH_STUDY_PLANS"
+
+        const val COLUMN_TITLE = "title"
+        const val COLUMN_PLAN_DATE = "plan_date"
+        const val COLUMN_PLANNED_MINUTES = "planned_minutes"
+        const val COLUMN_ACTUAL_MINUTES = "actual_minutes"
+        const val COLUMN_START_TIME = "start_time"
+        const val COLUMN_END_TIME = "end_time"
+        const val COLUMN_TYPE = "type"
+        const val COLUMN_STATUS = "status"
+        const val COLUMN_SOURCE_TYPE = "source_type"
+        const val COLUMN_CREATED_AT = "created_at"
+        const val COLUMN_UPDATED_AT = "updated_at"
+
+        const val TYPE_DAILY = 0
+        const val TYPE_WEEKLY = 1
+
+        const val STATUS_PENDING = 0
+        const val STATUS_COMPLETED = 1
+        const val STATUS_EXPIRED = 2
+
+        const val SOURCE_MANUAL = 0
+        const val SOURCE_AUTO = 1
 
         fun buildItemUri(id: Long): Uri = CONTENT_URI.buildUpon().appendPath(id.toString()).build()
     }

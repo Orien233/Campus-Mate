@@ -47,6 +47,15 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
+        <service
+            android:name=".domain.notification.NotificationFilterService"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
         <activity
             android:name=".ui.nfc.NfcReceiveActivity"
             android:exported="true"
@@ -115,6 +124,10 @@
             android:theme="@style/Theme.CampusMate" />
         <activity
             android:name=".ui.course.CourseEditActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CampusMate" />
+        <activity
+            android:name=".ui.plan.PlanDetailActivity"
             android:exported="false"
             android:theme="@style/Theme.CampusMate" />
         <activity

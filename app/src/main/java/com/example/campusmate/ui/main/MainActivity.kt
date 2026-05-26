@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment
 import com.example.campusmate.R
 import com.example.campusmate.ui.course.CourseListFragment
 import com.example.campusmate.ui.dashboard.DashboardFragment
+import com.example.campusmate.ui.plan.PlanListFragment
 import com.example.campusmate.ui.settings.SettingsFragment
 import com.example.campusmate.ui.statistics.StatisticsFragment
 import com.example.campusmate.ui.task.TaskListFragment
@@ -69,6 +70,7 @@ class MainActivity : AppCompatActivity() {
         return when (itemId) {
             R.id.nav_courses -> CourseListFragment()
             R.id.nav_tasks -> TaskListFragment()
+            R.id.nav_plan -> PlanListFragment()
             R.id.nav_statistics -> StatisticsFragment()
             R.id.nav_settings -> SettingsFragment()
             else -> DashboardFragment()
@@ -79,6 +81,7 @@ class MainActivity : AppCompatActivity() {
         return when (itemId) {
             R.id.nav_courses -> TAG_COURSES
             R.id.nav_tasks -> TAG_TASKS
+            R.id.nav_plan -> TAG_PLAN
             R.id.nav_statistics -> TAG_STATISTICS
             R.id.nav_settings -> TAG_SETTINGS
             else -> TAG_DASHBOARD
@@ -89,6 +92,7 @@ class MainActivity : AppCompatActivity() {
         return when (itemId) {
             R.id.nav_courses -> R.string.nav_courses
             R.id.nav_tasks -> R.string.nav_tasks
+            R.id.nav_plan -> R.string.nav_plan
             R.id.nav_statistics -> R.string.nav_statistics
             R.id.nav_settings -> R.string.nav_settings
             else -> R.string.app_name
@@ -100,6 +104,7 @@ class MainActivity : AppCompatActivity() {
         private const val TAG_DASHBOARD = "dashboard"
         private const val TAG_COURSES = "courses"
         private const val TAG_TASKS = "tasks"
+        private const val TAG_PLAN = "plan"
         private const val TAG_STATISTICS = "statistics"
         private const val TAG_SETTINGS = "settings"
     }

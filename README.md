@@ -18,11 +18,11 @@ V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地
 
 ## 当前版本状态
 
-- 当前版本：V1.1-stage-11
-- 当前阶段：校园天气卡片
+- 当前版本：V1.1-stage-14/15
+- 当前阶段：学习计划 + 通知弱化/勿扰增强
 - 主闭环状态：已跑通
-- 当前扩展功能状态：阶段 9-11 已完成，阶段 12-18 待实现
-- 数据库版本：3
+- 当前扩展功能状态：阶段 9-15 已完成，阶段 16-18 待实现
+- 数据库版本：4
 - applicationId：`com.example.campusmate`
 - minSdk：35
 - targetSdk：36
@@ -48,8 +48,8 @@ V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地
 - 天气：已完成，首页天气卡片、设置页城市配置、Mock/远程数据源、30 分钟缓存和失败降级。
 - WebView 当前页面课表 HTML 提取增强：部分完成，已有提取工具类，完整 Activity 流程待阶段 12。
 - 图片附件：待实现，阶段 13 处理。
-- 学习计划：待实现，阶段 14 处理。
-- 通知弱化 / 勿扰增强：部分完成，当前已有勿扰授权入口；增强沉浸和实验功能待阶段 15。
+- **学习计划**：已完成，基于课程表和待办任务智能生成每日/每周学习计划，包含计划列表、详情、完成状态切换。
+- **通知弱化 / 勿扰增强**：已完成，专注时自动开启勿扰模式，专注结束后恢复；NotificationListenerService 过滤非重要通知。
 - 项目展示页 / 技术点展示页：待实现，阶段 16 处理。
 - 数据导出 / 备份 JSON：待实现，阶段 17 处理。
 
@@ -58,8 +58,8 @@ V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地
 - NFC 已实现基础 NDEF 交换；当前分享页主要面向可写 NFC 标签或兼容 NDEF 发送源，直接手机对手机 Android Beam 在当前 SDK 下不可用。
 - WebView 真实教务系统课表提取尚未接入完整 UI，当前仅有 `WebViewScheduleExtractor` 工具类。
 - 图片附件尚未实现，当前没有 `task_attachments` 表，也未申请图片读取权限。
-- 学习计划尚未实现，当前没有 `study_plans` 表。
-- NotificationListenerService 未实现，当前只提供勿扰模式授权入口。
+- 学习计划：已完成，底部导航新增"计划"页面，支持基于课程表和任务智能生成每日/每周学习计划。
+- NotificationListenerService：已完成，设置页可开关专注勿扰和通知过滤功能。
 - JSON 导出/导入尚未实现，当前不会导出本地数据文件。
 - 完整演示模式尚未实现，当前演示数据不包含完整学习伙伴、附件和计划；天气通过 Mock 卡片稳定展示。
 - 头像当前只保存可选 `avatar_uri` 文本，不做相册选择；相册/拍照会在阶段 13 统一处理。
@@ -84,6 +84,7 @@ app/src/main/java/com/example/campusmate
 │   │   ├── FocusSession.kt
 │   │   ├── ImportLog.kt
 │   │   ├── StudyBuddy.kt
+│   │   ├── StudyPlan.kt
 │   │   ├── StudyRecord.kt
 │   │   ├── StudyTask.kt
 │   │   └── UserProfile.kt
@@ -97,6 +98,7 @@ app/src/main/java/com/example/campusmate
 │       ├── ImportLogRepository.kt
 │       ├── SettingsRepository.kt
 │       ├── StudyBuddyRepository.kt
+│       ├── StudyPlanRepository.kt
 │       ├── StudyRecordRepository.kt
 │       ├── TaskRepository.kt
 │       ├── UserProfileRepository.kt
@@ -127,6 +129,11 @@ app/src/main/java/com/example/campusmate
 │   │   ├── WeatherDataSource.kt
 │   │   ├── WeatherParser.kt
 │   │   └── WeatherResult.kt
+│   ├── plan
+│   │   └── StudyPlanGenerator.kt
+│   ├── notification
+│   │   ├── DndManager.kt
+│   │   └── NotificationFilterService.kt
 │   └── statistics
 │       └── HeatmapCalculator.kt
 ├── ui
@@ -401,9 +408,9 @@ SettingsFragment
   - 关系：阶段 13 将关联 `study_tasks._id`。
 
 - `study_plans`
-  - 作用：保存本地规则生成的学习计划。
-  - 关键字段：`task_id`、`course_id`、`title`、`plan_date`、`planned_minutes`、`status`、`created_at`、`updated_at`。
-  - 关系：阶段 14 将关联任务和课程。
+  - 作用：保存智能生成的学习计划。
+  - 关键字段：`title`、`plan_date`、`planned_minutes`、`actual_minutes`、`start_time`、`end_time`、`type`、`status`、`source_type`、`created_at`、`updated_at`。
+  - 关系：阶段 14 新增，支持每日和每周计划生成。
 
 当前 Provider Uri：
 
@@ -424,6 +431,8 @@ content://com.example.campusmate.provider/study_buddies
 content://com.example.campusmate.provider/study_buddies/#
 content://com.example.campusmate.provider/weather_cache
 content://com.example.campusmate.provider/weather_cache/#
+content://com.example.campusmate.provider/study_plans
+content://com.example.campusmate.provider/study_plans/#
 ```
 
 ## 权限说明
@@ -513,6 +522,33 @@ $env:ANDROID_USER_HOME='E:\Zdragon\CampusMate\.android-user'
 - JSON 导出导入将在阶段 17 测试。
 
 ## Changelog
+
+### V1.1-stage-14/15 - 学习计划 + 通知弱化/勿扰增强
+
+已完成：
+
+**阶段14 - 学习计划：**
+- 新增 `study_plans` 表，数据库版本从 3 升级到 4。
+- 新增 `StudyPlan` 数据模型和 `StudyPlanRepository`。
+- 新增 `StudyPlanGenerator`，基于课程表和待办任务智能生成每日/每周学习计划。
+- 新增底部导航"计划"页面 `PlanListFragment`。
+- 新增计划详情页 `PlanDetailActivity`。
+- 新增 `PlanAdapter` 适配器和相关布局文件。
+
+**阶段15 - 通知弱化/勿扰增强：**
+- 新增 `DndManager`，管理勿扰模式授权和切换。
+- 新增 `NotificationFilterService`，专注时过滤非重要通知。
+- `FocusService` 集成勿扰增强和通知过滤功能。
+- 设置页新增"专注勿扰"和"通知过滤"开关。
+- 新增 `FeatureFlags` 功能开关。
+
+待完成：
+
+- WebView 当前页面课表 HTML 提取完整 UI。
+- 任务图片附件。
+- 项目技术点展示页。
+- JSON 导出 / 导入备份。
+- 完整演示模式增强。
 
 ### V1.1-stage-11 - 校园天气卡片
 
@@ -609,7 +645,8 @@ $env:ANDROID_USER_HOME='E:\Zdragon\CampusMate\.android-user'
 - 当前 compile SDK 已移除旧 Android Beam 手机对手机推送 API，NFC 分享页采用 NDEF 标签写入方式，接收页可解析标准 CampusMate NDEF payload。
 - WebView 解析真实教务系统依赖页面结构，当前完整增强流程尚未实现。
 - 天气默认使用 Mock 数据保证演示稳定；远程天气依赖网络，失败时会回退缓存或 Mock。
-- NotificationListenerService 属于后续实验功能，当前未实现且默认不读取其他 App 通知。
+- NotificationListenerService 需要用户在系统设置中授权通知访问权限才能过滤通知。
+- 专注勿扰功能需要用户在系统设置中授权勿扰模式访问权限才能正常工作。
 - 数据导入当前尚未实现；未来阶段计划采用追加策略，不默认覆盖已有数据。
 
 ## 下一阶段目标

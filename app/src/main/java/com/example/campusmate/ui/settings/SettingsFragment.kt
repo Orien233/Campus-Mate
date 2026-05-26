@@ -43,6 +43,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var reminderSwitch: SwitchMaterial
     private lateinit var immersiveSwitch: SwitchMaterial
     private lateinit var mockWeatherSwitch: SwitchMaterial
+    private lateinit var focusDndSwitch: SwitchMaterial
+    private lateinit var notificationFilterSwitch: SwitchMaterial
     private lateinit var notificationStatusText: TextView
     private lateinit var exactAlarmStatusText: TextView
     private lateinit var dndStatusText: TextView
@@ -88,6 +90,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         reminderSwitch = view.findViewById(R.id.reminderSwitch)
         immersiveSwitch = view.findViewById(R.id.immersiveSwitch)
         mockWeatherSwitch = view.findViewById(R.id.mockWeatherSwitch)
+        focusDndSwitch = view.findViewById(R.id.focusDndSwitch)
+        notificationFilterSwitch = view.findViewById(R.id.notificationFilterSwitch)
         notificationStatusText = view.findViewById(R.id.notificationStatusText)
         exactAlarmStatusText = view.findViewById(R.id.exactAlarmStatusText)
         dndStatusText = view.findViewById(R.id.dndStatusText)
@@ -99,6 +103,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         reminderSwitch.isChecked = settingsRepository.isReminderEnabled()
         immersiveSwitch.isChecked = settingsRepository.isImmersiveModeEnabled()
         mockWeatherSwitch.isChecked = settingsRepository.isMockWeatherEnabled()
+        focusDndSwitch.isChecked = settingsRepository.isFocusDndEnabled()
+        notificationFilterSwitch.isChecked = settingsRepository.isNotificationFilterEnabled()
     }
 
     private fun setupActions(view: View) {
@@ -151,6 +157,30 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         }
         view.findViewById<MaterialButton>(R.id.dndSettingsButton).setOnClickListener {
             openSystemSettings(PermissionUtils.notificationPolicyAccessSettingsIntent())
+        }
+        focusDndSwitch.setOnCheckedChangeListener { _, checked ->
+            settingsRepository.setFocusDndEnabled(checked)
+            showMessage(
+                getString(
+                    if (checked) {
+                        R.string.focus_dnd_enabled
+                    } else {
+                        R.string.focus_dnd_disabled
+                    }
+                )
+            )
+        }
+        notificationFilterSwitch.setOnCheckedChangeListener { _, checked ->
+            settingsRepository.setNotificationFilterEnabled(checked)
+            showMessage(
+                getString(
+                    if (checked) {
+                        R.string.notification_filter_enabled
+                    } else {
+                        R.string.notification_filter_disabled
+                    }
+                )
+            )
         }
         view.findViewById<MaterialButton>(R.id.profileEntryButton).setOnClickListener {
             startActivity(Intent(requireContext(), ProfileActivity::class.java))

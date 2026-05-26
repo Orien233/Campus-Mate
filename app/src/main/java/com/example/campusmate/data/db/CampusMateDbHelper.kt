@@ -38,11 +38,16 @@ class CampusMateDbHelper(context: Context) :
             db.execSQL(SQL_CREATE_WEATHER_CACHE)
             db.execSQL(SQL_INDEX_WEATHER_CITY)
         }
+        if (oldVersion < 4) {
+            db.execSQL(SQL_CREATE_STUDY_PLANS)
+            db.execSQL(SQL_INDEX_PLANS_DATE)
+            db.execSQL(SQL_INDEX_PLANS_STATUS)
+        }
     }
 
     companion object {
         const val DATABASE_NAME = "campus_mate.db"
-        const val DATABASE_VERSION = 3
+        const val DATABASE_VERSION = 4
 
         private const val SQL_CREATE_COURSES = """
             CREATE TABLE courses (
@@ -176,6 +181,23 @@ class CampusMateDbHelper(context: Context) :
             )
         """
 
+        private const val SQL_CREATE_STUDY_PLANS = """
+            CREATE TABLE IF NOT EXISTS study_plans (
+                _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                plan_date TEXT NOT NULL,
+                planned_minutes INTEGER NOT NULL DEFAULT 0,
+                actual_minutes INTEGER NOT NULL DEFAULT 0,
+                start_time TEXT,
+                end_time TEXT,
+                type INTEGER NOT NULL DEFAULT 0,
+                status INTEGER NOT NULL DEFAULT 0,
+                source_type INTEGER NOT NULL DEFAULT 0,
+                created_at INTEGER,
+                updated_at INTEGER
+            )
+        """
+
         private const val SQL_INDEX_COURSES_TIME =
             "CREATE INDEX idx_courses_time ON courses(weekday, start_section, end_section, start_week, end_week, is_deleted)"
         private const val SQL_INDEX_TASKS_COURSE =
@@ -190,5 +212,9 @@ class CampusMateDbHelper(context: Context) :
             "CREATE INDEX IF NOT EXISTS idx_buddies_email ON study_buddies(email)"
         private const val SQL_INDEX_WEATHER_CITY =
             "CREATE INDEX IF NOT EXISTS idx_weather_city ON weather_cache(city, updated_at)"
+        private const val SQL_INDEX_PLANS_DATE =
+            "CREATE INDEX IF NOT EXISTS idx_plans_date ON study_plans(plan_date)"
+        private const val SQL_INDEX_PLANS_STATUS =
+            "CREATE INDEX IF NOT EXISTS idx_plans_status ON study_plans(status)"
     }
 }
