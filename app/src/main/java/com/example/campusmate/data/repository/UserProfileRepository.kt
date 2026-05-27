@@ -49,20 +49,6 @@ class UserProfileRepository(context: Context) {
         }
     }
 
-    fun updateAvatar(uri: String?): Boolean {
-        val profile = getProfile() ?: return saveProfile(UserProfile(nickname = DEFAULT_NICKNAME, avatarUri = uri)) > 0L
-        val rows = resolver.update(
-            CampusMateContract.UserProfile.buildItemUri(profile.id),
-            ContentValues().apply {
-                put(CampusMateContract.UserProfile.COLUMN_AVATAR_URI, uri)
-                put(CampusMateContract.UserProfile.COLUMN_UPDATED_AT, DateTimeUtils.nowMillis())
-            },
-            null,
-            null
-        )
-        return rows > 0
-    }
-
     fun buildPublicProfileJson(): String {
         val profile = getProfile() ?: throw IllegalStateException("Profile is empty.")
         validateProfile(profile)
@@ -172,6 +158,5 @@ class UserProfileRepository(context: Context) {
 
     companion object {
         const val PUBLIC_PROFILE_VERSION = 1
-        private const val DEFAULT_NICKNAME = "未命名"
     }
 }

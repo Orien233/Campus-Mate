@@ -261,7 +261,6 @@
     <string name="profile_major">专业</string>
     <string name="profile_grade">年级</string>
     <string name="profile_bio">简介</string>
-    <string name="profile_avatar_uri">头像 URI（可选）</string>
     <string name="profile_github">GitHub</string>
     <string name="profile_email">邮箱</string>
     <string name="profile_phone">手机号</string>
