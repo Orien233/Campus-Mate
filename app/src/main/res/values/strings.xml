@@ -194,8 +194,8 @@
     <string name="import_sample_action">导入示例 HTML</string>
     <string name="import_paste_hint">粘贴课表 HTML</string>
     <string name="import_paste_action">解析粘贴内容</string>
-    <string name="import_webview_action">WebView 提取课表 HTML</string>
-    <string name="import_webview_not_ready">WebView 提取已预留实现类，本阶段不保存账号密码，也不绕过验证码。</string>
+    <string name="import_webview_action">网页导入实验入口</string>
+    <string name="import_webview_not_ready">当前版本暂未开放完整网页导入，可使用内置示例或粘贴 HTML 导入。本阶段不保存账号密码，也不绕过验证码。</string>
     <string name="import_parse_failed">课表解析失败</string>
     <string name="import_preview_title">导入预览</string>
     <string name="import_preview_summary">识别 %1$d 门课程，冲突 %2$d 门，默认勾选 %3$d 门。</string>
