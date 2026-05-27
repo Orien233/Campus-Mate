@@ -1,16 +1,20 @@
 package com.example.campusmate.domain.reminder
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.example.campusmate.R
 import com.example.campusmate.data.model.StudyTask
 import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.ui.task.TaskDetailActivity
 import com.example.campusmate.util.NotificationUtils
-import com.example.campusmate.util.PermissionUtils
 
 /** Receives task reminder alarms and shows notifications for active tasks only. */
 class ReminderReceiver : BroadcastReceiver() {
@@ -21,7 +25,12 @@ class ReminderReceiver : BroadcastReceiver() {
 
         val task = TaskRepository(context).getTaskById(taskId) ?: return
         if (task.status != StudyTask.STATUS_TODO || task.isDeleted) return
-        if (!PermissionUtils.hasPostNotificationsPermission(context) || !NotificationUtils.areNotificationsEnabled(context)) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        if (!NotificationUtils.areNotificationsEnabled(context)) return
 
         NotificationUtils.ensureTaskReminderChannel(context)
         val contentIntent = android.app.PendingIntent.getActivity(
@@ -46,10 +55,12 @@ class ReminderReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
 
-        NotificationManagerCompat.from(context).notify(
-            NotificationUtils.taskReminderNotificationId(taskId),
-            notification
-        )
+        notifyTaskReminder(context, taskId, notification)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun notifyTaskReminder(context: Context, taskId: Long, notification: android.app.Notification) {
+        NotificationManagerCompat.from(context).notify(NotificationUtils.taskReminderNotificationId(taskId), notification)
     }
 
     companion object {
