@@ -14,15 +14,15 @@ CampusMate 是一个面向 Android 移动应用开发课程设计的本地单机
   -> 设置页与演示数据
 ```
 
-V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地能力。当前阶段新增校园天气卡片，使用手动城市配置、缓存和 Mock 降级，不保存账号密码，不自动定位，不上传用户隐私数据。
+V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地能力。当前阶段合并了校园天气、WebView 课表导入基础页和任务图片附件基础能力，不保存账号密码，不自动定位，不上传用户隐私数据。
 
 ## 当前版本状态
 
-- 当前版本：V1.1-stage-11
-- 当前阶段：校园天气卡片
+- 当前版本：V1.1-stage-13
+- 当前阶段：WebView 课表导入与任务图片附件基础实现
 - 主闭环状态：已跑通
-- 当前扩展功能状态：阶段 9-11 已完成，阶段 12-18 待实现
-- 数据库版本：3
+- 当前扩展功能状态：阶段 9-13 已完成基础实现，阶段 14-18 待实现
+- 数据库版本：4
 - applicationId：`com.example.campusmate`
 - minSdk：35
 - targetSdk：36
@@ -34,7 +34,7 @@ V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地
 - 课程管理：已完成，支持新增、编辑、详情、软删除、星期筛选和冲突提示。
 - 任务管理：已完成，支持新增、编辑、详情、删除、完成状态切换、任务类型和优先级。
 - 任务提醒：已完成，使用 AlarmManager、BroadcastReceiver 和 Notification，支持开机恢复未来提醒。
-- 课表导入：已完成，支持内置 sample HTML 与粘贴 HTML 解析，WebView 提取工具类已预留。
+- 课表导入：已完成，支持内置 sample HTML、粘贴 HTML 与 WebView 手动打开页面后提取当前 HTML。
 - 专注计时：已完成，支持翻转手机检测、前台服务计时、暂停/继续/完成/取消。
 - 翻转手机检测：已完成，基于加速度传感器，传感器不可用时可手动开始。
 - 学习记录：已完成，专注完成后写入 FocusSession 与 StudyRecord。
@@ -46,8 +46,8 @@ V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地
 - 学习伙伴：已完成，扫码确认后保存到 `study_buddies`，支持列表、详情和删除。
 - NFC：已完成，复用学习名片公开 JSON，支持 NFC NDEF 写入/接收、预览确认和不支持设备降级。
 - 天气：已完成，首页天气卡片、设置页城市配置、Mock/远程数据源、30 分钟缓存和失败降级。
-- WebView 当前页面课表 HTML 提取增强：部分完成，已有提取工具类，完整 Activity 流程待阶段 12。
-- 图片附件：待实现，阶段 13 处理。
+- WebView 当前页面课表 HTML 提取增强：基础完成，已接入 `WebViewImportActivity`，真实教务系统页面仍需现场验证。
+- 图片附件：基础完成，任务详情页支持通过 SAF 添加、打开和删除图片附件。
 - 学习计划：待实现，阶段 14 处理。
 - 通知弱化 / 勿扰增强：部分完成，当前已有勿扰授权入口；增强沉浸和实验功能待阶段 15。
 - 项目展示页 / 技术点展示页：待实现，阶段 16 处理。
@@ -56,12 +56,12 @@ V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地
 ## 待实现功能清单
 
 - NFC 已实现基础 NDEF 交换；当前分享页主要面向可写 NFC 标签或兼容 NDEF 发送源，直接手机对手机 Android Beam 在当前 SDK 下不可用。
-- WebView 真实教务系统课表提取尚未接入完整 UI，当前仅有 `WebViewScheduleExtractor` 工具类。
-- 图片附件尚未实现，当前没有 `task_attachments` 表，也未申请图片读取权限。
+- WebView 真实教务系统课表提取已接入基础 UI，但不同教务系统页面结构仍需现场验证。
+- 图片附件已实现基础 SAF 图片选择和 `task_attachments` 表；当前不做拍照、裁剪或复杂文件管理。
 - 学习计划尚未实现，当前没有 `study_plans` 表。
 - NotificationListenerService 未实现，当前只提供勿扰模式授权入口。
 - JSON 导出/导入尚未实现，当前不会导出本地数据文件。
-- 当前版本默认关闭 Android 系统备份，不通过系统备份导出本地数据库、设置、学习名片、学习伙伴或天气缓存。
+- 当前版本默认关闭 Android 系统备份，不通过系统备份导出本地数据库、设置、学习名片、学习伙伴、天气缓存或任务附件。
 - 完整演示模式尚未实现，当前演示数据不包含完整学习伙伴、附件和计划；天气通过 Mock 卡片稳定展示。
 - 当前阶段不实现头像/照片资料，学习名片仅保留文本信息与本地二维码/NFC 交换。
 - 当前阶段不新增聊天、动态、关注、点赞、评论、社交广场、登录、云同步或后端服务。
@@ -88,6 +88,7 @@ app/src/main/java/com/example/campusmate
 │   │   ├── StudyBuddy.kt
 │   │   ├── StudyRecord.kt
 │   │   ├── StudyTask.kt
+│   │   ├── TaskAttachment.kt
 │   │   └── UserProfile.kt
 │   ├── provider
 │   │   └── CampusMateProvider.kt
@@ -100,6 +101,7 @@ app/src/main/java/com/example/campusmate
 │       ├── SettingsRepository.kt
 │       ├── StudyBuddyRepository.kt
 │       ├── StudyRecordRepository.kt
+│       ├── TaskAttachmentRepository.kt
 │       ├── TaskRepository.kt
 │       ├── UserProfileRepository.kt
 │       └── WeatherRepository.kt
@@ -117,7 +119,8 @@ app/src/main/java/com/example/campusmate
 │   │   ├── AlarmReminderScheduler.kt
 │   │   ├── BootReminderReceiver.kt
 │   │   ├── ReminderReceiver.kt
-│   │   └── ReminderScheduler.kt
+│   │   ├── ReminderScheduler.kt
+│   │   └── TaskReminderPolicy.kt
 │   ├── nfc
 │   │   ├── NfcCardPayload.kt
 │   │   ├── NfcPayloadParser.kt
@@ -140,6 +143,10 @@ app/src/main/java/com/example/campusmate
 │   ├── dashboard
 │   ├── focus
 │   ├── import_
+│   │   ├── CourseDraftAdapter.kt
+│   │   ├── ImportPreviewActivity.kt
+│   │   ├── ImportScheduleActivity.kt
+│   │   └── WebViewImportActivity.kt
 │   ├── main
 │   ├── nfc
 │   │   ├── NfcReceiveActivity.kt
@@ -153,6 +160,13 @@ app/src/main/java/com/example/campusmate
 │   ├── settings
 │   ├── statistics
 │   └── task
+│       ├── TaskAdapter.kt
+│       ├── TaskAttachmentAdapter.kt
+│       ├── TaskAttachmentUiUtils.kt
+│       ├── TaskDetailActivity.kt
+│       ├── TaskEditActivity.kt
+│       ├── TaskListFragment.kt
+│       └── TaskUiFormatter.kt
 └── util
     ├── DateTimeUtils.kt
     ├── DbUtils.kt
@@ -238,7 +252,7 @@ ImportScheduleActivity / WebViewImportActivity
   -> ImportLog 保存导入记录
 ```
 
-当前完整 WebView 教务系统导入页面尚未开放，导入页仅保留“网页导入实验入口”提示；现阶段可用内置 HTML 和粘贴 HTML。
+当前 WebView 导入页已接入基础流程：用户手动输入教务系统网址、在 WebView 内登录并打开课表页，再提取当前页面 HTML 进入导入预览。该流程不保存账号密码、Cookie，也不绕过验证码；真实教务系统页面结构仍需现场验证。
 
 ### E. 学习名片数据流
 
@@ -317,14 +331,14 @@ DashboardFragment
 
 ```text
 TaskDetailActivity
-  -> 相册 / 相机
-  -> FileProvider / Uri
+  -> Storage Access Framework 图片选择
+  -> persistable Uri
   -> TaskAttachmentRepository
   -> task_attachments 表
   -> 附件 RecyclerView 展示
 ```
 
-该数据流为阶段 13 计划，当前尚未实现。
+当前已完成基础实现：任务详情页可添加、打开和删除图片附件；不申请相册读取权限，不接入拍照、裁剪或复杂文件管理。
 
 ### H. 备份数据流
 
@@ -350,7 +364,7 @@ SettingsFragment
 ```
 
 该数据流为阶段 17 计划，当前尚未实现。
-当前 Android 系统备份默认关闭，`allowBackup=false`，不会通过系统备份导出本地数据库、设置、学习名片、学习伙伴或天气缓存。
+当前 Android 系统备份默认关闭，`allowBackup=false`，不会通过系统备份导出本地数据库、设置、学习名片、学习伙伴、天气缓存或任务附件。
 
 ## 数据库设计说明
 
@@ -396,12 +410,12 @@ SettingsFragment
   - 关键字段：`city`、`weather_text`、`temperature`、`humidity`、`wind`、`source`、`raw_json`、`updated_at`。
   - 关系：由 `WeatherRepository` 读写，供 Dashboard 天气卡片展示；与用户位置无关。
 
-当前尚未创建、后续阶段计划加入的表：
-
 - `task_attachments`
-  - 作用：保存任务图片或文件附件 Uri。
-  - 关键字段：`task_id`、`uri`、`type`、`title`、`created_at`。
-  - 关系：阶段 13 将关联 `study_tasks._id`。
+  - 作用：保存任务图片附件 Uri。
+  - 关键字段：`task_id`、`uri`、`mime_type`、`title`、`created_at`。
+  - 关系：由 `TaskAttachmentRepository` 读写，按 `task_id` 关联任务详情页。
+
+当前尚未创建、后续阶段计划加入的表：
 
 - `study_plans`
   - 作用：保存本地规则生成的学习计划。
@@ -427,6 +441,8 @@ content://com.example.campusmate.provider/study_buddies
 content://com.example.campusmate.provider/study_buddies/#
 content://com.example.campusmate.provider/weather_cache
 content://com.example.campusmate.provider/weather_cache/#
+content://com.example.campusmate.provider/task_attachments
+content://com.example.campusmate.provider/task_attachments/#
 ```
 
 ## 权限说明
@@ -439,16 +455,13 @@ content://com.example.campusmate.provider/weather_cache/#
 - `SCHEDULE_EXACT_ALARM`：尽量准时触发任务提醒；不可用时降级为普通时间窗口。
 - `CAMERA`：阶段 9 新增，用于扫描学习名片二维码。
 - `NFC`：阶段 10 新增，用于 NFC NDEF 学习名片写入和接收；设备不支持或未开启时降级到二维码。
-- `INTERNET`：阶段 11 新增，用于可选远程天气请求和后续 WebView；天气默认可使用 Mock，不依赖网络。
+- `INTERNET`：阶段 11 新增，用于可选远程天气请求和 WebView 课表导入；天气默认可使用 Mock，不依赖网络。
 
 当前通过系统设置入口引导但不强制依赖：
 
 - `ACCESS_NOTIFICATION_POLICY`：勿扰模式授权入口，未授权不影响专注计时。
 
-后续阶段计划涉及但当前未声明：
-
-- `READ_MEDIA_IMAGES`：Android 13+ 阶段 13 读取图片附件。
-- `READ_EXTERNAL_STORAGE`：Android 12 及以下阶段 13 读取图片附件。
+图片附件当前通过 Storage Access Framework 选择图片并持久化 Uri，不额外声明 `READ_MEDIA_IMAGES` 或 `READ_EXTERNAL_STORAGE`。
 
 ## 运行方式
 
@@ -516,6 +529,40 @@ $env:ANDROID_USER_HOME='E:\Zdragon\CampusMate\.android-user'
 - JSON 导出导入将在阶段 17 测试。
 
 ## Changelog
+
+### V1.1-stage-13 - 任务图片附件
+
+已完成：
+
+- 新增 `task_attachments` 表，数据库版本从 3 升级到 4，迁移只创建新表和索引。
+- 扩展 `CampusMateContract` 和 `CampusMateProvider`，新增 `task_attachments` Uri。
+- 新增 `TaskAttachment`、`TaskAttachmentRepository`、`TaskAttachmentAdapter` 和附件 UI 工具。
+- 任务详情页增加图片附件卡片，支持 SAF 选择图片、持久化 Uri、打开附件和删除附件。
+- 清空本地数据和演示数据重置会一并清理任务附件。
+- README 更新到 V1.1-stage-13。
+
+待完成：
+
+- 本地规则式学习计划。
+- 专注期间通知弱化 / 勿扰增强。
+- 项目技术点展示页。
+- JSON 导出 / 导入备份。
+- 完整演示模式增强。
+
+### V1.1-stage-12 - WebView 课表导入增强
+
+已完成：
+
+- 新增 `WebViewImportActivity` 和 `activity_web_view_import.xml`。
+- 导入页的 WebView 入口已接入基础页面。
+- 用户可手动输入教务系统网址，在 WebView 内登录并打开课表页面。
+- 复用 `WebViewScheduleExtractor` 提取当前页面 HTML，交给 `JsoupScheduleParser`，成功后进入导入预览。
+- 保持不保存账号密码、Cookie，不绕过验证码；解析失败可降级到粘贴 HTML 或内置示例。
+
+待完成：
+
+- 针对真实教务系统页面结构做真机/实站验证。
+- 进一步完善失败提示和手动添加兜底流程。
 
 ### V1.1-stage-11 - 校园天气卡片
 
@@ -610,7 +657,8 @@ $env:ANDROID_USER_HOME='E:\Zdragon\CampusMate\.android-user'
 - 当前阶段不实现头像/照片资料，学习名片仅保留文本信息与本地二维码/NFC 交换。
 - NFC 功能需要支持 NFC 的真机和可写 NFC 标签或兼容 NDEF 发送源测试；当前环境未做真机贴近验证。
 - 当前 compile SDK 已移除旧 Android Beam 手机对手机推送 API，NFC 分享页采用 NDEF 标签写入方式，接收页可解析标准 CampusMate NDEF payload。
-- WebView 解析真实教务系统依赖页面结构，当前完整增强流程尚未实现。
+- WebView 解析真实教务系统依赖页面结构，当前基础流程已接入但仍需按学校实际页面验证。
+- 图片附件当前通过系统文件选择器和外部查看器完成，未接入拍照、裁剪或内置图片预览大图。
 - 天气默认使用 Mock 数据保证演示稳定；远程天气依赖网络，失败时会回退缓存或 Mock。
 - NotificationListenerService 属于后续实验功能，当前未实现且默认不读取其他 App 通知。
 - 数据导入当前尚未实现；未来阶段计划采用追加策略，不默认覆盖已有数据。
@@ -619,7 +667,7 @@ $env:ANDROID_USER_HOME='E:\Zdragon\CampusMate\.android-user'
 
 下一阶段目标：
 
-- 阶段名称：V1.1-stage-12 WebView 课表导入增强。
-- 准备实现的功能：WebView 手动登录教务系统、用户确认后提取当前页面 HTML、交给 JsoupScheduleParser、解析失败降级到粘贴 HTML / sample HTML / 手动添加。
-- 预期修改的模块：`ui/import_`、`domain/import_`、`AndroidManifest.xml`、README。
-- 可能涉及的权限：`android.permission.INTERNET`。
+- 阶段名称：V1.1-stage-14 本地规则式学习计划。
+- 准备实现的功能：基于课程、任务截止时间和每日目标生成本地学习计划，用户确认后写入本地表。
+- 预期修改的模块：`data/db`、`data/model`、`data/repository`、`ui/task` 或新增 `ui/plan`、README。
+- 可能涉及的权限：无新增敏感权限。

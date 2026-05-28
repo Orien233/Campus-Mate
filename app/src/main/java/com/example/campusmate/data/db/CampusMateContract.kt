@@ -17,6 +17,7 @@ object CampusMateContract {
     const val PATH_USER_PROFILE = "user_profile"
     const val PATH_STUDY_BUDDIES = "study_buddies"
     const val PATH_WEATHER_CACHE = "weather_cache"
+    const val PATH_TASK_ATTACHMENTS = "task_attachments"
 
     object Courses : BaseColumns {
         const val TABLE_NAME = "courses"
@@ -210,6 +211,21 @@ object CampusMateContract {
         const val COLUMN_SOURCE = "source"
         const val COLUMN_RAW_JSON = "raw_json"
         const val COLUMN_UPDATED_AT = "updated_at"
+
+        fun buildItemUri(id: Long): Uri = CONTENT_URI.buildUpon().appendPath(id.toString()).build()
+    }
+
+    object TaskAttachments : BaseColumns {
+        const val TABLE_NAME = "task_attachments"
+        val CONTENT_URI: Uri = BASE_CONTENT_URI.buildUpon().appendPath(PATH_TASK_ATTACHMENTS).build()
+        const val CONTENT_TYPE = "vnd.android.cursor.dir/vnd.$AUTHORITY.$PATH_TASK_ATTACHMENTS"
+        const val CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.$AUTHORITY.$PATH_TASK_ATTACHMENTS"
+
+        const val COLUMN_TASK_ID = "task_id"
+        const val COLUMN_URI = "uri"
+        const val COLUMN_MIME_TYPE = "mime_type"
+        const val COLUMN_TITLE = "title"
+        const val COLUMN_CREATED_AT = "created_at"
 
         fun buildItemUri(id: Long): Uri = CONTENT_URI.buildUpon().appendPath(id.toString()).build()
     }

@@ -104,6 +104,10 @@
             android:exported="false"
             android:theme="@style/Theme.CampusMate" />
         <activity
+            android:name=".ui.import_.WebViewImportActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CampusMate" />
+        <activity
             android:name=".ui.task.TaskDetailActivity"
             android:exported="false"
             android:theme="@style/Theme.CampusMate" />
