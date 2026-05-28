@@ -116,7 +116,7 @@ app/src/main/java/com/example/campusmate
 
 规则：
 
-- 当前数据库名为 `campus_mate.db`，数据库版本为 4。
+- 当前数据库名为 `campus_mate.db`，数据库版本为 5。
 - 新增表或字段必须考虑升级路径，不要用删除重建表的方式破坏已有演示数据。
 - 课程和任务已有软删除字段，列表查询和统计逻辑要正确过滤。
 

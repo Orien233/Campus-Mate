@@ -1,6 +1,7 @@
 package com.example.campusmate.ui.focus
 
 import android.app.PendingIntent
+import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.os.Handler
@@ -11,12 +12,15 @@ import com.example.campusmate.R
 import com.example.campusmate.data.model.FocusSession
 import com.example.campusmate.data.model.StudyRecord
 import com.example.campusmate.data.repository.FocusRepository
+import com.example.campusmate.data.repository.SettingsRepository
 import com.example.campusmate.data.repository.StudyRecordRepository
 import com.example.campusmate.domain.focus.FaceDownDetector
 import com.example.campusmate.domain.focus.FocusEvent
 import com.example.campusmate.domain.focus.FocusState
 import com.example.campusmate.domain.focus.FocusStateMachine
 import com.example.campusmate.domain.focus.FocusTimerEngine
+import com.example.campusmate.domain.notification.DndManager
+import com.example.campusmate.domain.notification.NotificationFilterService
 import com.example.campusmate.util.DateTimeUtils
 import com.example.campusmate.util.NotificationUtils
 
@@ -25,6 +29,8 @@ class FocusService : Service(), FaceDownDetector.Listener {
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var focusRepository: FocusRepository
     private lateinit var studyRecordRepository: StudyRecordRepository
+    private lateinit var settingsRepository: SettingsRepository
+    private lateinit var dndManager: DndManager
     private var stateMachine = FocusStateMachine(FocusState.IDLE)
     private var timerEngine: FocusTimerEngine? = null
     private var faceDownDetector: FaceDownDetector? = null
@@ -32,6 +38,7 @@ class FocusService : Service(), FaceDownDetector.Listener {
     private var focusTitle: String = ""
     private var pauseCount: Int = 0
     private var interruptCount: Int = 0
+    private var previousDndState: Int = -1
 
     private val tickRunnable = object : Runnable {
         override fun run() {
@@ -50,6 +57,8 @@ class FocusService : Service(), FaceDownDetector.Listener {
         super.onCreate()
         focusRepository = FocusRepository(this)
         studyRecordRepository = StudyRecordRepository(this)
+        settingsRepository = SettingsRepository(this)
+        dndManager = DndManager(this)
         NotificationUtils.ensureFocusServiceChannel(this)
     }
 
@@ -126,6 +135,17 @@ class FocusService : Service(), FaceDownDetector.Listener {
             }
         }
 
+        // Enable DND if setting is enabled
+        if (settingsRepository.isFocusDndEnabled()) {
+            previousDndState = dndManager.getCurrentInterruptionFilter()
+            dndManager.enableDnd()
+        }
+
+        // Enable notification filter if setting is enabled
+        if (settingsRepository.isNotificationFilterEnabled()) {
+            NotificationFilterService.isFocusModeActive = true
+        }
+
         startForeground(FOCUS_NOTIFICATION_ID, buildNotification())
         handler.removeCallbacks(tickRunnable)
         handler.post(tickRunnable)
@@ -181,6 +201,7 @@ class FocusService : Service(), FaceDownDetector.Listener {
             )
         }
         broadcastState()
+        restoreDndState()
         stopSelfSafely()
     }
 
@@ -196,7 +217,29 @@ class FocusService : Service(), FaceDownDetector.Listener {
             interruptCount = interruptCount
         )?.also { focusRepository.updateFocusSession(it) }
         broadcastState()
+        restoreDndState()
         stopSelfSafely()
+    }
+
+    private fun restoreDndState() {
+        if (settingsRepository.isFocusDndEnabled() && previousDndState != -1) {
+            try {
+                val notificationManager = getSystemService(NotificationManager::class.java)
+                when (previousDndState) {
+                    NotificationManager.INTERRUPTION_FILTER_NONE ->
+                        notificationManager?.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
+                    NotificationManager.INTERRUPTION_FILTER_PRIORITY ->
+                        notificationManager?.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
+                    NotificationManager.INTERRUPTION_FILTER_ALARMS ->
+                        notificationManager?.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS)
+                    NotificationManager.INTERRUPTION_FILTER_ALL ->
+                        notificationManager?.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
+                }
+            } catch (e: Exception) {
+                // Ignore
+            }
+        }
+        NotificationFilterService.isFocusModeActive = false
     }
 
     private fun persistSessionStatus(status: Int) {

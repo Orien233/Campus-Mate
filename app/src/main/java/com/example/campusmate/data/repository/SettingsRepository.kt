@@ -36,6 +36,18 @@ class SettingsRepository(context: Context) {
         preferences.edit().putBoolean(KEY_MOCK_WEATHER_ENABLED, value).apply()
     }
 
+    fun isFocusDndEnabled(): Boolean = preferences.getBoolean(KEY_FOCUS_DND_ENABLED, false)
+
+    fun setFocusDndEnabled(value: Boolean) {
+        preferences.edit().putBoolean(KEY_FOCUS_DND_ENABLED, value).apply()
+    }
+
+    fun isNotificationFilterEnabled(): Boolean = preferences.getBoolean(KEY_NOTIFICATION_FILTER_ENABLED, false)
+
+    fun setNotificationFilterEnabled(value: Boolean) {
+        preferences.edit().putBoolean(KEY_NOTIFICATION_FILTER_ENABLED, value).apply()
+    }
+
     companion object {
         private const val PREFS_NAME = "campusmate_settings"
         private const val KEY_DAILY_GOAL_MINUTES = "daily_goal_minutes"
@@ -43,6 +55,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_IMMERSIVE_MODE_ENABLED = "immersive_mode_enabled"
         private const val KEY_WEATHER_CITY = "weather_city"
         private const val KEY_MOCK_WEATHER_ENABLED = "mock_weather_enabled"
+        private const val KEY_FOCUS_DND_ENABLED = "focus_dnd_enabled"
+        private const val KEY_NOTIFICATION_FILTER_ENABLED = "notification_filter_enabled"
         private const val DEFAULT_DAILY_GOAL_MINUTES = 60
         private const val DEFAULT_WEATHER_CITY = "\u5317\u4eac"
     }

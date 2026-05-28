@@ -5,6 +5,7 @@
     <string name="nav_dashboard">首页</string>
     <string name="nav_courses">课程</string>
     <string name="nav_tasks">任务</string>
+    <string name="nav_plan">计划</string>
     <string name="nav_statistics">统计</string>
     <string name="nav_settings">设置</string>
 
@@ -73,11 +74,11 @@
     <string name="settings_demo_tools_body">用于 2-3 分钟答辩展示，会先清空本地数据，再生成课程、任务、提醒和学习热力图样例。</string>
     <string name="settings_seed_demo_data">生成演示数据</string>
     <string name="settings_seed_demo_confirm_title">生成演示数据</string>
-    <string name="settings_seed_demo_confirm_message">将先清除课程、任务、图片附件、提醒、专注记录、学习统计、课表导入日志、学习名片、学习伙伴和天气缓存，再生成一组答辩演示数据。此操作不可撤销。</string>
+    <string name="settings_seed_demo_confirm_message">将先清除课程、任务、学习计划、图片附件、提醒、专注记录、学习统计、课表导入日志、学习名片、学习伙伴和天气缓存，再生成一组答辩演示数据。此操作不可撤销。</string>
     <string name="settings_seed_demo_result">已写入 %1$d 门课程、%2$d 个任务、%3$d 条学习记录，恢复 %4$d 个未来提醒</string>
     <string name="settings_clear_data">清空本地数据</string>
     <string name="settings_clear_data_confirm_title">确认清空本地数据？</string>
-    <string name="settings_clear_data_confirm_message">此操作会清除课程、任务、图片附件、提醒、专注记录、学习统计、课表导入日志、学习名片、学习伙伴和天气缓存。此操作不可撤销。</string>
+    <string name="settings_clear_data_confirm_message">此操作会清除课程、任务、学习计划、图片附件、提醒、专注记录、学习统计、课表导入日志、学习名片、学习伙伴和天气缓存。此操作不可撤销。</string>
     <string name="settings_clear_data_result">已清空 %1$d 条本地数据</string>
 
     <string name="action_save">保存</string>
@@ -348,4 +349,48 @@
     <string name="nfc_receive_preview_title">NFC 名片预览</string>
     <string name="nfc_receive_confirm_add">确认添加伙伴</string>
     <string name="nfc_public_json_title">NFC 公开 JSON</string>
+
+    <!-- 学习计划 -->
+    <string name="plan_title">学习计划</string>
+    <string name="plan_empty_title">暂无学习计划</string>
+    <string name="plan_empty_body">基于课程表和待办任务智能生成每日学习计划。</string>
+    <string name="plan_generate_today">生成今日计划</string>
+    <string name="plan_generate_week">生成本周计划</string>
+    <string name="plan_generate_success">%1$s</string>
+    <string name="plan_generate_failed">%1$s</string>
+    <string name="plan_regenerate_confirm">确定重新生成吗？将删除当日现有计划。</string>
+    <string name="plan_delete_confirm">确定删除此计划项吗？</string>
+    <string name="plan_detail_title">计划详情</string>
+    <string name="plan_item_time_format">%1$s - %2$s</string>
+    <string name="plan_item_duration_format">%1$d 分钟</string>
+    <string name="plan_status_pending">待完成</string>
+    <string name="plan_status_completed">已完成</string>
+    <string name="plan_status_expired">已过期</string>
+    <string name="plan_mark_complete">标记完成</string>
+    <string name="plan_mark_incomplete">取消完成</string>
+    <string name="plan_actual_minutes">实际学习时长</string>
+    <string name="plan_planned_minutes">计划学习时长</string>
+    <string name="plan_source_auto">自动生成</string>
+    <string name="plan_source_manual">手动创建</string>
+    <string name="plan_today_summary">今日计划: %1$d 项 · %2$d 分钟</string>
+    <string name="plan_week_summary">本周计划: %1$d 项 · %2$d 分钟</string>
+    <string name="plan_completion_rate">完成率: %1$d%%</string>
+
+    <!-- 通知弱化 -->
+    <string name="notification_filter_title">通知过滤</string>
+    <string name="notification_filter_description">专注时屏蔽非重要通知</string>
+    <string name="notification_filter_enabled">通知过滤已开启：专注时将屏蔽其他应用通知。</string>
+    <string name="notification_filter_disabled">通知过滤已关闭：专注时不会屏蔽其他应用通知。</string>
+    <string name="notification_filter_not_granted">通知过滤需要授权通知访问权限。</string>
+    <string name="focus_dnd_title">专注勿扰</string>
+    <string name="focus_dnd_description">专注时自动开启勿扰模式</string>
+    <string name="focus_dnd_enabled">专注勿扰已开启：专注时自动开启系统勿扰模式。</string>
+    <string name="focus_dnd_disabled">专注勿扰已关闭：专注时不会自动开启勿扰模式。</string>
+    <string name="focus_dnd_not_granted">专注勿扰需要授权勿扰模式访问权限。</string>
+    <string name="focus_dnd_activating">专注开始，自动开启勿扰模式…</string>
+    <string name="focus_dnd_deactivating">专注结束，恢复原勿扰状态…</string>
+    <string name="settings_notification_filter">通知过滤</string>
+    <string name="settings_focus_dnd">专注勿扰增强</string>
+    <string name="settings_notification_filter_result">通知过滤已%1$s</string>
+    <string name="settings_focus_dnd_result">专注勿扰已%1$s</string>
 </resources>

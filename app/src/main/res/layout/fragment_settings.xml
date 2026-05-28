@@ -270,6 +270,24 @@
                     android:layout_marginTop="@dimen/space_s"
                     android:text="@string/settings_dnd_access"
                     app:icon="@drawable/ic_focus" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/focusDndSwitch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:text="@string/settings_focus_dnd"
+                    android:textColor="@color/campus_text_primary"
+                    android:textSize="16sp" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/notificationFilterSwitch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_xs"
+                    android:text="@string/settings_notification_filter"
+                    android:textColor="@color/campus_text_primary"
+                    android:textSize="16sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

@@ -14,15 +14,15 @@ CampusMate 是一个面向 Android 移动应用开发课程设计的本地单机
   -> 设置页与演示数据
 ```
 
-V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地能力。当前阶段合并了校园天气、WebView 课表导入基础页和任务图片附件基础能力，不保存账号密码，不自动定位，不上传用户隐私数据。
+V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地能力。当前阶段合并了校园天气、WebView 课表导入基础页、任务图片附件、学习计划和通知弱化/勿扰增强基础能力，不保存账号密码，不自动定位，不上传用户隐私数据。
 
 ## 当前版本状态
 
-- 当前版本：V1.1-stage-13
-- 当前阶段：WebView 课表导入与任务图片附件基础实现
+- 当前版本：V1.1-stage-15
+- 当前阶段：学习计划 + 通知弱化/勿扰增强，并合并 WebView 课表导入和任务图片附件基础实现
 - 主闭环状态：已跑通
-- 当前扩展功能状态：阶段 9-13 已完成基础实现，阶段 14-18 待实现
-- 数据库版本：4
+- 当前扩展功能状态：阶段 9-15 已完成，阶段 16-18 待实现
+- 数据库版本：5
 - applicationId：`com.example.campusmate`
 - minSdk：35
 - targetSdk：36
@@ -48,8 +48,8 @@ V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地
 - 天气：已完成，首页天气卡片、设置页城市配置、Mock/远程数据源、30 分钟缓存和失败降级。
 - WebView 当前页面课表 HTML 提取增强：基础完成，已接入 `WebViewImportActivity`，真实教务系统页面仍需现场验证。
 - 图片附件：基础完成，任务详情页支持通过 SAF 添加、打开和删除图片附件。
-- 学习计划：待实现，阶段 14 处理。
-- 通知弱化 / 勿扰增强：部分完成，当前已有勿扰授权入口；增强沉浸和实验功能待阶段 15。
+- 学习计划：已完成，基于课程表和待办任务智能生成每日/每周学习计划，包含计划列表、详情、完成状态切换。
+- 通知弱化 / 勿扰增强：已完成，专注时自动开启勿扰模式，专注结束后恢复；NotificationListenerService 过滤非重要通知。
 - 项目展示页 / 技术点展示页：待实现，阶段 16 处理。
 - 数据导出 / 备份 JSON：待实现，阶段 17 处理。
 
@@ -58,10 +58,10 @@ V1.1 在不做登录、云同步和后端服务的前提下，继续扩展本地
 - NFC 已实现基础 NDEF 交换；当前分享页主要面向可写 NFC 标签或兼容 NDEF 发送源，直接手机对手机 Android Beam 在当前 SDK 下不可用。
 - WebView 真实教务系统课表提取已接入基础 UI，但不同教务系统页面结构仍需现场验证。
 - 图片附件已实现基础 SAF 图片选择和 `task_attachments` 表；当前不做拍照、裁剪或复杂文件管理。
-- 学习计划尚未实现，当前没有 `study_plans` 表。
-- NotificationListenerService 未实现，当前只提供勿扰模式授权入口。
+- 学习计划已实现基础计划生成、列表和详情页；后续可继续增强手动编辑、计划提醒和演示数据覆盖。
+- NotificationListenerService 已接入，过滤通知需要用户在系统设置中主动授权通知访问权限。
 - JSON 导出/导入尚未实现，当前不会导出本地数据文件。
-- 当前版本默认关闭 Android 系统备份，不通过系统备份导出本地数据库、设置、学习名片、学习伙伴、天气缓存或任务附件。
+- 当前版本默认关闭 Android 系统备份，不通过系统备份导出本地数据库、设置、学习名片、学习伙伴、天气缓存、学习计划或任务附件。
 - 完整演示模式尚未实现，当前演示数据不包含完整学习伙伴、附件和计划；天气通过 Mock 卡片稳定展示。
 - 当前阶段不实现头像/照片资料，学习名片仅保留文本信息与本地二维码/NFC 交换。
 - 当前阶段不新增聊天、动态、关注、点赞、评论、社交广场、登录、云同步或后端服务。
@@ -86,6 +86,7 @@ app/src/main/java/com/example/campusmate
 │   │   ├── FocusSession.kt
 │   │   ├── ImportLog.kt
 │   │   ├── StudyBuddy.kt
+│   │   ├── StudyPlan.kt
 │   │   ├── StudyRecord.kt
 │   │   ├── StudyTask.kt
 │   │   ├── TaskAttachment.kt
@@ -100,6 +101,7 @@ app/src/main/java/com/example/campusmate
 │       ├── ImportLogRepository.kt
 │       ├── SettingsRepository.kt
 │       ├── StudyBuddyRepository.kt
+│       ├── StudyPlanRepository.kt
 │       ├── StudyRecordRepository.kt
 │       ├── TaskAttachmentRepository.kt
 │       ├── TaskRepository.kt
@@ -132,6 +134,11 @@ app/src/main/java/com/example/campusmate
 │   │   ├── WeatherDataSource.kt
 │   │   ├── WeatherParser.kt
 │   │   └── WeatherResult.kt
+│   ├── plan
+│   │   └── StudyPlanGenerator.kt
+│   ├── notification
+│   │   ├── DndManager.kt
+│   │   └── NotificationFilterService.kt
 │   └── statistics
 │       └── HeatmapCalculator.kt
 ├── ui
@@ -415,12 +422,10 @@ SettingsFragment
   - 关键字段：`task_id`、`uri`、`mime_type`、`title`、`created_at`。
   - 关系：由 `TaskAttachmentRepository` 读写，按 `task_id` 关联任务详情页。
 
-当前尚未创建、后续阶段计划加入的表：
-
 - `study_plans`
-  - 作用：保存本地规则生成的学习计划。
-  - 关键字段：`task_id`、`course_id`、`title`、`plan_date`、`planned_minutes`、`status`、`created_at`、`updated_at`。
-  - 关系：阶段 14 将关联任务和课程。
+  - 作用：保存智能生成的学习计划。
+  - 关键字段：`title`、`plan_date`、`planned_minutes`、`actual_minutes`、`start_time`、`end_time`、`type`、`status`、`source_type`、`created_at`、`updated_at`。
+  - 关系：由 `StudyPlanRepository` 读写，支持每日和每周计划生成。
 
 当前 Provider Uri：
 
@@ -441,6 +446,8 @@ content://com.example.campusmate.provider/study_buddies
 content://com.example.campusmate.provider/study_buddies/#
 content://com.example.campusmate.provider/weather_cache
 content://com.example.campusmate.provider/weather_cache/#
+content://com.example.campusmate.provider/study_plans
+content://com.example.campusmate.provider/study_plans/#
 content://com.example.campusmate.provider/task_attachments
 content://com.example.campusmate.provider/task_attachments/#
 ```
@@ -525,16 +532,47 @@ $env:ANDROID_USER_HOME='E:\Zdragon\CampusMate\.android-user'
 - 点击刷新天气，确认不会阻塞页面。
 - 打开 Mock 天气开关时，确认无网络也能稳定展示 Mock 数据。
 - 关闭 Mock 天气后，确认网络失败时回退缓存或 Mock，不崩溃。
-- 拍照附件保存将在阶段 13 测试。
+- 图片附件基础 SAF 选择、打开和删除可在任务详情页测试；拍照、裁剪或内置大图预览未接入。
 - JSON 导出导入将在阶段 17 测试。
 
 ## Changelog
+
+### V1.1-stage-15 - 通知弱化/勿扰增强
+
+已完成：
+
+- 新增 `DndManager`，管理勿扰模式授权和切换。
+- 新增 `NotificationFilterService`，专注时过滤非重要通知。
+- `FocusService` 集成勿扰增强和通知过滤功能。
+- 设置页新增"专注勿扰"和"通知过滤"开关。
+- 新增 `FeatureFlags` 功能开关。
+
+待完成：
+
+- 项目技术点展示页。
+- JSON 导出 / 导入备份。
+- 完整演示模式增强。
+
+### V1.1-stage-14 - 学习计划
+
+已完成：
+
+- 新增 `study_plans` 表；合并后数据库版本为 5，用于兼容两个分支都曾使用的 v4 schema。
+- 新增 `StudyPlan` 数据模型和 `StudyPlanRepository`。
+- 新增 `StudyPlanGenerator`，基于课程表和待办任务智能生成每日/每周学习计划。
+- 新增底部导航"计划"页面 `PlanListFragment`。
+- 新增计划详情页 `PlanDetailActivity`。
+- 新增 `PlanAdapter` 适配器和相关布局文件。
+
+待完成：
+
+- 计划手动编辑、计划提醒和完整演示数据增强。
 
 ### V1.1-stage-13 - 任务图片附件
 
 已完成：
 
-- 新增 `task_attachments` 表，数据库版本从 3 升级到 4，迁移只创建新表和索引。
+- 新增 `task_attachments` 表；合并后数据库版本为 5，迁移会补齐任务附件表和学习计划表。
 - 扩展 `CampusMateContract` 和 `CampusMateProvider`，新增 `task_attachments` Uri。
 - 新增 `TaskAttachment`、`TaskAttachmentRepository`、`TaskAttachmentAdapter` 和附件 UI 工具。
 - 任务详情页增加图片附件卡片，支持 SAF 选择图片、持久化 Uri、打开附件和删除附件。
@@ -543,11 +581,7 @@ $env:ANDROID_USER_HOME='E:\Zdragon\CampusMate\.android-user'
 
 待完成：
 
-- 本地规则式学习计划。
-- 专注期间通知弱化 / 勿扰增强。
-- 项目技术点展示页。
-- JSON 导出 / 导入备份。
-- 完整演示模式增强。
+- 拍照、裁剪或内置大图预览暂未接入。
 
 ### V1.1-stage-12 - WebView 课表导入增强
 
@@ -660,14 +694,15 @@ $env:ANDROID_USER_HOME='E:\Zdragon\CampusMate\.android-user'
 - WebView 解析真实教务系统依赖页面结构，当前基础流程已接入但仍需按学校实际页面验证。
 - 图片附件当前通过系统文件选择器和外部查看器完成，未接入拍照、裁剪或内置图片预览大图。
 - 天气默认使用 Mock 数据保证演示稳定；远程天气依赖网络，失败时会回退缓存或 Mock。
-- NotificationListenerService 属于后续实验功能，当前未实现且默认不读取其他 App 通知。
+- NotificationListenerService 需要用户在系统设置中授权通知访问权限才能过滤通知。
+- 专注勿扰功能需要用户在系统设置中授权勿扰模式访问权限才能正常工作。
 - 数据导入当前尚未实现；未来阶段计划采用追加策略，不默认覆盖已有数据。
 
 ## 下一阶段目标
 
 下一阶段目标：
 
-- 阶段名称：V1.1-stage-14 本地规则式学习计划。
-- 准备实现的功能：基于课程、任务截止时间和每日目标生成本地学习计划，用户确认后写入本地表。
-- 预期修改的模块：`data/db`、`data/model`、`data/repository`、`ui/task` 或新增 `ui/plan`、README。
+- 阶段名称：V1.1-stage-16 项目展示页 / 技术点展示页。
+- 准备实现的功能：面向课程答辩展示核心功能、技术点和已完成模块。
+- 预期修改的模块：`ui`、`res/layout`、`res/values/strings.xml`、README。
 - 可能涉及的权限：无新增敏感权限。
