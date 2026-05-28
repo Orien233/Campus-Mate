@@ -1,6 +1,7 @@
 package com.example.campusmate.ui.focus
 
 import android.app.PendingIntent
+import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.os.Handler
@@ -223,8 +224,17 @@ class FocusService : Service(), FaceDownDetector.Listener {
     private fun restoreDndState() {
         if (settingsRepository.isFocusDndEnabled() && previousDndState != -1) {
             try {
-                val notificationManager = getSystemService(android.app.NotificationManager::class.java)
-                notificationManager?.setInterruptionFilter(previousDndState)
+                val notificationManager = getSystemService(NotificationManager::class.java)
+                when (previousDndState) {
+                    NotificationManager.INTERRUPTION_FILTER_NONE ->
+                        notificationManager?.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
+                    NotificationManager.INTERRUPTION_FILTER_PRIORITY ->
+                        notificationManager?.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
+                    NotificationManager.INTERRUPTION_FILTER_ALARMS ->
+                        notificationManager?.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS)
+                    NotificationManager.INTERRUPTION_FILTER_ALL ->
+                        notificationManager?.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
+                }
             } catch (e: Exception) {
                 // Ignore
             }

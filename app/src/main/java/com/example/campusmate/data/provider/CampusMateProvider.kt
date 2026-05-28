@@ -70,6 +70,8 @@ class CampusMateProvider : ContentProvider() {
             WEATHER_CACHE_ID -> CampusMateContract.WeatherCache.CONTENT_ITEM_TYPE
             STUDY_PLANS -> CampusMateContract.StudyPlans.CONTENT_TYPE
             STUDY_PLAN_ID -> CampusMateContract.StudyPlans.CONTENT_ITEM_TYPE
+            TASK_ATTACHMENTS -> CampusMateContract.TaskAttachments.CONTENT_TYPE
+            TASK_ATTACHMENT_ID -> CampusMateContract.TaskAttachments.CONTENT_ITEM_TYPE
             else -> throw IllegalArgumentException("Unknown URI: $uri")
         }
     }
@@ -156,6 +158,7 @@ class CampusMateProvider : ContentProvider() {
             STUDY_BUDDIES, STUDY_BUDDY_ID -> CampusMateContract.StudyBuddies.TABLE_NAME
             WEATHER_CACHE, WEATHER_CACHE_ID -> CampusMateContract.WeatherCache.TABLE_NAME
             STUDY_PLANS, STUDY_PLAN_ID -> CampusMateContract.StudyPlans.TABLE_NAME
+            TASK_ATTACHMENTS, TASK_ATTACHMENT_ID -> CampusMateContract.TaskAttachments.TABLE_NAME
             else -> throw IllegalArgumentException("Unknown URI match: $match")
         }
     }
@@ -170,7 +173,8 @@ class CampusMateProvider : ContentProvider() {
             USER_PROFILE_ID,
             STUDY_BUDDY_ID,
             WEATHER_CACHE_ID,
-            STUDY_PLAN_ID -> ContentUris.parseId(uri)
+            STUDY_PLAN_ID,
+            TASK_ATTACHMENT_ID -> ContentUris.parseId(uri)
             else -> null
         }
     }
@@ -201,6 +205,7 @@ class CampusMateProvider : ContentProvider() {
             STUDY_BUDDIES -> CampusMateContract.StudyBuddies.CONTENT_URI
             WEATHER_CACHE -> CampusMateContract.WeatherCache.CONTENT_URI
             STUDY_PLANS -> CampusMateContract.StudyPlans.CONTENT_URI
+            TASK_ATTACHMENTS -> CampusMateContract.TaskAttachments.CONTENT_URI
             else -> throw IllegalArgumentException("Not a collection match: $match")
         }
     }
@@ -214,7 +219,8 @@ class CampusMateProvider : ContentProvider() {
             match == USER_PROFILE ||
             match == STUDY_BUDDIES ||
             match == WEATHER_CACHE ||
-            match == STUDY_PLANS
+            match == STUDY_PLANS ||
+            match == TASK_ATTACHMENTS
     }
 
     private fun notifyChange(uri: Uri) {
@@ -240,6 +246,8 @@ class CampusMateProvider : ContentProvider() {
         private const val WEATHER_CACHE_ID = 801
         private const val STUDY_PLANS = 900
         private const val STUDY_PLAN_ID = 901
+        private const val TASK_ATTACHMENTS = 1000
+        private const val TASK_ATTACHMENT_ID = 1001
 
         private val uriMatcher = UriMatcher(UriMatcher.NO_MATCH).apply {
             addURI(CampusMateContract.AUTHORITY, CampusMateContract.PATH_COURSES, COURSES)
@@ -260,6 +268,8 @@ class CampusMateProvider : ContentProvider() {
             addURI(CampusMateContract.AUTHORITY, "${CampusMateContract.PATH_WEATHER_CACHE}/#", WEATHER_CACHE_ID)
             addURI(CampusMateContract.AUTHORITY, CampusMateContract.PATH_STUDY_PLANS, STUDY_PLANS)
             addURI(CampusMateContract.AUTHORITY, "${CampusMateContract.PATH_STUDY_PLANS}/#", STUDY_PLAN_ID)
+            addURI(CampusMateContract.AUTHORITY, CampusMateContract.PATH_TASK_ATTACHMENTS, TASK_ATTACHMENTS)
+            addURI(CampusMateContract.AUTHORITY, "${CampusMateContract.PATH_TASK_ATTACHMENTS}/#", TASK_ATTACHMENT_ID)
         }
     }
 }

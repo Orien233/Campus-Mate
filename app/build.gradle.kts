@@ -4,12 +4,13 @@ plugins {
 
 android {
     namespace = "com.example.campusmate"
-    compileSdk = 35
+    compileSdk = 36
+    compileSdkMinor = 1
 
     defaultConfig {
         applicationId = "com.example.campusmate"
-        minSdk = 26
-        targetSdk = 35
+        minSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 

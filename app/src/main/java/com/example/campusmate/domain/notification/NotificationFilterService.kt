@@ -15,10 +15,9 @@ class NotificationFilterService : NotificationListenerService() {
 
         @Volatile
         var isFocusModeActive: Boolean = false
-            private set
     }
 
-    override fun onNotificationPosted(sbn: StatusBarNotification?): android.service.notification.NotificationStats? {
+    override fun onNotificationPosted(sbn: StatusBarNotification?) {
         sbn ?: return super.onNotificationPosted(sbn)
 
         if (!isFocusModeActive) {
@@ -34,11 +33,11 @@ class NotificationFilterService : NotificationListenerService() {
             }
         }
 
-        return super.onNotificationPosted(sbn)
+        super.onNotificationPosted(sbn)
     }
 
-    override fun onNotificationRemoved(sbn: StatusBarNotification?): android.service.notification.NotificationStats? {
-        return super.onNotificationRemoved(sbn)
+    override fun onNotificationRemoved(sbn: StatusBarNotification?) {
+        super.onNotificationRemoved(sbn)
     }
 
     fun setFocusMode(active: Boolean) {

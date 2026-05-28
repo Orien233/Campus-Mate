@@ -58,11 +58,11 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val todayDurationMinutes = studyRecordRepository.getTodayDuration() / 60
         val weeklyDurationMinutes = studyRecordRepository.getWeeklyDuration() / 60
 
-        currentView.findViewById<TextView>(R.id.todayCoursesValue).text = todayCourses.size.toString()
-        currentView.findViewById<TextView>(R.id.pendingTasksValue).text = pendingTasks.toString()
-        currentView.findViewById<TextView>(R.id.todayFocusValue).text = getString(R.string.duration_minutes, todayDurationMinutes)
-        currentView.findViewById<TextView>(R.id.weekFocusValue).text = getString(R.string.duration_minutes, weeklyDurationMinutes)
-        currentView.findViewById<TextView>(R.id.nextCourseValue).text =
+        currentView.findViewById<TextView>(R.id.tvTodayCourseCount).text = todayCourses.size.toString()
+        currentView.findViewById<TextView>(R.id.tvPendingTaskCount).text = pendingTasks.toString()
+        currentView.findViewById<TextView>(R.id.tvTodayFocusMinutes).text = getString(R.string.duration_minutes, todayDurationMinutes)
+        currentView.findViewById<TextView>(R.id.tvWeekFocusMinutes).text = getString(R.string.duration_minutes, weeklyDurationMinutes)
+        currentView.findViewById<TextView>(R.id.tvNextCourseValue).text =
             todayCourses.firstOrNull()?.let { getString(R.string.dashboard_next_course_format, it.name, it.startSection, it.endSection) }
                 ?: getString(R.string.dashboard_no_next_course)
         loadWeather(forceRefresh = false)

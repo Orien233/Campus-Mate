@@ -34,7 +34,7 @@ class ImportScheduleActivity : AppCompatActivity() {
             parseAndOpenPreview(pastedHtmlInput.text?.toString().orEmpty(), ImportLog.SOURCE_PASTED_HTML)
         }
         findViewById<MaterialButton>(R.id.importWebViewButton).setOnClickListener {
-            Snackbar.make(rootView, R.string.import_webview_not_ready, Snackbar.LENGTH_LONG).show()
+            startActivity(Intent(this, WebViewImportActivity::class.java))
         }
     }
 

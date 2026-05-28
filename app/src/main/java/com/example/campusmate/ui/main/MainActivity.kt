@@ -1,6 +1,8 @@
 package com.example.campusmate.ui.main
 
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.example.campusmate.R
@@ -32,11 +34,31 @@ class MainActivity : AppCompatActivity() {
             showFragment(item.itemId)
             true
         }
+        bottomNavigationView.setOnItemReselectedListener { item ->
+            showFragment(item.itemId)
+        }
 
-        if (bottomNavigationView.selectedItemId != selectedItemId) {
+        if (!isBottomNavigationItem(selectedItemId)) {
+            showFragment(selectedItemId)
+        } else if (bottomNavigationView.selectedItemId != selectedItemId) {
             bottomNavigationView.selectedItemId = selectedItemId
         } else {
             showFragment(selectedItemId)
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main_toolbar, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.nav_settings -> {
+                showFragment(R.id.nav_settings)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
@@ -97,6 +119,10 @@ class MainActivity : AppCompatActivity() {
             R.id.nav_settings -> R.string.nav_settings
             else -> R.string.app_name
         }
+    }
+
+    private fun isBottomNavigationItem(itemId: Int): Boolean {
+        return bottomNavigationView.menu.findItem(itemId) != null
     }
 
     companion object {

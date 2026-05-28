@@ -1,15 +1,24 @@
 package com.example.campusmate.ui.task
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.campusmate.R
 import com.example.campusmate.data.model.StudyTask
+import com.example.campusmate.data.model.TaskAttachment
 import com.example.campusmate.data.repository.CourseRepository
+import com.example.campusmate.data.repository.SettingsRepository
+import com.example.campusmate.data.repository.TaskAttachmentRepository
 import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.domain.reminder.AlarmReminderScheduler
+import com.example.campusmate.domain.reminder.TaskReminderPolicy
+import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -19,21 +28,33 @@ import com.google.android.material.snackbar.Snackbar
 class TaskDetailActivity : AppCompatActivity() {
     private lateinit var taskRepository: TaskRepository
     private lateinit var courseRepository: CourseRepository
+    private lateinit var settingsRepository: SettingsRepository
     private lateinit var reminderScheduler: AlarmReminderScheduler
+    private lateinit var attachmentRepository: TaskAttachmentRepository
+    private lateinit var attachmentAdapter: TaskAttachmentAdapter
     private lateinit var rootView: View
     private var taskId: Long = 0L
     private var currentTask: StudyTask? = null
+
+    private val pickAttachmentLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            if (uri == null) return@registerForActivityResult
+            addPickedAttachment(uri)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_task_detail)
         taskRepository = TaskRepository(this)
         courseRepository = CourseRepository(this)
+        settingsRepository = SettingsRepository(this)
         reminderScheduler = AlarmReminderScheduler(this)
+        attachmentRepository = TaskAttachmentRepository(this)
         rootView = findViewById(R.id.taskDetailRoot)
         taskId = intent.getLongExtra(EXTRA_TASK_ID, 0L)
 
         setupToolbar()
+        setupAttachments()
         findViewById<MaterialButton>(R.id.editTaskButton).setOnClickListener {
             currentTask?.let {
                 startActivity(Intent(this, TaskEditActivity::class.java).putExtra(TaskEditActivity.EXTRA_TASK_ID, it.id))
@@ -50,6 +71,7 @@ class TaskDetailActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         loadTask()
+        loadAttachments()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -94,14 +116,111 @@ class TaskDetailActivity : AppCompatActivity() {
         )
     }
 
+    private fun setupAttachments() {
+        attachmentAdapter = TaskAttachmentAdapter(
+            onOpen = { openAttachment(it) },
+            onDelete = { confirmDeleteAttachment(it) }
+        )
+        findViewById<RecyclerView>(R.id.attachmentRecyclerView).apply {
+            layoutManager = LinearLayoutManager(this@TaskDetailActivity)
+            adapter = attachmentAdapter
+        }
+        findViewById<MaterialButton>(R.id.addAttachmentButton).setOnClickListener {
+            if (taskId <= 0L) {
+                Snackbar.make(rootView, R.string.task_not_found, Snackbar.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            pickAttachmentLauncher.launch(arrayOf("image/*"))
+        }
+    }
+
+    private fun loadAttachments() {
+        if (taskId <= 0L) return
+        val attachments = attachmentRepository.getAttachmentsByTask(taskId)
+        attachmentAdapter.submitList(attachments)
+        findViewById<View>(R.id.attachmentEmptyText).visibility = if (attachments.isEmpty()) View.VISIBLE else View.GONE
+    }
+
+    private fun addPickedAttachment(uri: Uri) {
+        try {
+            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } catch (_: SecurityException) {
+            // Some providers do not support persistable permissions; best effort only.
+        }
+
+        val mimeType = contentResolver.getType(uri)
+        val title = TaskAttachmentUiUtils.queryDisplayName(this, uri)
+        val id = attachmentRepository.addAttachment(
+            taskId = taskId,
+            uri = uri.toString(),
+            mimeType = mimeType,
+            title = title
+        )
+        if (id > 0L) {
+            loadAttachments()
+        } else {
+            Snackbar.make(rootView, R.string.task_attachment_add_failed, Snackbar.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openAttachment(item: TaskAttachment) {
+        val uri = Uri.parse(item.uri)
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, item.mimeType ?: "image/*")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        if (intent.resolveActivity(packageManager) == null) {
+            Snackbar.make(rootView, R.string.task_attachment_no_viewer, Snackbar.LENGTH_SHORT).show()
+            return
+        }
+        startActivity(Intent.createChooser(intent, getString(R.string.task_attachment_open)))
+    }
+
+    private fun confirmDeleteAttachment(item: TaskAttachment) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.task_attachment_delete_title)
+            .setMessage(getString(R.string.task_attachment_delete_message, item.title ?: item.uri))
+            .setNegativeButton(R.string.action_cancel, null)
+            .setPositiveButton(R.string.action_delete) { _, _ ->
+                if (attachmentRepository.deleteAttachment(item.id)) {
+                    loadAttachments()
+                } else {
+                    Snackbar.make(rootView, R.string.task_attachment_delete_failed, Snackbar.LENGTH_SHORT).show()
+                }
+            }
+            .show()
+    }
+
     private fun toggleDone(task: StudyTask) {
-        val success = if (task.status == StudyTask.STATUS_DONE) {
+        val updatedStatus = if (task.status == StudyTask.STATUS_DONE) StudyTask.STATUS_TODO else StudyTask.STATUS_DONE
+        if (TaskReminderPolicy.shouldCancelWhenCompleted(task.status, updatedStatus)) {
+            reminderScheduler.cancelTaskReminder(task.id)
+        }
+        val success = if (updatedStatus == StudyTask.STATUS_TODO) {
             taskRepository.markTodo(task.id)
         } else {
-            reminderScheduler.cancelTaskReminder(task.id)
             taskRepository.markDone(task.id)
         }
-        if (success) loadTask() else Snackbar.make(rootView, R.string.task_status_update_failed, Snackbar.LENGTH_SHORT).show()
+        if (success) {
+            scheduleReminderIfReopened(task, updatedStatus)
+            loadTask()
+        } else {
+            Snackbar.make(rootView, R.string.task_status_update_failed, Snackbar.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun scheduleReminderIfReopened(previousTask: StudyTask, updatedStatus: Int) {
+        val reopenedTask = previousTask.copy(status = updatedStatus)
+        if (
+            TaskReminderPolicy.shouldScheduleWhenReopened(
+                previousStatus = previousTask.status,
+                reopenedTask = reopenedTask,
+                remindersEnabled = settingsRepository.isReminderEnabled(),
+                nowMillis = DateTimeUtils.nowMillis()
+            )
+        ) {
+            reminderScheduler.scheduleTaskReminder(reopenedTask)
+        }
     }
 
     private fun confirmDelete(task: StudyTask) {
@@ -112,6 +231,7 @@ class TaskDetailActivity : AppCompatActivity() {
             .setPositiveButton(R.string.action_delete) { _, _ ->
                 reminderScheduler.cancelTaskReminder(task.id)
                 if (taskRepository.deleteTask(task.id)) {
+                    attachmentRepository.deleteAttachmentsByTask(task.id)
                     setResult(RESULT_OK)
                     finish()
                 } else {
