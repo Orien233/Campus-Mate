@@ -55,7 +55,6 @@ class EditProfileActivity : AppCompatActivity() {
         findViewById<TextInputEditText>(R.id.majorInput).setText(profile.major)
         findViewById<TextInputEditText>(R.id.gradeInput).setText(profile.grade)
         findViewById<TextInputEditText>(R.id.bioInput).setText(profile.bio)
-        findViewById<TextInputEditText>(R.id.avatarUriInput).setText(profile.avatarUri)
         findViewById<TextInputEditText>(R.id.githubInput).setText(profile.github)
         findViewById<TextInputEditText>(R.id.emailInput).setText(profile.email)
         findViewById<TextInputEditText>(R.id.phoneInput).setText(profile.phone)
@@ -78,7 +77,7 @@ class EditProfileActivity : AppCompatActivity() {
             major = inputTextOrNull(R.id.majorInput),
             grade = inputTextOrNull(R.id.gradeInput),
             bio = inputTextOrNull(R.id.bioInput),
-            avatarUri = inputTextOrNull(R.id.avatarUriInput),
+            avatarUri = null,
             github = inputTextOrNull(R.id.githubInput),
             email = inputTextOrNull(R.id.emailInput),
             phone = inputTextOrNull(R.id.phoneInput),

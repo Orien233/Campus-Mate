@@ -8,8 +8,11 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.campusmate.R
 import com.example.campusmate.data.model.StudyTask
 import com.example.campusmate.data.repository.CourseRepository
+import com.example.campusmate.data.repository.SettingsRepository
 import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.domain.reminder.AlarmReminderScheduler
+import com.example.campusmate.domain.reminder.TaskReminderPolicy
+import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -19,6 +22,7 @@ import com.google.android.material.snackbar.Snackbar
 class TaskDetailActivity : AppCompatActivity() {
     private lateinit var taskRepository: TaskRepository
     private lateinit var courseRepository: CourseRepository
+    private lateinit var settingsRepository: SettingsRepository
     private lateinit var reminderScheduler: AlarmReminderScheduler
     private lateinit var rootView: View
     private var taskId: Long = 0L
@@ -29,6 +33,7 @@ class TaskDetailActivity : AppCompatActivity() {
         setContentView(R.layout.activity_task_detail)
         taskRepository = TaskRepository(this)
         courseRepository = CourseRepository(this)
+        settingsRepository = SettingsRepository(this)
         reminderScheduler = AlarmReminderScheduler(this)
         rootView = findViewById(R.id.taskDetailRoot)
         taskId = intent.getLongExtra(EXTRA_TASK_ID, 0L)
@@ -95,13 +100,35 @@ class TaskDetailActivity : AppCompatActivity() {
     }
 
     private fun toggleDone(task: StudyTask) {
-        val success = if (task.status == StudyTask.STATUS_DONE) {
+        val updatedStatus = if (task.status == StudyTask.STATUS_DONE) StudyTask.STATUS_TODO else StudyTask.STATUS_DONE
+        if (TaskReminderPolicy.shouldCancelWhenCompleted(task.status, updatedStatus)) {
+            reminderScheduler.cancelTaskReminder(task.id)
+        }
+        val success = if (updatedStatus == StudyTask.STATUS_TODO) {
             taskRepository.markTodo(task.id)
         } else {
-            reminderScheduler.cancelTaskReminder(task.id)
             taskRepository.markDone(task.id)
         }
-        if (success) loadTask() else Snackbar.make(rootView, R.string.task_status_update_failed, Snackbar.LENGTH_SHORT).show()
+        if (success) {
+            scheduleReminderIfReopened(task, updatedStatus)
+            loadTask()
+        } else {
+            Snackbar.make(rootView, R.string.task_status_update_failed, Snackbar.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun scheduleReminderIfReopened(previousTask: StudyTask, updatedStatus: Int) {
+        val reopenedTask = previousTask.copy(status = updatedStatus)
+        if (
+            TaskReminderPolicy.shouldScheduleWhenReopened(
+                previousStatus = previousTask.status,
+                reopenedTask = reopenedTask,
+                remindersEnabled = settingsRepository.isReminderEnabled(),
+                nowMillis = DateTimeUtils.nowMillis()
+            )
+        ) {
+            reminderScheduler.scheduleTaskReminder(reopenedTask)
+        }
     }
 
     private fun confirmDelete(task: StudyTask) {

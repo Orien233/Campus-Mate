@@ -70,14 +70,14 @@
     <string name="settings_dnd_status_disabled">勿扰模式授权未开启：不影响番茄专注主流程。</string>
     <string name="settings_system_entry_unavailable">当前设备未提供该系统设置入口</string>
     <string name="settings_demo_tools">演示工具</string>
-    <string name="settings_demo_tools_body">用于 2-3 分钟答辩展示，会生成课程、任务、提醒和学习热力图样例。</string>
+    <string name="settings_demo_tools_body">用于 2-3 分钟答辩展示，会先清空本地数据，再生成课程、任务、提醒和学习热力图样例。</string>
     <string name="settings_seed_demo_data">生成演示数据</string>
     <string name="settings_seed_demo_confirm_title">生成演示数据</string>
-    <string name="settings_seed_demo_confirm_message">将先清空现有课程、任务、专注记录和导入日志，再生成一组答辩演示数据。</string>
+    <string name="settings_seed_demo_confirm_message">将先清除课程、任务、提醒、专注记录、学习统计、课表导入日志、学习名片、学习伙伴和天气缓存，再生成一组答辩演示数据。此操作不可撤销。</string>
     <string name="settings_seed_demo_result">已写入 %1$d 门课程、%2$d 个任务、%3$d 条学习记录，恢复 %4$d 个未来提醒</string>
-    <string name="settings_clear_data">清空数据</string>
-    <string name="settings_clear_data_confirm_title">清空数据</string>
-    <string name="settings_clear_data_confirm_message">将删除本地课程、任务、专注记录、学习记录和导入日志，设置项会保留。</string>
+    <string name="settings_clear_data">清空本地数据</string>
+    <string name="settings_clear_data_confirm_title">确认清空本地数据？</string>
+    <string name="settings_clear_data_confirm_message">此操作会清除课程、任务、提醒、专注记录、学习统计、课表导入日志、学习名片、学习伙伴和天气缓存。此操作不可撤销。</string>
     <string name="settings_clear_data_result">已清空 %1$d 条本地数据</string>
 
     <string name="action_save">保存</string>
@@ -194,8 +194,8 @@
     <string name="import_sample_action">导入示例 HTML</string>
     <string name="import_paste_hint">粘贴课表 HTML</string>
     <string name="import_paste_action">解析粘贴内容</string>
-    <string name="import_webview_action">WebView 提取课表 HTML</string>
-    <string name="import_webview_not_ready">WebView 提取已预留实现类，本阶段不保存账号密码，也不绕过验证码。</string>
+    <string name="import_webview_action">网页导入实验入口</string>
+    <string name="import_webview_not_ready">当前版本暂未开放完整网页导入，可使用内置示例或粘贴 HTML 导入。本阶段不保存账号密码，也不绕过验证码。</string>
     <string name="import_parse_failed">课表解析失败</string>
     <string name="import_preview_title">导入预览</string>
     <string name="import_preview_summary">识别 %1$d 门课程，冲突 %2$d 门，默认勾选 %3$d 门。</string>
@@ -261,7 +261,6 @@
     <string name="profile_major">专业</string>
     <string name="profile_grade">年级</string>
     <string name="profile_bio">简介</string>
-    <string name="profile_avatar_uri">头像 URI（可选）</string>
     <string name="profile_github">GitHub</string>
     <string name="profile_email">邮箱</string>
     <string name="profile_phone">手机号</string>

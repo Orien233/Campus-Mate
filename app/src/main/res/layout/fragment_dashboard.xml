@@ -33,7 +33,6 @@
                     android:padding="@dimen/space_m">
 
                     <TextView
-                        android:id="@+id/todayCoursesValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/dashboard_today_courses"
@@ -41,7 +40,7 @@
                         android:textSize="14sp" />
 
                     <TextView
-                        android:id="@+id/pendingTasksValue"
+                        android:id="@+id/tvTodayCourseCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_s"
@@ -66,7 +65,6 @@
                     android:padding="@dimen/space_m">
 
                     <TextView
-                        android:id="@+id/todayFocusValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/dashboard_pending_tasks"
@@ -74,7 +72,7 @@
                         android:textSize="14sp" />
 
                     <TextView
-                        android:id="@+id/weekFocusValue"
+                        android:id="@+id/tvPendingTaskCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_s"
@@ -106,6 +104,7 @@
                         android:textSize="14sp" />
 
                     <TextView
+                        android:id="@+id/tvTodayFocusMinutes"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_s"
@@ -137,6 +136,7 @@
                         android:textSize="14sp" />
 
                     <TextView
+                        android:id="@+id/tvWeekFocusMinutes"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_s"
@@ -224,7 +224,6 @@
                 android:padding="@dimen/space_m">
 
                 <TextView
-                    android:id="@+id/nextCourseValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/dashboard_next_course"
@@ -232,6 +231,7 @@
                     android:textSize="14sp" />
 
                 <TextView
+                    android:id="@+id/tvNextCourseValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_s"
