@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">CampusMate</string>
+    <string name="ui_expand">展开</string>
+    <string name="ui_collapse">收起</string>
 
     <string name="nav_dashboard">首页</string>
     <string name="nav_courses">课程</string>
@@ -21,9 +23,14 @@
     <string name="dashboard_quick_start_focus">开始专注</string>
     <string name="dashboard_quick_add_task">添加任务</string>
     <string name="dashboard_quick_import_schedule">导入课表</string>
+    <string name="dashboard_quick_actions_title">快捷操作</string>
+    <string name="dashboard_quick_generate_plan">生成计划</string>
+    <string name="dashboard_quick_view_statistics">查看统计</string>
     <string name="dashboard_weather_title">校园天气</string>
     <string name="dashboard_weather_empty">正在加载天气...</string>
     <string name="dashboard_weather_detail">%1$s · 湿度 %2$s · 风 %3$s</string>
+    <string name="dashboard_weather_humidity">湿度：%1$s</string>
+    <string name="dashboard_weather_wind">风力：%1$s</string>
     <string name="dashboard_weather_update">更新：%1$s · 来源：%2$s</string>
     <string name="dashboard_weather_refresh">刷新天气</string>
     <string name="duration_minutes">%1$d 分钟</string>
@@ -89,6 +96,13 @@
     <string name="action_close">关闭</string>
 
     <string name="course_add">添加课程</string>
+    <string name="course_overview_title">课程概览</string>
+    <string name="course_overview_total">全部课程</string>
+    <string name="course_overview_today">今日课程</string>
+    <string name="course_overview_visible">当前显示</string>
+    <string name="course_filter_section_title">筛选与视图</string>
+    <string name="course_actions_section_title">课程操作</string>
+    <string name="course_semester_settings">学期设置</string>
     <string name="course_add_title">新增课程</string>
     <string name="course_edit_title">编辑课程</string>
     <string name="course_detail_title">课程详情</string>
@@ -135,6 +149,13 @@
     <string name="course_conflict_save_anyway">仍然保存</string>
 
     <string name="task_add">添加任务</string>
+    <string name="task_overview_title">任务概览</string>
+    <string name="task_overview_todo">待完成</string>
+    <string name="task_filter_section_title">筛选与排序</string>
+    <string name="task_actions_section_title">任务操作</string>
+    <string name="task_action_add_homework">添加作业</string>
+    <string name="task_action_add_exam">添加考试</string>
+    <string name="task_action_add_review">添加复习</string>
     <string name="task_add_title">新增任务</string>
     <string name="task_edit_title">编辑任务</string>
     <string name="task_detail_title">任务详情</string>
@@ -261,11 +282,18 @@
     <string name="focus_notification_text">%1$s\n剩余 %2$s · %3$s</string>
 
     <string name="statistics_today">今日学习</string>
+    <string name="statistics_overview_title">学习总览</string>
     <string name="statistics_week">本周学习</string>
     <string name="statistics_streak">连续学习</string>
     <string name="statistics_streak_days">%1$d 天</string>
     <string name="statistics_heatmap_title">学习热力图</string>
     <string name="statistics_heatmap_subtitle">最近 84 天，每个格子代表一天，颜色越深表示学习时长越长。</string>
+    <string name="statistics_heatmap_subtitle_compact">最近 4 周，点击标题可展开到最近 84 天。</string>
+    <string name="statistics_heatmap_subtitle_expanded">最近 84 天，每个格子代表一天，颜色越深表示学习时长越长。</string>
+    <string name="statistics_records_section_title">学习记录</string>
+    <string name="statistics_task_section_title">任务完成情况</string>
+    <string name="statistics_task_completion_summary">完成率 %1$d%%</string>
+    <string name="statistics_task_completion_detail">已完成 %1$d · 待完成 %2$d · 已逾期 %3$d</string>
     <string name="statistics_heatmap_day_desc">%1$s 学习 %2$d 分钟</string>
     <string name="statistics_day_detail_title">学习记录</string>
     <string name="statistics_day_summary">%1$s · %2$d 分钟 · %3$d 条记录</string>
@@ -352,10 +380,18 @@
 
     <!-- 学习计划 -->
     <string name="plan_title">学习计划</string>
+    <string name="plan_add_title">添加计划</string>
+    <string name="plan_today_overview">今日计划概览</string>
+    <string name="plan_generate_section_title">智能生成</string>
     <string name="plan_empty_title">暂无学习计划</string>
     <string name="plan_empty_body">基于课程表和待办任务智能生成每日学习计划。</string>
     <string name="plan_generate_today">生成今日计划</string>
     <string name="plan_generate_week">生成本周计划</string>
+    <string name="plan_generate_by_course">按课程生成</string>
+    <string name="plan_generate_by_exam">按考试生成</string>
+    <string name="plan_manual_default_title">自主学习</string>
+    <string name="plan_add_invalid">请填写计划标题和有效学习时长</string>
+    <string name="plan_add_success">计划已添加</string>
     <string name="plan_generate_success">%1$s</string>
     <string name="plan_generate_failed">%1$s</string>
     <string name="plan_regenerate_confirm">确定重新生成吗？将删除当日现有计划。</string>
