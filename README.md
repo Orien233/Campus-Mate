@@ -29,7 +29,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 - 数据库版本：`CampusMateDbHelper.DATABASE_VERSION = 5`
 - 数据库名：`campus_mate.db`
 - `applicationId`：`com.example.campusmate`
-- `minSdk`：35
+- `minSdk`：33
 - `targetSdk`：36
 - `compileSdk`：36 + `compileSdkMinor` 1（即 36.1）
 - Android Gradle Plugin：9.1.1
@@ -443,7 +443,7 @@ Android Studio：
 
 1. 打开仓库根目录。
 2. 等待 Gradle Sync 完成。
-3. 选择 `app` 配置运行到 Android 15/16 模拟器或真机。
+3. 选择 `app` 配置运行到 Android 13+ 模拟器或真机。
 4. NFC、传感器、通知权限、相机扫码、勿扰和通知访问必须用真机做最终验证。
 
 Windows PowerShell：
