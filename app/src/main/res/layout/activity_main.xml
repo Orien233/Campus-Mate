@@ -1,40 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mainRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/campus_background"
-    android:orientation="vertical">
+    android:background="@color/campus_background">
 
-    <com.google.android.material.appbar.AppBarLayout
+    <LinearLayout
+        android:id="@+id/mainScaffold"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/campus_surface"
-        android:elevation="@dimen/toolbar_elevation">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/topAppBar"
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/mainAppBar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
+            android:layout_height="wrap_content"
             android:background="@color/campus_surface"
-            app:title="@string/app_name"
-            app:titleCentered="false"
-            app:titleTextColor="@color/campus_text_primary" />
-    </com.google.android.material.appbar.AppBarLayout>
+            android:elevation="@dimen/toolbar_elevation">
 
-    <FrameLayout
-        android:id="@+id/fragmentContainer"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/topAppBar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="@color/campus_surface"
+                app:title="@string/app_name"
+                app:titleCentered="false"
+                app:titleTextColor="@color/campus_text_primary" />
+        </com.google.android.material.appbar.AppBarLayout>
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNavigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/campus_surface"
-        app:itemIconTint="@color/campus_primary"
-        app:itemTextColor="@color/campus_primary"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/menu_bottom_navigation" />
-</LinearLayout>
+        <FrameLayout
+            android:id="@+id/fragmentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNavigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/campus_surface"
+            app:itemIconTint="@color/campus_primary"
+            app:itemTextColor="@color/campus_primary"
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/menu_bottom_navigation" />
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

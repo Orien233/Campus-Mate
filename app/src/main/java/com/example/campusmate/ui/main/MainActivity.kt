@@ -12,6 +12,7 @@ import com.example.campusmate.ui.plan.PlanListFragment
 import com.example.campusmate.ui.settings.SettingsFragment
 import com.example.campusmate.ui.statistics.StatisticsFragment
 import com.example.campusmate.ui.task.TaskListFragment
+import com.example.campusmate.util.SystemBarsInsets
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -28,6 +29,7 @@ class MainActivity : AppCompatActivity() {
         toolbar = findViewById(R.id.topAppBar)
         bottomNavigationView = findViewById(R.id.bottomNavigation)
         setSupportActionBar(toolbar)
+        SystemBarsInsets.apply(this)
 
         selectedItemId = savedInstanceState?.getInt(KEY_SELECTED_ITEM) ?: R.id.nav_dashboard
         bottomNavigationView.setOnItemSelectedListener { item ->
@@ -65,6 +67,14 @@ class MainActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putInt(KEY_SELECTED_ITEM, selectedItemId)
         super.onSaveInstanceState(outState)
+    }
+
+    fun navigateTo(itemId: Int) {
+        if (isBottomNavigationItem(itemId) && bottomNavigationView.selectedItemId != itemId) {
+            bottomNavigationView.selectedItemId = itemId
+        } else {
+            showFragment(itemId)
+        }
     }
 
     private fun showFragment(itemId: Int) {

@@ -6,4 +6,5 @@
     <dimen name="space_l">24dp</dimen>
     <dimen name="space_xl">32dp</dimen>
     <dimen name="toolbar_elevation">0dp</dimen>
+    <dimen name="system_bar_top_protection">48dp</dimen>
 </resources>

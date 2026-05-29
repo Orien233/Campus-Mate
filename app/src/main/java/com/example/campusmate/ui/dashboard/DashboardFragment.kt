@@ -13,8 +13,10 @@ import com.example.campusmate.data.repository.StudyRecordRepository
 import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.data.repository.WeatherRepository
 import com.example.campusmate.domain.weather.WeatherResult
+import com.example.campusmate.ui.common.CollapsibleSection
 import com.example.campusmate.ui.focus.FocusActivity
 import com.example.campusmate.ui.import_.ImportScheduleActivity
+import com.example.campusmate.ui.main.MainActivity
 import com.example.campusmate.ui.task.TaskEditActivity
 import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.button.MaterialButton
@@ -48,6 +50,24 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         view.findViewById<MaterialButton>(R.id.refreshWeatherButton).setOnClickListener {
             loadWeather(forceRefresh = true)
         }
+        view.findViewById<MaterialButton>(R.id.generatePlanButton).setOnClickListener {
+            (activity as? MainActivity)?.navigateTo(R.id.nav_plan)
+        }
+        view.findViewById<MaterialButton>(R.id.viewStatisticsButton).setOnClickListener {
+            (activity as? MainActivity)?.navigateTo(R.id.nav_statistics)
+        }
+        CollapsibleSection.bind(
+            root = view,
+            headerId = R.id.weatherHeader,
+            contentId = R.id.weatherExpandedContent,
+            indicatorId = R.id.weatherExpandIndicator
+        )
+        CollapsibleSection.bind(
+            root = view,
+            headerId = R.id.quickActionsHeader,
+            contentId = R.id.quickActionsExpandedContent,
+            indicatorId = R.id.quickActionsExpandIndicator
+        )
     }
 
     override fun onResume() {
@@ -76,7 +96,9 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         weatherLoadToken = token
         currentView.findViewById<TextView>(R.id.weatherCityText).text = city
         currentView.findViewById<TextView>(R.id.weatherTemperatureText).text = getString(R.string.dashboard_weather_empty)
-        currentView.findViewById<TextView>(R.id.weatherDetailText).text = ""
+        currentView.findViewById<TextView>(R.id.weatherConditionText).text = ""
+        currentView.findViewById<TextView>(R.id.weatherHumidityText).text = ""
+        currentView.findViewById<TextView>(R.id.weatherWindText).text = ""
         currentView.findViewById<TextView>(R.id.weatherUpdatedText).text = ""
 
         Thread {
@@ -94,12 +116,11 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val currentView = view ?: return
         currentView.findViewById<TextView>(R.id.weatherCityText).text = weather.city
         currentView.findViewById<TextView>(R.id.weatherTemperatureText).text = weather.temperature
-        currentView.findViewById<TextView>(R.id.weatherDetailText).text = getString(
-            R.string.dashboard_weather_detail,
-            weather.weatherText,
-            weather.humidity,
-            weather.wind
-        )
+        currentView.findViewById<TextView>(R.id.weatherConditionText).text = weather.weatherText
+        currentView.findViewById<TextView>(R.id.weatherHumidityText).text =
+            getString(R.string.dashboard_weather_humidity, weather.humidity)
+        currentView.findViewById<TextView>(R.id.weatherWindText).text =
+            getString(R.string.dashboard_weather_wind, weather.wind)
         currentView.findViewById<TextView>(R.id.weatherUpdatedText).text = getString(
             R.string.dashboard_weather_update,
             DateTimeUtils.formatDateTime(weather.updatedAt),

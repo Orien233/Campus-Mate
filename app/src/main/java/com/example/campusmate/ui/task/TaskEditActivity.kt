@@ -42,6 +42,7 @@ class TaskEditActivity : AppCompatActivity() {
 
     private var editingTaskId: Long = 0L
     private var editingTask: StudyTask? = null
+    private var initialTaskType: Int = StudyTask.TYPE_HOMEWORK
     private var courses: List<Course> = emptyList()
     private var selectedDueAt: Long? = null
     private var selectedRemindAt: Long? = null
@@ -55,6 +56,7 @@ class TaskEditActivity : AppCompatActivity() {
         settingsRepository = SettingsRepository(this)
         reminderScheduler = AlarmReminderScheduler(this)
         editingTaskId = intent.getLongExtra(EXTRA_TASK_ID, 0L)
+        initialTaskType = intent.getIntExtra(EXTRA_TASK_TYPE, StudyTask.TYPE_HOMEWORK)
 
         bindViews()
         setupToolbar()
@@ -106,6 +108,7 @@ class TaskEditActivity : AppCompatActivity() {
         courseSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, courseLabels)
         typeSpinner.adapter = ArrayAdapter.createFromResource(this, R.array.task_type_labels, android.R.layout.simple_spinner_dropdown_item)
         prioritySpinner.adapter = ArrayAdapter.createFromResource(this, R.array.task_priority_labels, android.R.layout.simple_spinner_dropdown_item)
+        typeSpinner.setSelection(initialTaskType.coerceIn(0, 5))
         prioritySpinner.setSelection(StudyTask.PRIORITY_NORMAL)
     }
 
@@ -257,6 +260,7 @@ class TaskEditActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_TASK_ID = "extra_task_id"
+        const val EXTRA_TASK_TYPE = "extra_task_type"
         private const val DEMO_REMINDER_DELAY_MILLIS = 10_000L
     }
 }

@@ -3,6 +3,7 @@ package com.example.campusmate.ui.task
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -13,7 +14,9 @@ import com.example.campusmate.data.repository.SettingsRepository
 import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.domain.reminder.AlarmReminderScheduler
 import com.example.campusmate.domain.reminder.TaskReminderPolicy
+import com.example.campusmate.ui.common.CollapsibleSection
 import com.example.campusmate.util.DateTimeUtils
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -28,6 +31,9 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
     private lateinit var adapter: TaskAdapter
     private lateinit var recyclerView: RecyclerView
     private lateinit var emptyStateView: View
+    private lateinit var todoCountText: TextView
+    private lateinit var upcomingCountText: TextView
+    private lateinit var overdueCountText: TextView
     private var currentFilter: TaskFilter = TaskFilter.ALL
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -37,6 +43,9 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         settingsRepository = SettingsRepository(requireContext())
         reminderScheduler = AlarmReminderScheduler(requireContext())
         emptyStateView = view.findViewById(R.id.taskEmptyState)
+        todoCountText = view.findViewById(R.id.taskTodoCountText)
+        upcomingCountText = view.findViewById(R.id.taskUpcomingCountText)
+        overdueCountText = view.findViewById(R.id.taskOverdueCountText)
         recyclerView = view.findViewById(R.id.taskRecyclerView)
         adapter = TaskAdapter(
             onTaskClick = { openDetail(it.id) },
@@ -48,10 +57,32 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         recyclerView.adapter = adapter
 
         view.findViewById<FloatingActionButton>(R.id.addTaskFab).setOnClickListener { openEdit() }
+        view.findViewById<MaterialButton>(R.id.taskEmptyActionButton).setOnClickListener { openEdit() }
+        view.findViewById<MaterialButton>(R.id.addHomeworkButton).setOnClickListener {
+            openEdit(taskType = StudyTask.TYPE_HOMEWORK)
+        }
+        view.findViewById<MaterialButton>(R.id.addExamButton).setOnClickListener {
+            openEdit(taskType = StudyTask.TYPE_EXAM)
+        }
+        view.findViewById<MaterialButton>(R.id.addReviewButton).setOnClickListener {
+            openEdit(taskType = StudyTask.TYPE_REVIEW)
+        }
         view.findViewById<ChipGroup>(R.id.taskFilterGroup).setOnCheckedStateChangeListener { _, checkedIds ->
             currentFilter = filterForChipId(checkedIds.firstOrNull() ?: R.id.filterAllTasksChip)
             loadTasks()
         }
+        CollapsibleSection.bind(
+            root = view,
+            headerId = R.id.taskFilterHeader,
+            contentId = R.id.taskFilterContent,
+            indicatorId = R.id.taskFilterIndicator
+        )
+        CollapsibleSection.bind(
+            root = view,
+            headerId = R.id.taskActionsHeader,
+            contentId = R.id.taskActionsContent,
+            indicatorId = R.id.taskActionsIndicator
+        )
     }
 
     override fun onResume() {
@@ -62,7 +93,16 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
     private fun loadTasks() {
         val courseNameById = courseRepository.getAllCourses().associate { it.id to it.name }
         val now = System.currentTimeMillis()
-        val tasks = taskRepository.getAllTasks().filter { task ->
+        val allTasks = taskRepository.getAllTasks()
+        todoCountText.text = allTasks.count { it.status == StudyTask.STATUS_TODO }.toString()
+        upcomingCountText.text = allTasks.count {
+            it.status == StudyTask.STATUS_TODO && it.dueAt?.let { dueAt -> dueAt >= now } == true
+        }.toString()
+        overdueCountText.text = allTasks.count {
+            it.status == StudyTask.STATUS_TODO && it.dueAt?.let { dueAt -> dueAt < now } == true
+        }.toString()
+
+        val tasks = allTasks.filter { task ->
             when (currentFilter) {
                 TaskFilter.ALL -> true
                 TaskFilter.TODO -> task.status == StudyTask.STATUS_TODO
@@ -119,9 +159,10 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         )
     }
 
-    private fun openEdit(taskId: Long? = null) {
+    private fun openEdit(taskId: Long? = null, taskType: Int? = null) {
         val intent = Intent(requireContext(), TaskEditActivity::class.java)
         taskId?.let { intent.putExtra(TaskEditActivity.EXTRA_TASK_ID, it) }
+        taskType?.let { intent.putExtra(TaskEditActivity.EXTRA_TASK_TYPE, it) }
         startActivity(intent)
     }
 

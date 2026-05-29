@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/campus_background"
+    android:clipToPadding="false"
     android:fillViewport="true">
 
     <LinearLayout
@@ -21,7 +22,7 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="112dp"
+                android:layout_height="104dp"
                 android:layout_columnWeight="1"
                 android:layout_gravity="fill">
 
@@ -53,7 +54,7 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="112dp"
+                android:layout_height="104dp"
                 android:layout_columnWeight="1"
                 android:layout_gravity="fill">
 
@@ -85,7 +86,7 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="112dp"
+                android:layout_height="104dp"
                 android:layout_columnWeight="1"
                 android:layout_gravity="fill">
 
@@ -110,14 +111,14 @@
                         android:layout_marginTop="@dimen/space_s"
                         android:text="@string/dashboard_zero_duration"
                         android:textColor="@color/campus_text_primary"
-                        android:textSize="24sp"
+                        android:textSize="22sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="112dp"
+                android:layout_height="104dp"
                 android:layout_columnWeight="1"
                 android:layout_gravity="fill">
 
@@ -142,7 +143,7 @@
                         android:layout_marginTop="@dimen/space_s"
                         android:text="@string/dashboard_zero_duration"
                         android:textColor="@color/campus_text_primary"
-                        android:textSize="24sp"
+                        android:textSize="22sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -159,56 +160,109 @@
                 android:orientation="vertical"
                 android:padding="@dimen/space_m">
 
-                <TextView
+                <LinearLayout
+                    android:id="@+id/weatherHeader"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dashboard_weather_title"
-                    android:textColor="@color/campus_text_secondary"
-                    android:textSize="14sp" />
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/weatherCityText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_s"
-                    android:text="@string/dashboard_weather_empty"
-                    android:textColor="@color/campus_text_primary"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_weather_title"
+                        android:textColor="@color/campus_text_primary"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/weatherTemperatureText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_xs"
-                    android:textColor="@color/campus_primary"
-                    android:textSize="28sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/weatherExpandIndicator"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/campus_primary"
+                        android:textSize="14sp" />
+                </LinearLayout>
 
-                <TextView
-                    android:id="@+id/weatherDetailText"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_xs"
-                    android:textColor="@color/campus_text_primary"
-                    android:textSize="15sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/weatherUpdatedText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_xs"
-                    android:textColor="@color/campus_text_secondary"
-                    android:textSize="13sp" />
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/refreshWeatherButton"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        <TextView
+                            android:id="@+id/weatherCityText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dashboard_weather_empty"
+                            android:textColor="@color/campus_text_primary"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/weatherConditionText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_xs"
+                            android:textColor="@color/campus_text_secondary"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/weatherTemperatureText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_m"
+                        android:textColor="@color/campus_primary"
+                        android:textSize="28sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/weatherExpandedContent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_s"
-                    android:text="@string/dashboard_weather_refresh"
-                    app:icon="@drawable/ic_settings" />
+                    android:layout_marginTop="@dimen/space_m"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/weatherHumidityText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/campus_text_primary"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/weatherWindText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs"
+                        android:textColor="@color/campus_text_primary"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/weatherUpdatedText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs"
+                        android:textColor="@color/campus_text_secondary"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/refreshWeatherButton"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_s"
+                        android:text="@string/dashboard_weather_refresh"
+                        app:icon="@drawable/ic_settings" />
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -237,41 +291,110 @@
                     android:layout_marginTop="@dimen/space_s"
                     android:text="@string/dashboard_no_next_course"
                     android:textColor="@color/campus_text_primary"
-                    android:textSize="20sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_m"
-            android:orientation="vertical">
+            android:layout_marginTop="@dimen/space_m">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/startFocusButton"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/dashboard_quick_start_focus"
-                app:icon="@drawable/ic_focus" />
+                android:orientation="vertical"
+                android:padding="@dimen/space_m">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/addTaskButton"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_s"
-                android:text="@string/dashboard_quick_add_task"
-                app:icon="@drawable/ic_task" />
+                <LinearLayout
+                    android:id="@+id/quickActionsHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/importScheduleButton"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_s"
-                android:text="@string/dashboard_quick_import_schedule"
-                app:icon="@drawable/ic_import" />
-        </LinearLayout>
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_quick_actions_title"
+                        android:textColor="@color/campus_text_primary"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/quickActionsExpandIndicator"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/campus_primary"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="3"
+                    android:useDefaultMargins="true">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/startFocusButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:text="@string/dashboard_quick_start_focus"
+                        android:textSize="13sp"
+                        app:icon="@drawable/ic_focus" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/addTaskButton"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:text="@string/dashboard_quick_add_task"
+                        android:textSize="13sp"
+                        app:icon="@drawable/ic_task" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/importScheduleButton"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:text="@string/dashboard_quick_import_schedule"
+                        android:textSize="13sp"
+                        app:icon="@drawable/ic_import" />
+                </GridLayout>
+
+                <LinearLayout
+                    android:id="@+id/quickActionsExpandedContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/generatePlanButton"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/space_s"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_quick_generate_plan"
+                        app:icon="@drawable/ic_plan" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/viewStatisticsButton"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_s"
+                        android:layout_weight="1"
+                        android:text="@string/dashboard_quick_view_statistics"
+                        app:icon="@drawable/ic_statistics" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
