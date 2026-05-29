@@ -2,15 +2,30 @@ package com.example.campusmate.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import com.example.campusmate.data.model.llm.LlmAuthHeaderType
 import com.example.campusmate.data.model.llm.LlmProviderConfig
 import com.example.campusmate.data.model.llm.LlmProviderType
 import com.example.campusmate.data.model.llm.LlmScheduleParseMode
 
-/** SharedPreferences-backed LLM settings. API key storage is added separately. */
+/** SharedPreferences-backed LLM settings with encrypted local API key storage. */
 class LlmSettingsRepository(context: Context) {
+    private val appContext = context.applicationContext
     private val preferences: SharedPreferences =
-        context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val encryptedPreferences: SharedPreferences by lazy {
+        val masterKey = MasterKey.Builder(appContext)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        EncryptedSharedPreferences.create(
+            appContext,
+            ENCRYPTED_PREFS_NAME,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
 
     fun getConfig(): LlmProviderConfig {
         val default = LlmProviderConfig()
@@ -50,8 +65,27 @@ class LlmSettingsRepository(context: Context) {
             .apply()
     }
 
+    fun saveApiKey(apiKey: String) {
+        val normalized = apiKey.trim()
+        if (normalized.isBlank()) return
+        encryptedPreferences.edit()
+            .putString(KEY_API_KEY, normalized)
+            .apply()
+    }
+
+    fun getApiKey(): String? {
+        return encryptedPreferences.getString(KEY_API_KEY, null)?.takeIf { it.isNotBlank() }
+    }
+
+    fun getMaskedApiKey(): String = maskApiKey(getApiKey())
+
+    fun clearApiKey() {
+        encryptedPreferences.edit().remove(KEY_API_KEY).apply()
+    }
+
     fun clearAll() {
         preferences.edit().clear().apply()
+        clearApiKey()
     }
 
     private inline fun <reified T : Enum<T>> SharedPreferences.getEnum(key: String, default: T): T {
@@ -61,6 +95,7 @@ class LlmSettingsRepository(context: Context) {
 
     companion object {
         private const val PREFS_NAME = "campusmate_llm_settings"
+        private const val ENCRYPTED_PREFS_NAME = "campusmate_llm_secure_settings"
         private const val KEY_ENABLED = "enabled"
         private const val KEY_SCHEDULE_PARSE_ENABLED = "schedule_parse_enabled"
         private const val KEY_PLAN_GENERATE_ENABLED = "plan_generate_enabled"
@@ -74,5 +109,19 @@ class LlmSettingsRepository(context: Context) {
         private const val KEY_TEMPERATURE = "temperature"
         private const val KEY_TIMEOUT_MILLIS = "timeout_millis"
         private const val KEY_MAX_OUTPUT_TOKENS = "max_output_tokens"
+        private const val KEY_API_KEY = "api_key"
+
+        fun hasMaskedShape(value: String): Boolean = value.contains(MASK_MARKER)
+
+        fun maskApiKey(apiKey: String?): String {
+            val normalized = apiKey?.trim().orEmpty()
+            if (normalized.isBlank()) return ""
+            if (normalized.length <= 8) return MASK_MARKER
+            return normalized.take(4) + MASK_MARKER + normalized.takeLast(4)
+        }
+
+        private const val MASK_MARKER = "\u2022\u2022\u2022\u2022"
     }
+
+    fun hasApiKey(): Boolean = getApiKey() != null
 }
