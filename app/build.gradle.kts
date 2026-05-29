@@ -42,7 +42,9 @@ dependencies {
     implementation(libs.material)
     implementation(libs.jsoup)
     implementation(libs.zxing.android.embedded)
+    implementation(libs.androidx.security.crypto)
     testImplementation(libs.junit)
+    testImplementation(libs.json)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
