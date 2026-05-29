@@ -1,6 +1,7 @@
 package com.example.campusmate.domain.llm
 
 import com.example.campusmate.data.model.llm.LlmProviderConfig
+import com.example.campusmate.data.model.llm.LlmAuthHeaderType
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -18,7 +19,12 @@ class OpenAiCompatibleLlmClient : LlmClient {
                 readTimeout = LlmHttpUtils.timeoutMillis(config.timeoutMillis)
                 doOutput = true
                 setRequestProperty("Content-Type", "application/json")
-                setRequestProperty("Authorization", "Bearer ${apiKey.trim()}")
+                when (config.authHeaderType) {
+                    LlmAuthHeaderType.BEARER_AUTHORIZATION ->
+                        setRequestProperty("Authorization", "Bearer ${apiKey.trim()}")
+                    LlmAuthHeaderType.X_GOOG_API_KEY ->
+                        setRequestProperty("x-goog-api-key", apiKey.trim())
+                }
             }
 
             try {

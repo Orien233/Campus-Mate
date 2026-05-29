@@ -34,6 +34,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var taskRepository: TaskRepository
     private lateinit var reminderScheduler: AlarmReminderScheduler
     private lateinit var dataMaintenanceRepository: DataMaintenanceRepository
+    private lateinit var llmSettingsUiBinder: LlmSettingsUiBinder
 
     private lateinit var rootView: View
     private lateinit var dailyGoalInputLayout: TextInputLayout
@@ -69,6 +70,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         dataMaintenanceRepository = DataMaintenanceRepository(requireContext())
 
         bindViews(view)
+        llmSettingsUiBinder = LlmSettingsUiBinder(this, view, ::showMessage)
+        llmSettingsUiBinder.bind()
         bindCurrentSettings()
         setupActions(view)
         refreshPermissionStatus()
@@ -79,6 +82,13 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         if (::notificationStatusText.isInitialized) {
             refreshPermissionStatus()
         }
+    }
+
+    override fun onDestroyView() {
+        if (::llmSettingsUiBinder.isInitialized) {
+            llmSettingsUiBinder.shutdown()
+        }
+        super.onDestroyView()
     }
 
     private fun bindViews(view: View) {
