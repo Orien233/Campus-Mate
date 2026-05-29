@@ -13,6 +13,7 @@ constraintlayout = "2.2.0"
 jsoup = "1.18.3"
 zxingAndroidEmbedded = "4.3.0"
 securityCrypto = "1.1.0"
+json = "20260522"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -28,6 +29,7 @@ material = { group = "com.google.android.material", name = "material", version.r
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 zxing-android-embedded = { group = "com.journeyapps", name = "zxing-android-embedded", version.ref = "zxingAndroidEmbedded" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+json = { group = "org.json", name = "json", version.ref = "json" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

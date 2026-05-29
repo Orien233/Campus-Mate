@@ -104,6 +104,28 @@ app/src/main/java/com/example/campusmate
 - 不保存教务系统账号、密码、Cookie，不绕过验证码。
 - 导入前保留预览和冲突处理，不要静默写入课程表。
 
+### LLM / AI 辅助能力
+
+优先查看：
+
+- `app/src/main/java/com/example/campusmate/data/model/llm`
+- `app/src/main/java/com/example/campusmate/data/repository/LlmSettingsRepository.kt`
+- `app/src/main/java/com/example/campusmate/domain/llm`
+- `app/src/main/java/com/example/campusmate/domain/import_/LlmScheduleParseService.kt`
+- `app/src/main/java/com/example/campusmate/domain/plan/LlmPlanGenerateService.kt`
+- `app/src/main/java/com/example/campusmate/ui/settings/LlmSettingsUiBinder.kt`
+- `app/src/main/res/layout/fragment_settings.xml`
+
+规则：
+
+- 后续接入课表解析时，默认策略为 `LLM_FIRST_FALLBACK_LOCAL`：优先尝试 LLM，失败或不可用时回退到本地 Jsoup 解析。
+- 当前阶段只实现 LLM API 设置、加密 Key 存储、连接测试和基础生成请求；不要擅自把它接入真实课表导入按钮或 `StudyPlanGenerator` 主流程。
+- 不得内置任何 API Key，不得新增后端代理服务，不得把 LLM 接入改成强制云服务。
+- 不得把 API Key、Authorization Header、`x-goog-api-key` 或完整请求密钥打印到 Logcat、Toast、Snackbar、README 或测试输出。
+- API Key 必须保存在本机加密存储中；如果 AndroidX Security Crypto 不可用，才可改用 Android Keystore + AES-GCM。
+- 业务接入前必须保留预览确认页，不允许 AI 结果直接写入数据库。
+- 预设服务商只用于填充表单，国产模型 baseUrl 和 model 必须允许用户按控制台实际配置修改。
+
 ### 本地存储
 
 优先查看：
