@@ -48,6 +48,45 @@ class SettingsRepository(context: Context) {
         preferences.edit().putBoolean(KEY_NOTIFICATION_FILTER_ENABLED, value).apply()
     }
 
+    /**
+     * Optional "section -> clock time range" mapping for timetable display.
+     *
+     * Stored as a JSON array string to avoid DB/schema changes.
+     * Example: [{"section":1,"start":"08:00","end":"09:50"}]
+     */
+    fun getSectionTimeSlots(): List<SettingsSectionTimeSlot> {
+        val raw = preferences.getString(KEY_SECTION_TIME_SLOTS_JSON, null)?.trim().orEmpty()
+        if (raw.isBlank()) return emptyList()
+        return try {
+            val array = org.json.JSONArray(raw)
+            buildList {
+                for (i in 0 until array.length()) {
+                    val obj = array.optJSONObject(i) ?: continue
+                    val section = obj.optInt("section", -1)
+                    val start = obj.optString("start", "")
+                    val end = obj.optString("end", "")
+                    if (section > 0 && start.isNotBlank() && end.isNotBlank()) {
+                        add(SettingsSectionTimeSlot(section = section, startTime = start, endTime = end))
+                    }
+                }
+            }
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    fun setSectionTimeSlots(slots: List<SettingsSectionTimeSlot>) {
+        val array = org.json.JSONArray()
+        for (slot in slots) {
+            val obj = org.json.JSONObject()
+            obj.put("section", slot.section)
+            obj.put("start", slot.startTime)
+            obj.put("end", slot.endTime)
+            array.put(obj)
+        }
+        preferences.edit().putString(KEY_SECTION_TIME_SLOTS_JSON, array.toString()).apply()
+    }
+
     companion object {
         private const val PREFS_NAME = "campusmate_settings"
         private const val KEY_DAILY_GOAL_MINUTES = "daily_goal_minutes"
@@ -57,7 +96,14 @@ class SettingsRepository(context: Context) {
         private const val KEY_MOCK_WEATHER_ENABLED = "mock_weather_enabled"
         private const val KEY_FOCUS_DND_ENABLED = "focus_dnd_enabled"
         private const val KEY_NOTIFICATION_FILTER_ENABLED = "notification_filter_enabled"
+        private const val KEY_SECTION_TIME_SLOTS_JSON = "section_time_slots_json"
         private const val DEFAULT_DAILY_GOAL_MINUTES = 60
         private const val DEFAULT_WEATHER_CITY = "\u5317\u4eac"
     }
 }
+
+data class SettingsSectionTimeSlot(
+    val section: Int,
+    val startTime: String,
+    val endTime: String
+)

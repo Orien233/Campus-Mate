@@ -46,8 +46,8 @@ class CourseAdapter(
 
         fun bind(course: Course) {
             nameText.text = course.name
-            metaText.text = CourseUiFormatter.teacherAndRoom(course)
-            timeText.text = CourseUiFormatter.timeSummary(course)
+            metaText.text = CourseUiFormatter.teacherAndRoom(itemView.context, course)
+            timeText.text = CourseUiFormatter.timeSummary(itemView.context, course)
             noteText.text = course.note?.takeIf { it.isNotBlank() } ?: itemView.context.getString(R.string.course_no_note)
             colorView.background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE

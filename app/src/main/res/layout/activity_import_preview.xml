@@ -25,6 +25,17 @@
         android:textColor="@color/campus_text_secondary"
         android:textSize="14sp" />
 
+    <TextView
+        android:id="@+id/importPreviewInfoText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/space_m"
+        android:paddingTop="@dimen/space_xs"
+        android:paddingEnd="@dimen/space_m"
+        android:textColor="@color/campus_text_secondary"
+        android:textSize="13sp"
+        android:visibility="gone" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/courseDraftRecyclerView"
         android:layout_width="match_parent"

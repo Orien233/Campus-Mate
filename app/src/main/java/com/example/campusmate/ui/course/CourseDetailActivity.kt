@@ -74,7 +74,7 @@ class CourseDetailActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.courseDetailNameText).text = course.name
         findViewById<TextView>(R.id.courseDetailTeacherText).text = course.teacher.orEmpty().ifBlank { getString(R.string.course_empty_value) }
         findViewById<TextView>(R.id.courseDetailClassroomText).text = course.classroom.orEmpty().ifBlank { getString(R.string.course_empty_value) }
-        findViewById<TextView>(R.id.courseDetailTimeText).text = CourseUiFormatter.timeSummary(course)
+        findViewById<TextView>(R.id.courseDetailTimeText).text = CourseUiFormatter.timeSummary(this, course)
         findViewById<TextView>(R.id.courseDetailNoteText).text = course.note.orEmpty().ifBlank { getString(R.string.course_no_note) }
         findViewById<View>(R.id.courseDetailColorView).background = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE

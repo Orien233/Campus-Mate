@@ -31,7 +31,8 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         SystemBarsInsets.apply(this)
 
-        selectedItemId = savedInstanceState?.getInt(KEY_SELECTED_ITEM) ?: R.id.nav_dashboard
+        selectedItemId = savedInstanceState?.getInt(KEY_SELECTED_ITEM)
+            ?: intent.getIntExtra(EXTRA_START_DESTINATION, R.id.nav_dashboard)
         bottomNavigationView.setOnItemSelectedListener { item ->
             showFragment(item.itemId)
             true
@@ -137,6 +138,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val KEY_SELECTED_ITEM = "selected_item"
+        const val EXTRA_START_DESTINATION = "extra_start_destination"
         private const val TAG_DASHBOARD = "dashboard"
         private const val TAG_COURSES = "courses"
         private const val TAG_TASKS = "tasks"
