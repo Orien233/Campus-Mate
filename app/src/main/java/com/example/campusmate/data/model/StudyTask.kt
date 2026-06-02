@@ -24,6 +24,7 @@ data class StudyTask(
         const val TYPE_OTHER = 5
 
         const val PRIORITY_LOW = 0
+        const val PRIORITY_MEDIUM = 1
         const val PRIORITY_NORMAL = 1
         const val PRIORITY_HIGH = 2
 

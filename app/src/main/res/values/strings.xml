@@ -92,6 +92,7 @@
     <string name="action_cancel">取消</string>
     <string name="action_delete">删除</string>
     <string name="action_select">选择</string>
+    <string name="action_replace">替换</string>
     <string name="action_clear">清空</string>
     <string name="action_close">关闭</string>
 
@@ -387,8 +388,10 @@
     <string name="plan_empty_body">基于课程表和待办任务智能生成每日学习计划。</string>
     <string name="plan_generate_today">生成今日计划</string>
     <string name="plan_generate_week">生成本周计划</string>
-    <string name="plan_generate_by_course">按课程生成</string>
-    <string name="plan_generate_by_exam">按考试生成</string>
+    <string name="plan_generate_today_desc">结合课程表和待办任务，智能生成学习计划</string>
+    <string name="plan_generate_using_ai">正在使用 AI 生成…</string>
+    <string name="plan_generate_using_local">正在使用本地算法生成…</string>
+    <string name="plan_generate_fallback_to_local">AI 不可用，切换到本地算法</string>
     <string name="plan_manual_default_title">自主学习</string>
     <string name="plan_add_invalid">请填写计划标题和有效学习时长</string>
     <string name="plan_add_success">计划已添加</string>
@@ -411,6 +414,16 @@
     <string name="plan_today_summary">今日计划: %1$d 项 · %2$d 分钟</string>
     <string name="plan_week_summary">本周计划: %1$d 项 · %2$d 分钟</string>
     <string name="plan_completion_rate">完成率: %1$d%%</string>
+    <string name="plan_week_preview_title">本周计划预览</string>
+    <string name="plan_week_generating">正在生成本周计划…</string>
+    <string name="plan_week_day_empty">当天暂无计划</string>
+    <string name="plan_confirm_all">一键全部确认</string>
+    <string name="plan_confirm">确认</string>
+    <string name="plan_local_generation_tip">未检测到 API Key，当前计划基于本地课程和考试数据生成</string>
+    <string name="plan_week_save_success">已保存 %1$d 项计划</string>
+    <string name="plan_source_llm">AI 生成</string>
+    <string name="plan_no_specific_time">时间待定</string>
+    <string name="action_retry">重试</string>
 
     <!-- 通知弱化 -->
     <string name="notification_filter_title">通知过滤</string>
@@ -461,4 +474,29 @@
     <string name="settings_llm_model_required">请填写 Model</string>
     <string name="settings_llm_number_invalid">请输入有效数值</string>
     <string name="settings_llm_preset_restored">已恢复 %1$s 预设</string>
+
+    <!-- LLM 学习计划生成 -->
+    <string name="llm_plan_preview_title">AI 计划预览</string>
+    <string name="llm_plan_preview_summary">计划概览</string>
+    <string name="llm_plan_preview_plans">计划列表</string>
+    <string name="llm_plan_generating">正在生成学习计划…</string>
+    <string name="llm_plan_generated_count">AI 已生成 %1$d 个计划项，共 %2$d 分钟</string>
+    <string name="llm_plan_privacy_title">隐私说明</string>
+    <string name="llm_plan_privacy_body">计划生成时，当日课程和待办任务信息将发送给所选 AI 模型服务商。CampusMate 不提供模型服务，不代理请求，不保存传输内容。</string>
+    <string name="llm_plan_append">追加到现有</string>
+    <string name="llm_plan_replace">替换当日</string>
+    <string name="llm_plan_use_local_fallback">使用本地规则生成</string>
+    <string name="llm_plan_added_success">AI 生成的计划已追加到当日计划</string>
+    <string name="llm_plan_replaced_success">AI 生成的计划已替换当日计划</string>
+    <string name="llm_plan_no_key">未配置 AI API Key，请在设置中填写</string>
+    <string name="llm_plan_no_key_settings">请先配置 AI API Key</string>
+    <string name="llm_plan_network_error">网络请求失败，请检查网络连接</string>
+    <string name="llm_plan_parse_error">AI 返回格式解析失败</string>
+    <string name="llm_plan_timeout">AI 响应超时，请重试</string>
+    <string name="llm_plan_auth_error">API Key 无效或已过期</string>
+    <string name="llm_plan_rate_limit">请求频率超限，请稍后再试</string>
+    <string name="llm_plan_server_error">AI 服务暂不可用</string>
+    <string name="llm_plan_disabled">AI 计划生成未启用，请在设置中开启</string>
+    <string name="llm_plan_warning_time_overlap">注意：部分计划时间与课程重叠</string>
+    <string name="llm_plan_warning_time_invalid">注意：部分计划时间设置不合理</string>
 </resources>

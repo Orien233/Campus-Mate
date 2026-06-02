@@ -9,8 +9,3 @@ data class LlmProviderPreset(
     val authHeaderType: LlmAuthHeaderType,
     val notes: String
 )
-
-enum class LlmAuthHeaderType {
-    BEARER_AUTHORIZATION,
-    X_GOOG_API_KEY
-}
