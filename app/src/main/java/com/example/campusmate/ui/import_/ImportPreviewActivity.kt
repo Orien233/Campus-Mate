@@ -2,8 +2,8 @@ package com.example.campusmate.ui.import_
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -12,7 +12,10 @@ import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.model.ImportLog
 import com.example.campusmate.data.repository.CourseRepository
 import com.example.campusmate.data.repository.ImportLogRepository
+import com.example.campusmate.data.repository.SettingsRepository
+import com.example.campusmate.data.repository.SettingsSectionTimeSlot
 import com.example.campusmate.domain.import_.CourseDraft
+import com.example.campusmate.domain.import_.SectionTimeSlot
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
@@ -23,8 +26,13 @@ class ImportPreviewActivity : AppCompatActivity() {
     private lateinit var adapter: CourseDraftAdapter
     private lateinit var courseRepository: CourseRepository
     private lateinit var importLogRepository: ImportLogRepository
+    private lateinit var previewInfoText: TextView
     private var sourceType: Int = ImportLog.SOURCE_PASTED_HTML
+    private var parserLabel: String = ""
+    private var fallbackReason: String? = null
+    private var warnings: List<String> = emptyList()
     private var draftItems: List<CourseDraftItem> = emptyList()
+    private var sectionTimeSlots: List<SectionTimeSlot> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +42,9 @@ class ImportPreviewActivity : AppCompatActivity() {
         courseRepository = CourseRepository(this)
         importLogRepository = ImportLogRepository(this)
         sourceType = intent.getIntExtra(EXTRA_SOURCE_TYPE, ImportLog.SOURCE_PASTED_HTML)
+        parserLabel = intent.getStringExtra(EXTRA_PARSER_LABEL).orEmpty()
+        fallbackReason = intent.getStringExtra(EXTRA_FALLBACK_REASON)
+        warnings = intent.getStringArrayListExtra(EXTRA_WARNINGS).orEmpty()
         setupToolbar()
         setupList()
         setupActions()
@@ -54,6 +65,7 @@ class ImportPreviewActivity : AppCompatActivity() {
 
     private fun setupList() {
         adapter = CourseDraftAdapter()
+        previewInfoText = findViewById(R.id.importPreviewInfoText)
         findViewById<RecyclerView>(R.id.courseDraftRecyclerView).apply {
             layoutManager = LinearLayoutManager(this@ImportPreviewActivity)
             adapter = this@ImportPreviewActivity.adapter
@@ -72,6 +84,9 @@ class ImportPreviewActivity : AppCompatActivity() {
     @Suppress("UNCHECKED_CAST", "DEPRECATION")
     private fun loadDrafts() {
         val drafts = intent.getSerializableExtra(EXTRA_DRAFTS) as? ArrayList<CourseDraft> ?: arrayListOf()
+        sectionTimeSlots =
+            (intent.getSerializableExtra(EXTRA_SECTION_TIME_SLOTS) as? ArrayList<SectionTimeSlot>)?.toList()
+                ?: emptyList()
         draftItems = drafts.mapIndexed { index, draft ->
             val hasExistingConflict = courseRepository.hasTimeConflict(
                 weekday = draft.weekday,
@@ -99,6 +114,36 @@ class ImportPreviewActivity : AppCompatActivity() {
             draftItems.count { it.hasConflict },
             draftItems.count { it.selected }
         )
+        previewInfoText.text = buildPreviewInfoText()
+        previewInfoText.visibility = if (previewInfoText.text.isNullOrBlank()) View.GONE else View.VISIBLE
+    }
+
+    private fun buildPreviewInfoText(): CharSequence? {
+        val parts = mutableListOf<String>()
+        if (parserLabel.isNotBlank()) {
+            parts.add(getString(R.string.import_preview_parser_info, displayParserLabel(parserLabel)))
+        }
+        if (sectionTimeSlots.isNotEmpty()) {
+            parts.add(getString(R.string.import_preview_section_time_info, sectionTimeSlots.size))
+        }
+        fallbackReason?.takeIf { it.isNotBlank() }?.let {
+            parts.add(getString(R.string.import_preview_fallback_info, it))
+        }
+        if (warnings.isNotEmpty()) {
+            val previewWarnings = warnings.take(3)
+            val tail = if (warnings.size > previewWarnings.size) {
+                "\n" + getString(R.string.import_preview_warning_more, warnings.size - previewWarnings.size)
+            } else {
+                ""
+            }
+            parts.add(
+                getString(R.string.import_preview_warning_info, warnings.size) +
+                    "\n" +
+                    previewWarnings.joinToString(separator = "\n") +
+                    tail
+            )
+        }
+        return parts.joinToString(separator = "\n\n").takeIf { it.isNotBlank() }
     }
 
     private fun importSelected(skipConflicts: Boolean) {
@@ -112,17 +157,40 @@ class ImportPreviewActivity : AppCompatActivity() {
         val importedCount = courseRepository.addCourses(candidates.map { it.draft.toCourse() })
         val skippedCount = draftItems.size - importedCount
         val conflictCount = draftItems.count { it.hasConflict }
+        val resolvedParserLabel = displayParserLabel(parserLabel).ifBlank {
+            getString(R.string.import_preview_parser_unknown)
+        }
         importLogRepository.addImportLog(
             ImportLog(
                 sourceType = sourceType,
                 importedCount = importedCount,
                 skippedCount = skippedCount,
                 conflictCount = conflictCount,
-                message = getString(R.string.import_log_message, importedCount, skippedCount, conflictCount)
+                message = getString(
+                    R.string.import_log_message_with_parser,
+                    importedCount,
+                    skippedCount,
+                    conflictCount,
+                    resolvedParserLabel
+                )
             )
         )
 
-        Toast.makeText(this, getString(R.string.import_success_message, importedCount, skippedCount), Toast.LENGTH_LONG).show()
+        // Apply extracted section clock times only after the user confirms import.
+        val appliedSectionTimes = sectionTimeSlots.isNotEmpty()
+        if (appliedSectionTimes) {
+            SettingsRepository(this).setSectionTimeSlots(
+                sectionTimeSlots.map { SettingsSectionTimeSlot(it.section, it.startTime, it.endTime) }
+            )
+        }
+
+        val baseMessage = getString(R.string.import_success_message, importedCount, skippedCount)
+        val finalMessage = if (appliedSectionTimes) {
+            baseMessage + "\n" + getString(R.string.import_section_time_applied)
+        } else {
+            baseMessage
+        }
+        Toast.makeText(this, finalMessage, Toast.LENGTH_LONG).show()
         setResult(RESULT_OK)
         finish()
     }
@@ -158,8 +226,20 @@ class ImportPreviewActivity : AppCompatActivity() {
         )
     }
 
+    private fun displayParserLabel(rawLabel: String): String {
+        return when {
+            rawLabel.contains("AI", ignoreCase = true) -> getString(R.string.import_ai_mode)
+            rawLabel.contains("Local", ignoreCase = true) -> getString(R.string.import_local_mode)
+            else -> rawLabel
+        }
+    }
+
     companion object {
         const val EXTRA_DRAFTS = "extra_drafts"
         const val EXTRA_SOURCE_TYPE = "extra_source_type"
+        const val EXTRA_PARSER_LABEL = "extra_parser_label"
+        const val EXTRA_FALLBACK_REASON = "extra_fallback_reason"
+        const val EXTRA_WARNINGS = "extra_warnings"
+        const val EXTRA_SECTION_TIME_SLOTS = "extra_section_time_slots"
     }
 }

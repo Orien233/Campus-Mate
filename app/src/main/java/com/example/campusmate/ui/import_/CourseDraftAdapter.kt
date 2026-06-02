@@ -50,7 +50,7 @@ class CourseDraftAdapter : RecyclerView.Adapter<CourseDraftAdapter.CourseDraftVi
             }
             timeText.text = itemView.context.getString(
                 R.string.import_draft_time_format,
-                CourseUiFormatter.weekdayLabel(draft.weekday),
+                CourseUiFormatter.weekdayLabel(itemView.context, draft.weekday),
                 draft.startSection,
                 draft.endSection,
                 draft.startWeek,

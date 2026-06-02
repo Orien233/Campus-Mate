@@ -8,9 +8,10 @@ import com.example.campusmate.data.model.llm.LlmAuthHeaderType
 import com.example.campusmate.data.model.llm.LlmProviderConfig
 import com.example.campusmate.data.model.llm.LlmProviderType
 import com.example.campusmate.data.model.llm.LlmScheduleParseMode
+import com.example.campusmate.domain.import_.LlmScheduleParseSettingsSource
 
 /** SharedPreferences-backed LLM settings with encrypted local API key storage. */
-class LlmSettingsRepository(context: Context) {
+class LlmSettingsRepository(context: Context) : LlmScheduleParseSettingsSource {
     private val appContext = context.applicationContext
     private val preferences: SharedPreferences =
         appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -27,7 +28,7 @@ class LlmSettingsRepository(context: Context) {
         )
     }
 
-    fun getConfig(): LlmProviderConfig {
+    override fun getConfig(): LlmProviderConfig {
         val default = LlmProviderConfig()
         return LlmProviderConfig(
             enabled = preferences.getBoolean(KEY_ENABLED, default.enabled),
@@ -73,7 +74,7 @@ class LlmSettingsRepository(context: Context) {
             .apply()
     }
 
-    fun getApiKey(): String? {
+    override fun getApiKey(): String? {
         return encryptedPreferences.getString(KEY_API_KEY, null)?.takeIf { it.isNotBlank() }
     }
 
@@ -123,5 +124,5 @@ class LlmSettingsRepository(context: Context) {
         private const val MASK_MARKER = "\u2022\u2022\u2022\u2022"
     }
 
-    fun hasApiKey(): Boolean = getApiKey() != null
+    override fun hasApiKey(): Boolean = getApiKey() != null
 }
