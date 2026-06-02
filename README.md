@@ -80,8 +80,8 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 - 勿扰模式：需要用户授予通知策略访问权限；未授权时不应影响普通专注计时。
 - 天气：默认 Mock 数据保证演示稳定；关闭 Mock 后远程请求依赖网络，失败时回退缓存或 Mock。
 - 图片附件：当前只通过 Storage Access Framework 选择图片并持久化 Uri；不申请相册读取权限，不支持拍照、裁剪、压缩或内置大图预览。
-- 学习计划：已有手动添加、规则生成、状态切换和详情页；按课程/考试细分生成、提醒、复杂编辑和 AI 生成尚未接入。
-- LLM：当前只是设置、Client、连接测试和 prompt 构造能力；没有数据库表；业务按钮尚未真正调用 LLM 写入课表或计划。任何后续 AI 结果仍必须经过预览确认页。
+- 学习计划：已有手动添加、本地规则生成、AI 今日/本周计划预览、状态切换和详情页；按课程/考试细分生成、计划提醒和复杂编辑尚未接入。
+- LLM：当前已有设置、Client、连接测试、prompt 构造能力和学习计划主流程接入；课表解析按钮尚未真正调用 LLM。任何 AI 结果都必须先进入预览确认页，不能直接静默写入数据库。
 
 ## 5. 项目结构说明
 
@@ -399,7 +399,7 @@ SettingsFragment
 - 连接测试从手机直接请求用户选择的模型服务商。
 - 错误详情会通过 `LlmHttpUtils` 屏蔽当前 API Key，避免完整密钥出现在 UI 或测试输出中。
 - 当前支持 OpenAI-Compatible 和 Gemini 两类客户端；预设只用于填表，用户可以按控制台实际配置修改。
-- 当前尚未把 LLM 接入真实课表解析按钮或学习计划主流程；后续接入必须保留预览确认，不能让 AI 结果直接写数据库。
+- 当前已把 LLM 接入学习计划主流程：计划页在 API Key 可用且功能开启时进入 AI 计划预览页，用户确认后才追加或替换计划；失败时可回退本地规则生成。课表解析按钮尚未真正调用 LLM；后续接入仍必须进入导入预览，不能让 AI 结果直接写数据库。
 
 ## 8. 数据库设计说明
 
@@ -415,7 +415,7 @@ SettingsFragment
 | `user_profile` | 本机学习名片 | `nickname`、`school`、`major`、`grade`、`bio`、`avatar_uri`、`github`、`email`、`phone`、`show_email`、`show_phone` | `UserProfileRepository` | 用于生成公开 JSON，不上传云端。 |
 | `study_buddies` | 二维码/NFC 确认添加的学习伙伴 | `nickname`、`school`、`major`、`grade`、`bio`、`github`、`email`、`phone`、`source`、`added_at`、`note` | `StudyBuddyRepository` | `source=0` 二维码，`source=1` NFC，`source=2` 手动预留。 |
 | `weather_cache` | 天气缓存 | `city`、`weather_text`、`temperature`、`humidity`、`wind`、`source`、`raw_json`、`updated_at` | `WeatherRepository` | Dashboard 天气卡片读取；不关联定位。 |
-| `study_plans` | 学习计划 | `title`、`plan_date`、`planned_minutes`、`actual_minutes`、`start_time`、`end_time`、`type`、`status`、`source_type` | `StudyPlanRepository` | 由规则生成器或手动添加写入，供计划列表和详情展示。 |
+| `study_plans` | 学习计划 | `title`、`plan_date`、`planned_minutes`、`actual_minutes`、`start_time`、`end_time`、`type`、`status`、`source_type` | `StudyPlanRepository` | 由本地规则生成器、AI 预览确认或手动添加写入，供计划列表和详情展示。 |
 | `task_attachments` | 任务图片附件 Uri | `task_id`、`uri`、`mime_type`、`title`、`created_at` | `TaskAttachmentRepository` | 按 `task_id` 关联任务详情页。 |
 
 Provider Uri 均以 `content://com.example.campusmate.provider/` 开头，当前包含：`courses`、`tasks`、`focus_sessions`、`study_records`、`import_logs`、`user_profile`、`study_buddies`、`weather_cache`、`study_plans`、`task_attachments` 及各自 `/#` item Uri。
