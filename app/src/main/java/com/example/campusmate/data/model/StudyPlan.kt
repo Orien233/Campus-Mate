@@ -46,6 +46,7 @@ data class StudyPlan(
 
         const val SOURCE_MANUAL = CampusMateContract.StudyPlans.SOURCE_MANUAL
         const val SOURCE_AUTO = CampusMateContract.StudyPlans.SOURCE_AUTO
+        const val SOURCE_LLM = CampusMateContract.StudyPlans.SOURCE_LLM
 
         fun fromCursor(cursor: android.database.Cursor): StudyPlan {
             val idIndex = cursor.getColumnIndexOrThrow(BaseColumns._ID)

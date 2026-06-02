@@ -3,12 +3,14 @@
     <string name="app_name">CampusMate</string>
     <string name="ui_expand">展开</string>
     <string name="ui_collapse">收起</string>
+
     <string name="nav_dashboard">首页</string>
     <string name="nav_courses">课程</string>
     <string name="nav_tasks">任务</string>
     <string name="nav_plan">计划</string>
     <string name="nav_statistics">统计</string>
     <string name="nav_settings">设置</string>
+
     <string name="dashboard_today_courses">今日课程</string>
     <string name="dashboard_pending_tasks">待完成任务</string>
     <string name="dashboard_today_focus">今日学习</string>
@@ -33,6 +35,7 @@
     <string name="dashboard_weather_refresh">刷新天气</string>
     <string name="duration_minutes">%1$d 分钟</string>
     <string name="placeholder_next_stage">该入口将在后续阶段接入</string>
+
     <string name="empty_courses_title">暂无课程</string>
     <string name="empty_courses_body">导入课表或手动添加后，课程会显示在这里　</string>
     <string name="empty_tasks_title">暂无任务</string>
@@ -41,13 +44,14 @@
     <string name="empty_statistics_body">完成一次专注后，热力图和学习记录会显示在这里　</string>
     <string name="empty_settings_title">偏好设置</string>
     <string name="empty_settings_body">保存学习目标、提醒和沉浸模式偏好，并提供答辩演示数据入口　</string>
+
     <string name="settings_learning_goal">学习目标</string>
     <string name="settings_daily_goal_minutes">每日学习目标（分钟）</string>
     <string name="settings_daily_goal_invalid">请输入 1 到 1440 之间的分钟数</string>
     <string name="settings_daily_goal_saved">每日目标已保存为 %1$d 分钟</string>
     <string name="settings_preferences">偏好</string>
     <string name="settings_reminder_enabled">任务提醒</string>
-    <string name="settings_immersive_enabled">专注页沉浸模式</string>
+    <string name="settings_immersive_enabled">专注页沉浸模开</string>
     <string name="settings_weather">校园天气</string>
     <string name="settings_weather_body">手动设置城市，不申请定位权限。演示时可使用 Mock 天气保证稳定。</string>
     <string name="settings_weather_city">天气城市</string>
@@ -64,7 +68,7 @@
     <string name="settings_notification_permission">通知权限</string>
     <string name="settings_notification_status_enabled">通知权限可用：任务提醒和前台服务通知可以正常显示　</string>
     <string name="settings_notification_status_disabled">通知权限不可用：应用不会崩溃，但任务提醒通知不会显示　</string>
-    <string name="settings_notification_permission_granted">通知权限已授权</string>
+    <string name="settings_notification_permission_granted">通知权限已授杀</string>
     <string name="settings_notification_permission_denied">未授权通知权限，可稍后在系统设置中开启</string>
     <string name="settings_exact_alarm_permission">精确闹钟设置</string>
     <string name="settings_exact_alarm_status_enabled">精确闹钟可用：任务提醒会尽量准时触发　</string>
@@ -80,15 +84,18 @@
     <string name="settings_seed_demo_confirm_message">将先清除课程、任务、学习计划、图片附件、提醒、专注记录、学习统计、课表导入日志、学习名片、学习伙伴和天气缓存，再生成一组答辩演示数据。此操作不可撤销　</string>
     <string name="settings_seed_demo_result">已写入 %1$d 门课程、%2$d 个任务、%3$d 条学习记录，恢复 %4$d 个未来提醒</string>
     <string name="settings_clear_data">清空本地数据</string>
-    <string name="settings_clear_data_confirm_title">确认清空本地数据？</string>
+    <string name="settings_clear_data_confirm_title">确认清空本地数据＀</string>
     <string name="settings_clear_data_confirm_message">此操作会清除课程、任务、学习计划、图片附件、提醒、专注记录、学习统计、课表导入日志、学习名片、学习伙伴和天气缓存。此操作不可撤销　</string>
     <string name="settings_clear_data_result">已清空 %1$d 条本地数据</string>
+
     <string name="action_save">保存</string>
     <string name="action_cancel">取消</string>
     <string name="action_delete">删除</string>
     <string name="action_select">选择</string>
+    <string name="action_replace">替换</string>
     <string name="action_clear">清空</string>
     <string name="action_close">关闭</string>
+
     <string name="course_add">添加课程</string>
     <string name="course_overview_title">课程概览</string>
     <string name="course_overview_total">全部课程</string>
@@ -124,6 +131,7 @@
     <string name="course_note">备注</string>
     <string name="course_no_note">暂无备注</string>
     <string name="course_empty_value">未填写</string>
+
     <string name="course_weekday_unknown">未知</string>
     <string name="course_section_range_format">第%1$d-%2$d节</string>
     <string name="course_week_range_format">第%1$d-%2$d周 %3$s</string>
@@ -147,6 +155,7 @@
     <string name="course_conflict_message">该课程与已有课程在星期、周次和节次上重叠。你可以返回修改，或仍然保存用于演示冲突场景　</string>
     <string name="course_conflict_back">返回修改</string>
     <string name="course_conflict_save_anyway">仍然保存</string>
+
     <string name="task_add">添加任务</string>
     <string name="task_overview_title">任务概览</string>
     <string name="task_overview_todo">待完成</string>
@@ -175,12 +184,12 @@
     <string name="task_filter_upcoming">即将截止</string>
     <string name="task_filter_overdue">已逾期</string>
     <string name="task_type_other">其他</string>
-    <string name="task_priority_normal">普通</string>
+    <string name="task_priority_normal">普退</string>
     <string name="task_status_todo">待完成</string>
     <string name="task_status_done">已完成</string>
     <string name="task_status_archived">已归档</string>
     <string name="task_meta_format">%1$s · %2$s · %3$s</string>
-    <string name="task_toggle_done">切换完成状态</string>
+    <string name="task_toggle_done">切换完成状怀</string>
     <string name="task_more_actions">更多操作</string>
     <string name="task_action_edit">编辑</string>
     <string name="task_action_delete">删除</string>
@@ -206,6 +215,7 @@
     <string name="task_attachment_delete_title">删除附件</string>
     <string name="task_attachment_delete_message">确定删除%1$s”吗</string>
     <string name="task_attachment_delete_failed">删除附件失败</string>
+
     <string name="notification_channel_task_reminders">任务提醒</string>
     <string name="notification_channel_task_reminders_desc">作业、考试和复习任务的提醒通知</string>
     <string name="notification_channel_focus_service">专注计时</string>
@@ -218,6 +228,7 @@
     <string name="reminder_exact_alarm_unavailable">精确闹钟权限不可用，已降级为普通提醒　</string>
     <string name="reminder_disabled_message">提醒开关已关闭，未调度通知　</string>
     <string name="reminder_scheduled">提醒已设置</string>
+
     <string name="import_schedule_title">导入课表</string>
     <string name="import_sample_title">内置示例课表</string>
     <string name="import_sample_body">包含 6 门课程，其中 1 门故意冲突，便于答辩演示预览和冲突处理　</string>
@@ -234,7 +245,7 @@
     <string name="import_webview_extract_failed">提取失败：请确认已打开课表页面且允许加载完成</string>
     <string name="import_section_time_applied">已应用课表节次时间</string>
     <string name="import_webview_url_empty">请先输入网址</string>
-    <string name="import_webview_url_invalid">网址格式不正确</string>
+    <string name="import_webview_url_invalid">网址格式不正础</string>
     <string name="import_webview_fallback">使用粘贴 HTML / 示例</string>
     <string name="import_webview_fallback_hint">解析失败时可降级为粘贴 HTML 或内置示例导入</string>
     <string name="import_parse_failed">课表解析失败</string>
@@ -249,6 +260,7 @@
     <string name="import_no_selected_courses">没有可导入的选中课程</string>
     <string name="import_success_message">已导入 %1$d 门课程，跳过 %2$d 门</string>
     <string name="import_log_message">导入 %1$d，跳过 %2$d，冲突 %3$d</string>
+
     <string name="focus_title">番茄专注</string>
     <string name="focus_default_title">专注学习</string>
     <string name="focus_free_task">自由专注</string>
@@ -277,6 +289,7 @@
     <string name="focus_record_note">由番茄专注自动生成</string>
     <string name="focus_notification_title">CampusMate 专注中</string>
     <string name="focus_notification_text">%1$s\n剩余 %2$s · %3$s</string>
+
     <string name="statistics_today">今日学习</string>
     <string name="statistics_overview_title">学习总览</string>
     <string name="statistics_week">本周学习</string>
@@ -296,6 +309,7 @@
     <string name="statistics_day_no_records">这一天还没有学习记录　</string>
     <string name="statistics_record_default_title">专注学习</string>
     <string name="statistics_record_no_note">无备注</string>
+
     <string name="profile_title">学习名片</string>
     <string name="profile_edit_title">编辑学习名片</string>
     <string name="profile_card_title">二维码学习名片</string>
@@ -303,16 +317,16 @@
     <string name="profile_empty_body">填写昵称、学校和简介后，可以生成本地二维码名片　</string>
     <string name="profile_nickname">昵称</string>
     <string name="profile_school">学校</string>
-    <string name="profile_major">专业</string>
+    <string name="profile_major">רҵ</string>
     <string name="profile_grade">年级</string>
-    <string name="profile_bio">简介</string>
+    <string name="profile_bio">简什</string>
     <string name="profile_github">GitHub</string>
     <string name="profile_email">邮箱</string>
     <string name="profile_phone">手机号</string>
     <string name="profile_show_email">公开邮箱</string>
     <string name="profile_show_phone">公开手机号</string>
     <string name="profile_public_contact_hidden">未公开</string>
-    <string name="profile_nickname_required">请填写昵称</string>
+    <string name="profile_nickname_required">请填写昵秀</string>
     <string name="profile_saved">学习名片已保存</string>
     <string name="profile_save_failed">学习名片保存失败</string>
     <string name="profile_edit_action">编辑资料</string>
@@ -324,6 +338,7 @@
     <string name="profile_public_json_title">公开 JSON</string>
     <string name="profile_public_scope_title">本次公开信息</string>
     <string name="profile_public_scope_body">二维码只包含已填写的公开字段，不包含未授权公开的邮箱和手机号　</string>
+
     <string name="buddy_list_title">学习伙伴</string>
     <string name="buddy_detail_title">伙伴详情</string>
     <string name="buddy_empty_title">暂无学习伙伴</string>
@@ -338,9 +353,10 @@
     <string name="buddy_delete_success">学习伙伴已删除</string>
     <string name="buddy_delete_failed">删除失败</string>
     <string name="buddy_not_found">学习伙伴不存在或已删除</string>
-    <string name="buddy_added_success">已添加学习伙伴</string>
+    <string name="buddy_added_success">已添加学习伙伀</string>
     <string name="buddy_add_failed">添加学习伙伴失败</string>
     <string name="buddy_duplicate_hint">该 GitHub 或邮箱已存在，仍可确认追加保存</string>
+
     <string name="scan_qr_title">扫描学习名片</string>
     <string name="scan_qr_prompt">扫描 CampusMate 学习名片二维码</string>
     <string name="scan_qr_start">开始扫描</string>
@@ -351,6 +367,7 @@
     <string name="scan_qr_permission_denied">未授予相机权限，无法扫描二维码</string>
     <string name="settings_profile_tools">学习名片</string>
     <string name="settings_profile_tools_body">本地编辑个人资料，生成二维码学习名片，也可以扫码添加学习伙伴　</string>
+
     <string name="profile_nfc_share_action">NFC 分享名片</string>
     <string name="profile_nfc_receive_action">接收 NFC 名片</string>
     <string name="nfc_share_title">NFC 学习名片</string>
@@ -369,6 +386,8 @@
     <string name="nfc_receive_preview_title">NFC 名片预览</string>
     <string name="nfc_receive_confirm_add">确认添加伙伴</string>
     <string name="nfc_public_json_title">NFC 公开 JSON</string>
+
+
     <string name="plan_title">学习计划</string>
     <string name="plan_add_title">添加计划</string>
     <string name="plan_today_overview">今日计划概览</string>
@@ -377,8 +396,10 @@
     <string name="plan_empty_body">基于课程表和待办任务智能生成每日学习计划　</string>
     <string name="plan_generate_today">生成今日计划</string>
     <string name="plan_generate_week">生成本周计划</string>
-    <string name="plan_generate_by_course">按课程生成</string>
-    <string name="plan_generate_by_exam">按考试生成</string>
+    <string name="plan_generate_today_desc">结合课程表和待办任务，智能生成学习计划</string>
+    <string name="plan_generate_using_ai">正在使用 AI 生成…</string>
+    <string name="plan_generate_using_local">正在使用本地算法生成…</string>
+    <string name="plan_generate_fallback_to_local">AI 不可用，切换到本地算法</string>
     <string name="plan_manual_default_title">自主学习</string>
     <string name="plan_add_invalid">请填写计划标题和有效学习时长</string>
     <string name="plan_add_success">计划已添加</string>
@@ -391,16 +412,75 @@
     <string name="plan_item_duration_format">%1$d 分钟</string>
     <string name="plan_status_pending">待完成</string>
     <string name="plan_status_completed">已完成</string>
-    <string name="plan_status_expired">已过期</string>
+    <string name="plan_status_expired">已过最</string>
     <string name="plan_mark_complete">标记完成</string>
     <string name="plan_mark_incomplete">取消完成</string>
     <string name="plan_actual_minutes">实际学习时长</string>
     <string name="plan_planned_minutes">计划学习时长</string>
     <string name="plan_source_auto">自动生成</string>
     <string name="plan_source_manual">手动创建</string>
-    <string name="plan_today_summary">今日计划：%1$d 项 · %2$d 分钟</string>
-    <string name="plan_week_summary">本周计划：%1$d 项 · %2$d 分钟</string>
-    <string name="plan_completion_rate">完成率 %1$d%%</string>
+    <string name="plan_today_summary">今日计划: %1$d 项 · %2$d 分钟</string>
+    <string name="plan_week_summary">本周计划: %1$d 项 · %2$d 分钟</string>
+    <string name="plan_completion_rate">完成率: %1$d%%</string>
+    <string name="plan_week_preview_title">本周计划预览</string>
+    <string name="plan_week_generating">正在生成本周计划…</string>
+    <string name="plan_week_day_empty">当天暂无计划</string>
+    <string name="plan_confirm_all">一键全部确认</string>
+    <string name="plan_confirm">确认</string>
+    <string name="plan_local_generation_tip">未检测到 API Key，当前计划基于本地课程和考试数据生成</string>
+    <string name="plan_week_save_success">已保存 %1$d 项计划</string>
+    <string name="plan_source_llm">AI 生成</string>
+    <string name="plan_no_specific_time">时间待定</string>
+    <string name="action_retry">重试</string>
+
+    <!-- LLM 学习计划生成 -->
+    <string name="llm_plan_preview_title">AI 计划预览</string>
+    <string name="llm_plan_preview_summary">计划概览</string>
+    <string name="llm_plan_preview_plans">计划列表</string>
+    <string name="llm_plan_generating">正在生成学习计划…</string>
+    <string name="llm_plan_generated_count">AI 已生成 %1$d 个计划项，共 %2$d 分钟</string>
+    <string name="llm_plan_privacy_title">隐私说明</string>
+    <string name="llm_plan_privacy_body">计划生成时，当日课程和待办任务信息将发送给所选 AI 模型服务商。CampusMate 不提供模型服务，不代理请求，不保存传输内容。</string>
+    <string name="llm_plan_append">追加到现有</string>
+    <string name="llm_plan_replace">替换当日</string>
+    <string name="llm_plan_use_local_fallback">使用本地规则生成</string>
+    <string name="llm_plan_added_success">AI 生成的计划已追加到当日计划</string>
+    <string name="llm_plan_replaced_success">AI 生成的计划已替换当日计划</string>
+    <string name="llm_plan_no_key">未配置 AI API Key，请在设置中填写</string>
+    <string name="llm_plan_no_key_settings">请先配置 AI API Key</string>
+    <string name="llm_plan_network_error">网络请求失败，请检查网络连接</string>
+    <string name="llm_plan_parse_error">AI 返回格式解析失败</string>
+    <string name="llm_plan_timeout">AI 响应超时，请重试</string>
+    <string name="llm_plan_auth_error">API Key 无效或已过期</string>
+    <string name="llm_plan_rate_limit">请求频率超限，请稍后再试</string>
+    <string name="llm_plan_server_error">AI 服务暂不可用</string>
+    <string name="llm_plan_disabled">AI 计划生成未启用，请在设置中开启</string>
+    <string name="llm_plan_warning_time_overlap">注意：部分计划时间与课程重叠</string>
+    <string name="llm_plan_warning_time_invalid">注意：部分计划时间设置不合理</string>
+
+    <string name="import_mode_title">解析模式</string>
+    <string name="import_mode_body">默认推荐 AI 辅助解析；如 AI 不可用，可切换到本地规则解析。首次使用 AI 时会提示隐私说明。</string>
+    <string name="import_ai_mode">AI 辅助解析</string>
+    <string name="import_local_mode">本地规则解析</string>
+    <string name="import_open_llm_settings">打开 AI 设置</string>
+    <string name="import_ai_mode_selected">已切换到 AI 辅助解析</string>
+    <string name="import_local_mode_selected">已切换到本地规则解析</string>
+    <string name="import_html_empty">请输入课表 HTML，或先打开示例 / WebView 页面再解析。</string>
+    <string name="import_llm_unavailable_fallback">AI 当前不可用，已切换为本地规则解析。</string>
+    <string name="import_llm_privacy_title">AI 解析隐私说明</string>
+    <string name="import_llm_privacy_message">课表 HTML 会发送给你选择的模型服务商进行解析。CampusMate 不提供模型服务，不代理请求。AI 输出只会先进入预览页，确认后才会写入课程表。</string>
+    <string name="import_llm_privacy_continue">我已了解，继续解析</string>
+    <string name="import_llm_fallback_title">AI 解析失败</string>
+    <string name="import_llm_fallback_message">%1$s\n\n是否改用本地规则解析？</string>
+    <string name="import_llm_fallback_use_local">改用本地规则解析</string>
+    <string name="import_llm_parse_failed">AI 课表解析失败</string>
+    <string name="import_preview_parser_info">解析方式：%1$s</string>
+    <string name="import_preview_fallback_info">回退原因：%1$s</string>
+    <string name="import_preview_warning_info">AI 警告：%1$d 条</string>
+    <string name="import_preview_warning_more">等还有 %1$d 条未显示</string>
+    <string name="import_preview_section_time_info">已识别节次时间：%1$d 条（导入确认后应用）</string>
+    <string name="import_preview_parser_unknown">未知解析方式</string>
+    <string name="import_log_message_with_parser">导入 %1$d，跳过 %2$d，冲突 %3$d，解析：%4$s</string>
     <string name="notification_filter_title">通知过滤</string>
     <string name="notification_filter_description">专注时屏蔽非重要通知</string>
     <string name="notification_filter_enabled">通知过滤已开启：专注时将屏蔽其他应用通知　</string>
@@ -417,6 +497,8 @@
     <string name="settings_focus_dnd">专注勿扰增强</string>
     <string name="settings_notification_filter_result">通知过滤：%1$s</string>
     <string name="settings_focus_dnd_result">专注勿扰：%1$s</string>
+
+
     <string name="settings_llm_title">AI 辅助功能</string>
     <string name="settings_llm_body">AI 辅助功能需要你填写自己的模型 API Key。CampusMate 不提供模型服务、不内置 API Key、不代理请求。API Key 由用户自行填写，仅保存在本机加密存储中。调用费用和数据处理规则以用户选择的模型服务商为准。后续使用 AI 解析课表或生成计划时，相关课程/任务内容会发送给所选模型服务商。可以随时清空 API Key。</string>
     <string name="settings_llm_enabled">启用 AI 辅助功能</string>
@@ -447,27 +529,4 @@
     <string name="settings_llm_model_required">请填写 Model</string>
     <string name="settings_llm_number_invalid">请输入有效数值</string>
     <string name="settings_llm_preset_restored">已恢复 %1$s 预设</string>
-    <string name="import_mode_title">解析模式</string>
-    <string name="import_mode_body">默认推荐 AI 辅助解析；如 AI 不可用，可切换到本地规则解析。首次使用 AI 时会提示隐私说明。</string>
-    <string name="import_ai_mode">AI 辅助解析</string>
-    <string name="import_local_mode">本地规则解析</string>
-    <string name="import_open_llm_settings">打开 AI 设置</string>
-    <string name="import_ai_mode_selected">已切换到 AI 辅助解析</string>
-    <string name="import_local_mode_selected">已切换到本地规则解析</string>
-    <string name="import_html_empty">请输入课表 HTML，或先打开示例 / WebView 页面再解析。</string>
-    <string name="import_llm_unavailable_fallback">AI 当前不可用，已切换为本地规则解析。</string>
-    <string name="import_llm_privacy_title">AI 解析隐私说明</string>
-    <string name="import_llm_privacy_message">课表 HTML 会发送给你选择的模型服务商进行解析。CampusMate 不提供模型服务，不代理请求。AI 输出只会先进入预览页，确认后才会写入课程表。</string>
-    <string name="import_llm_privacy_continue">我已了解，继续解析</string>
-    <string name="import_llm_fallback_title">AI 解析失败</string>
-    <string name="import_llm_fallback_message">%1$s\n\n是否改用本地规则解析？</string>
-    <string name="import_llm_fallback_use_local">改用本地规则解析</string>
-    <string name="import_llm_parse_failed">AI 课表解析失败</string>
-    <string name="import_preview_parser_info">解析方式：%1$s</string>
-    <string name="import_preview_fallback_info">回退原因：%1$s</string>
-    <string name="import_preview_warning_info">AI 警告：%1$d 条</string>
-    <string name="import_preview_warning_more">等还有 %1$d 条未显示</string>
-    <string name="import_preview_section_time_info">已识别节次时间：%1$d 条（导入确认后应用）</string>
-    <string name="import_preview_parser_unknown">未知解析方式</string>
-    <string name="import_log_message_with_parser">导入 %1$d，跳过 %2$d，冲突 %3$d，解析：%4$s</string>
 </resources>

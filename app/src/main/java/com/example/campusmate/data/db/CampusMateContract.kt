@@ -243,6 +243,7 @@ object CampusMateContract {
 
         const val SOURCE_MANUAL = 0
         const val SOURCE_AUTO = 1
+        const val SOURCE_LLM = 2
 
         fun buildItemUri(id: Long): Uri = CONTENT_URI.buildUpon().appendPath(id.toString()).build()
     }

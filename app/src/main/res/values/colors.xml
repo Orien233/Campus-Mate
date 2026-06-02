@@ -2,6 +2,7 @@
 <resources>
     <color name="campus_primary">#1B6B5F</color>
     <color name="campus_primary_dark">#0F4E45</color>
+    <color name="campus_primary_light">#E0F2F1</color>
     <color name="campus_secondary">#2F5D9E</color>
     <color name="campus_accent">#E8A23A</color>
     <color name="campus_background">#F7F8FA</color>
@@ -9,6 +10,18 @@
     <color name="campus_text_primary">#1E2528</color>
     <color name="campus_text_secondary">#627077</color>
     <color name="campus_outline">#D9E0E3</color>
+    <color name="campus_divider">#E0E0E0</color>
+    <color name="campus_error">#D32F2F</color>
+    <color name="campus_tip_background">#FFF8E1</color>
+    <color name="campus_tip_border">#FFE082</color>
+    <color name="campus_tip_icon">#F57C00</color>
+    <color name="campus_tip_text">#5D4037</color>
+    <color name="tab_selected_background">#E0F2F1</color>
+    <color name="tab_selected_indicator">#1B6B5F</color>
+    <color name="warning">#F57C00</color>
+    <color name="surface">@color/campus_surface</color>
+    <color name="error">#D32F2F</color>
+    <color name="success">#388E3C</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>

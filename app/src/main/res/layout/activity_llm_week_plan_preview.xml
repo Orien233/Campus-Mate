@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/campus_background">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/campus_surface">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_back"
+            app:title="@string/plan_week_preview_title"
+            app:titleTextColor="@color/campus_text_primary" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <!-- Loading State -->
+        <LinearLayout
+            android:id="@+id/loadingContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:indeterminate="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m"
+                android:text="@string/plan_week_generating"
+                android:textColor="@color/campus_text_secondary"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Error State -->
+        <LinearLayout
+            android:id="@+id/errorContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="@dimen/space_l"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_error"
+                app:tint="@color/campus_error" />
+
+            <TextView
+                android:id="@+id/errorText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m"
+                android:gravity="center"
+                android:textColor="@color/campus_text_secondary"
+                android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/retryButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m"
+                android:text="@string/action_retry" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/fallbackLocalButton"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/plan_generate_fallback_to_local" />
+        </LinearLayout>
+
+        <!-- Week Plan Content -->
+        <LinearLayout
+            android:id="@+id/contentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Local Generation Tip Banner -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/localGenerationTip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/space_m"
+                android:layout_marginTop="@dimen/space_m"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/campus_tip_background"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/campus_tip_border"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/space_s">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginEnd="@dimen/space_s"
+                        android:src="@drawable/ic_info"
+                        app:tint="@color/campus_tip_icon" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/plan_local_generation_tip"
+                        android:textColor="@color/campus_tip_text"
+                        android:textSize="13sp" />
+
+                    <ImageView
+                        android:id="@+id/closeTipButton"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:padding="4dp"
+                        android:src="@drawable/ic_close"
+                        app:tint="@color/campus_tip_icon" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Summary Header -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/space_m"
+                app:cardBackgroundColor="@color/campus_primary"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/space_m">
+
+                    <TextView
+                        android:id="@+id/weekSummaryText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/weekWarningText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs"
+                        android:textColor="@android:color/white"
+                        android:alpha="0.8"
+                        android:textSize="12sp"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Day Selector Tab Layout -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/campus_surface"
+                android:elevation="2dp"
+                android:scrollbars="none">
+
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/dayTabLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/campus_surface"
+                    android:paddingHorizontal="@dimen/space_m"
+                    app:tabGravity="start"
+                    app:tabIndicator="@drawable/tab_indicator"
+                    app:tabIndicatorFullWidth="false"
+                    app:tabIndicatorHeight="3dp"
+                    app:tabMode="scrollable"
+                    app:tabPaddingEnd="@dimen/space_s"
+                    app:tabPaddingStart="@dimen/space_s"
+                    app:tabRippleColor="@color/campus_primary_light"
+                    app:tabSelectedTextColor="@color/campus_primary"
+                    app:tabTextColor="@color/campus_text_secondary" />
+            </HorizontalScrollView>
+
+            <!-- Plans List for Selected Day -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/weekPlanRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:padding="@dimen/space_m"
+                android:paddingBottom="100dp" />
+
+            <!-- Empty State for Day -->
+            <LinearLayout
+                android:id="@+id/dayEmptyState"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/plan_week_day_empty"
+                    android:textColor="@color/campus_text_secondary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Bottom Action Bar -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/actionBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/campus_surface"
+            app:cardCornerRadius="0dp"
+            app:cardElevation="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/space_m">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/cancelButton"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="@dimen/space_s"
+                        android:text="@string/action_cancel"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/confirmAllButton"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:text="@string/plan_confirm"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:icon="@drawable/ic_check"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

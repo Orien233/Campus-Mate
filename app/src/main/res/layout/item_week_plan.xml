@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/planCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/space_s"
+    android:checkable="true"
+    app:cardBackgroundColor="@color/campus_surface"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:checkedIcon="@null"
+    app:strokeColor="@color/campus_divider"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/space_m">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/planCheckbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/campus_primary" />
+
+            <TextView
+                android:id="@+id/planTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/campus_text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/planSourceChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="11sp"
+                app:chipBackgroundColor="@color/campus_primary_light"
+                app:chipMinHeight="24dp"
+                app:chipMinTouchTargetSize="24dp"
+                app:chipStrokeWidth="0dp"
+                app:textEndPadding="8dp"
+                app:textStartPadding="8dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xs"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="40dp">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_time"
+                app:tint="@color/campus_text_secondary" />
+
+            <TextView
+                android:id="@+id/planTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/space_xs"
+                android:textColor="@color/campus_text_secondary"
+                android:textSize="13sp" />
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="12dp"
+                android:layout_marginHorizontal="@dimen/space_s"
+                android:background="@color/campus_divider" />
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_duration"
+                app:tint="@color/campus_text_secondary" />
+
+            <TextView
+                android:id="@+id/planDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/space_xs"
+                android:textColor="@color/campus_text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
