@@ -21,9 +21,9 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 
 ## 2. 当前版本状态
 
-- 课程阶段版本：`V1.1-stage-15`
+- 课程阶段版本：`V1.1-stage-15-p0-3`
 - Gradle `versionName`：`1.0`
-- 当前阶段：学习计划 + 通知弱化/勿扰增强，已合并 WebView 课表导入、任务图片附件、NFC、天气和 LLM API 设置基础能力。
+- 当前阶段：学习计划 + 通知弱化/勿扰增强，已合并 WebView 课表导入、任务图片附件、NFC、天气和 LLM API 设置基础能力。P0-3：LLM 学习计划生成正式接入（预览确认 + 本地规则回退）。
 - 主闭环状态：课程、任务、提醒、导入、专注、记录、统计、设置页已跑通。
 - 当前扩展功能状态：阶段 9-15 基础能力已进入代码；项目展示页、JSON 导出/备份和完整演示数据仍未完成。
 - 数据库版本：`CampusMateDbHelper.DATABASE_VERSION = 5`
@@ -55,7 +55,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 | 学习记录 | 已完成 | 专注完成后写入 `focus_sessions` 和 `study_records`。 |
 | 热力图统计 | 已完成 | `StatisticsFragment` 展示今日/本周学习、连续学习、任务完成情况和最近学习热力图。 |
 | 设置页 | 已完成 | 包含学习目标、提醒开关、沉浸模式、天气城市/Mock、权限入口、学习名片入口、演示数据、清空数据和 LLM 设置。 |
-| 学习计划 | 基础完成 | `PlanListFragment` 支持今日/本周规则生成、手动添加、完成状态切换、删除和详情页；按课程/考试生成入口仍是占位。 |
+| 学习计划 | 已完成 | `PlanListFragment` 支持今日/本周规则生成、AI 生成今日（含预览确认）、手动添加，完成状态切换、删除和详情页；按课程/考试生成入口仍是占位。AI 生成调用 LLM，失败时回退本地规则。 |
 | 任务图片附件 | 基础完成 | 任务详情页通过 SAF 选择图片，保存 Uri 到 `task_attachments`，可打开和删除；未接入拍照、裁剪或内置大图预览。 |
 | 学习名片 | 已完成 | 本地编辑文本资料，保存到 `user_profile`，不需要登录。 |
 | 二维码 | 已完成 | `StudyCardActivity` 生成公开 JSON 二维码；`ScanQrActivity` 扫码后先预览，再手动确认添加。 |
@@ -64,7 +64,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 | 天气 | 已完成 | 手动城市配置、Mock 数据、`wttr.in` 远程请求、30 分钟缓存、缓存/Mock 降级；不申请定位权限。 |
 | 通知弱化 / 勿扰增强 | 实验功能 / 待真机验证 | `FocusService` 可按设置调用 `DndManager` 并启用 `NotificationFilterService` 标记；依赖用户系统授权。 |
 | 演示数据 | 基础完成 | `DemoDataRepository` 生成课程、任务、学习记录和导入日志样例；尚未完整覆盖学习伙伴、附件、计划。 |
-| LLM 接口基础设施 | 基础完成 | 已有设置页、加密 API Key 存储、OpenAI-Compatible/Gemini Client、连接测试和 prompt 构造服务；尚未接入真实课表导入或学习计划主流程。 |
+| LLM 接口基础设施 | 已完成 | 已有设置页、加密 API Key 存储、OpenAI-Compatible/Gemini Client、连接测试、prompt 构造服务。P0-3 已接入学习计划主流程：AI 生成必须预览确认，失败时回退本地规则生成器。 |
 | 项目展示页 / 技术点展示页 | 待实现 | 当前代码中未发现独立项目展示页。 |
 | JSON 导出 / 备份 | 待实现 | 当前未实现本地 JSON 导出/导入流程。 |
 
@@ -266,19 +266,23 @@ FocusActivity
 
 ```text
 PlanListFragment
-  -> StudyPlanGenerator
+  -> LlmPlanPreviewActivity (AI 生成入口)
+  -> StudyPlanGenerator (本地规则生成)
   -> CourseRepository / TaskRepository
   -> StudyPlanRepository
   -> study_plans 表
   -> PlanAdapter / PlanDetailActivity 展示
 ```
 
-- `StudyPlanGenerator`：当前是本地规则生成器，基于课程和待办任务生成每日/每周计划。
+- `LlmPlanPreviewActivity`：AI 生成计划预览页，调用 LLM 生成计划后展示预览，用户可选择「追加到现有」或「替换当日」；失败时可回退本地规则生成。
+- `LlmPlanGenerateService`：构造 LLM 请求和可用性判断。
+- `LlmPlanValidator`：解析 LLM 返回的 JSON，校验计划时间、时长等合法性。
+- `StudyPlanGenerator`：本地规则生成器，基于课程和待办任务生成每日/每周计划，作为 AI 不可用时的回退方案。
 - `StudyPlanRepository`：负责计划批量写入、按日期查询、状态更新、删除和详情查询。
-- `PlanListFragment`：触发今日/本周生成、手动添加、切换完成状态和删除。
+- `PlanListFragment`：触发今日/本周生成、AI 生成今日、手动添加、切换完成状态和删除。
 - `PlanAdapter` / `PlanDetailActivity`：展示列表和详情。
+- AI 生成结果必须先在 `LlmPlanPreviewActivity` 预览确认，不能直接写入数据库。
 - 按课程生成、按考试生成按钮目前显示后续阶段占位提示。
-- `LlmPlanGenerateService` 当前只构造 LLM 请求和可用性判断，尚未接入 `StudyPlanGenerator` 主流程。
 
 ### F. 任务图片附件闭环
 
