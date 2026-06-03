@@ -146,12 +146,19 @@
                     android:textColor="@color/campus_text_primary"
                     android:textSize="16sp" />
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/settings_field_group_spacing"
+                    android:layout_marginBottom="@dimen/settings_choice_group_spacing"
+                    android:text="@string/settings_llm_provider"
+                    android:textColor="@color/campus_text_primary"
+                    android:textSize="14sp" />
+
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/llmProviderInputLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_m"
-                    android:hint="@string/settings_llm_provider"
                     app:endIconMode="dropdown_menu">
 
                     <AutoCompleteTextView
@@ -167,6 +174,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_xs"
+                    android:layout_marginBottom="@dimen/space_s"
                     android:textColor="@color/campus_text_secondary"
                     android:textSize="13sp" />
 
@@ -174,7 +182,8 @@
                     android:id="@+id/llmBaseUrlInputLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_m"
+                    android:layout_marginTop="@dimen/settings_field_group_spacing"
+                    android:layout_marginBottom="@dimen/space_s"
                     android:hint="@string/settings_llm_base_url">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -189,7 +198,8 @@
                     android:id="@+id/llmModelInputLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_s"
+                    android:layout_marginTop="@dimen/settings_field_group_spacing"
+                    android:layout_marginBottom="@dimen/space_s"
                     android:hint="@string/settings_llm_model">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -200,12 +210,20 @@
                         android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/settings_field_group_spacing"
+                    android:layout_marginBottom="@dimen/settings_choice_group_spacing"
+                    android:text="@string/settings_llm_auth_header"
+                    android:textColor="@color/campus_text_primary"
+                    android:textSize="14sp" />
+
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/llmAuthHeaderInputLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_s"
-                    android:hint="@string/settings_llm_auth_header"
+                    android:hint="@string/settings_llm_auth_placeholder"
                     app:endIconMode="dropdown_menu">
 
                     <AutoCompleteTextView
@@ -220,7 +238,8 @@
                     android:id="@+id/llmApiKeyInputLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_s"
+                    android:layout_marginTop="@dimen/settings_field_group_spacing"
+                    android:layout_marginBottom="@dimen/space_s"
                     android:hint="@string/settings_llm_api_key"
                     app:endIconMode="password_toggle">
 
@@ -241,50 +260,67 @@
                     android:textColor="@color/campus_text_secondary"
                     android:textSize="13sp" />
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/llmTemperatureInputLayout"
-                    android:layout_width="match_parent"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/llmAdvancedToggleButton"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_m"
-                    android:hint="@string/settings_llm_temperature">
+                    android:text="@string/settings_llm_advanced_toggle" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/llmTemperatureInput"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="numberDecimal"
-                        android:maxLines="1" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/llmTimeoutInputLayout"
+                <LinearLayout
+                    android:id="@+id/llmAdvancedSettingsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_s"
-                    android:hint="@string/settings_llm_timeout_millis">
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/llmTimeoutInput"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/llmTemperatureInputLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="number"
-                        android:maxLines="1" />
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:layout_marginTop="@dimen/settings_field_group_spacing"
+                        android:layout_marginBottom="@dimen/space_s"
+                        android:hint="@string/settings_llm_temperature">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/llmMaxTokensInputLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_s"
-                    android:hint="@string/settings_llm_max_output_tokens">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/llmTemperatureInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="numberDecimal"
+                            android:maxLines="1" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/llmMaxTokensInput"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/llmTimeoutInputLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="number"
-                        android:maxLines="1" />
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:layout_marginTop="@dimen/settings_field_group_spacing"
+                        android:hint="@string/settings_llm_timeout_millis">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/llmTimeoutInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="number"
+                            android:maxLines="1" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/llmMaxTokensInputLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/settings_field_group_spacing"
+                        android:hint="@string/settings_llm_max_output_tokens">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/llmMaxTokensInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="number"
+                            android:maxLines="1" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/llmSaveButton"

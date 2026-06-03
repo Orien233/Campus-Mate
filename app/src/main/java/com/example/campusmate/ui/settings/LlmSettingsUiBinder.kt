@@ -51,8 +51,11 @@ class LlmSettingsUiBinder(
     private lateinit var testButton: MaterialButton
     private lateinit var clearKeyButton: MaterialButton
     private lateinit var restorePresetButton: MaterialButton
+    private lateinit var advancedToggleButton: MaterialButton
+    private lateinit var advancedSettingsContainer: View
 
     private var selectedPreset: LlmProviderPreset = LlmProviderPresets.default
+    private var advancedExpanded: Boolean = false
 
     fun bind() {
         bindViews()
@@ -89,6 +92,8 @@ class LlmSettingsUiBinder(
         testButton = rootView.findViewById(R.id.llmTestButton)
         clearKeyButton = rootView.findViewById(R.id.llmClearKeyButton)
         restorePresetButton = rootView.findViewById(R.id.llmRestorePresetButton)
+        advancedToggleButton = rootView.findViewById(R.id.llmAdvancedToggleButton)
+        advancedSettingsContainer = rootView.findViewById(R.id.llmAdvancedSettingsContainer)
     }
 
     private fun setupProviderDropdown() {
@@ -112,6 +117,9 @@ class LlmSettingsUiBinder(
                 authHeaderOptions().map { it.first }
             )
         )
+        authHeaderInput.setOnClickListener {
+            authHeaderInput.showDropDown()
+        }
     }
 
     private fun bindCurrentSettings() {
@@ -151,6 +159,16 @@ class LlmSettingsUiBinder(
         restorePresetButton.setOnClickListener {
             applyPreset(selectedPreset)
             showMessage(fragment.getString(R.string.settings_llm_preset_restored, selectedPreset.displayName))
+        }
+        advancedToggleButton.setOnClickListener {
+            advancedExpanded = !advancedExpanded
+            if (advancedExpanded) {
+                advancedSettingsContainer.visibility = View.VISIBLE
+                advancedToggleButton.text = fragment.getString(R.string.settings_llm_advanced_hide)
+            } else {
+                advancedSettingsContainer.visibility = View.GONE
+                advancedToggleButton.text = fragment.getString(R.string.settings_llm_advanced_toggle)
+            }
         }
     }
 
