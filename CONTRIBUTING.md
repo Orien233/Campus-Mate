@@ -29,6 +29,8 @@
 - `fix/focus-service-stop`
 - `docs/project-docs-maintenance`
 
+不要额外添加工具名、账号名或个人前缀；例如使用 `feature/weather-location`，不要写成 `codex/weather-location`。
+
 ## 3. 提交规范
 
 建议使用简短前缀：
@@ -108,7 +110,7 @@ PR 描述至少包含：
 
 ### 学习计划
 
-主要文件范围：`domain/plan`、`ui/plan`、`StudyPlanRepository`、`StudyPlan`、`study_plans` 相关布局和字符串。当前 LLM 计划生成服务未接入主流程，接入时要保留预览/确认边界。
+主要文件范围：`domain/plan`、`ui/plan`、`StudyPlanRepository`、`StudyPlan`、`study_plans` 相关布局和字符串。当前 LLM 计划生成已接入今日/本周预览确认；生成上下文包含课程、任务、天气、学习记录和已有计划。改动时必须保留预览/确认边界，并要求生成结果避开课程时间。
 
 ### 任务附件
 
@@ -120,11 +122,11 @@ PR 描述至少包含：
 
 ### 天气
 
-主要文件范围：`domain/weather`、`WeatherRepository`、`DashboardFragment`、`SettingsFragment`、`fragment_dashboard.xml`。天气不申请定位权限；Mock 数据用于稳定演示。
+主要文件范围：`domain/weather`、`WeatherRepository`、`DashboardFragment`、`SettingsFragment`、`fragment_dashboard.xml`。天气使用 `ACCESS_COARSE_LOCATION` 辅助判断城市，只保存城市名，不保存经纬度；不再保留 Mock 数据或 Mock 开关。权限授予/拒绝、定位失败、远程请求失败和缓存降级都需要说明验证情况。
 
 ### LLM
 
-主要文件范围：`domain/llm`、`data/model/llm`、`LlmSettingsRepository`、`LlmSettingsUiBinder`、`fragment_settings.xml`。不内置 Key，不提供后端代理，不输出完整 API Key。业务接入前要说明哪些用户数据会发给用户选择的模型服务商。
+主要文件范围：`domain/llm`、`data/model/llm`、`LlmSettingsRepository`、`LlmSettingsUiBinder`、`fragment_settings.xml`，以及具体业务解析服务。当前已接入课表解析、任务网页解析预填和学习计划生成。不内置 Key，不提供后端代理，不输出完整 API Key。业务接入前要说明哪些用户数据会发给用户选择的模型服务商；课程、任务、计划等 AI 结果必须先预览或回填确认，不能静默写库。
 
 ### 文档
 
