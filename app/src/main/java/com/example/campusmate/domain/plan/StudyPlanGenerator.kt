@@ -4,12 +4,15 @@ import android.content.Context
 import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.data.model.StudyTask
+import com.example.campusmate.data.repository.CourseRepository
 import com.example.campusmate.data.repository.StudyPlanRepository
+import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.util.DateTimeUtils
 
 class StudyPlanGenerator(private val context: Context) {
+    private val courseRepository = CourseRepository(context)
+    private val taskRepository = TaskRepository(context)
     private val planRepository = StudyPlanRepository(context)
-    private val contextBuilder = StudyPlanContextBuilder(context)
 
     private val sectionStartHours = mapOf(
         1 to 8, 2 to 8, 3 to 9, 4 to 10, 5 to 10, 6 to 11,
@@ -33,22 +36,18 @@ class StudyPlanGenerator(private val context: Context) {
     )
 
     fun generateDailyPlan(dateMillis: Long = System.currentTimeMillis()): PlanGenerationResult {
-        return generateDailyPlan(DateTimeUtils.formatDate(dateMillis))
-    }
+        val date = DateTimeUtils.formatDate(dateMillis)
+        val weekday = calculateWeekday(dateMillis)
 
-    fun generateDailyPlan(date: String): PlanGenerationResult {
-        val planContext = contextBuilder.buildForDate(date)
-        val planDate = planContext.date
-
-        if (planRepository.hasPlanForDate(planDate)) {
+        if (planRepository.hasPlanForDate(date)) {
             return PlanGenerationResult(
                 success = false,
                 message = "当日计划已存在，如需重新生成请先删除现有计划"
             )
         }
 
-        val courses = planContext.courses
-        val tasks = planContext.tasks
+        val courses = courseRepository.getCoursesByWeekday(weekday)
+        val tasks = getTasksForDate(date)
         val plans = mutableListOf<StudyPlan>()
 
         var currentHour = 7
@@ -63,7 +62,7 @@ class StudyPlanGenerator(private val context: Context) {
             plans.add(
                 StudyPlan(
                     title = "上课: ${course.name}",
-                    planDate = planDate,
+                    planDate = date,
                     plannedMinutes = courseMinutes,
                     startTime = startTime,
                     endTime = formatTime(endHour, endMin),
@@ -89,7 +88,7 @@ class StudyPlanGenerator(private val context: Context) {
             plans.add(
                 StudyPlan(
                     title = "自主学习: ${tasks.size}项待办任务",
-                    planDate = planDate,
+                    planDate = date,
                     plannedMinutes = taskMinutes,
                     startTime = formatTime(currentHour, currentMinute),
                     endTime = formatTime(endHour, endMin),
@@ -105,7 +104,7 @@ class StudyPlanGenerator(private val context: Context) {
             plans.add(
                 StudyPlan(
                     title = "自主学习时间",
-                    planDate = planDate,
+                    planDate = date,
                     plannedMinutes = 120,
                     startTime = formatTime(currentHour, currentMinute),
                     endTime = formatTime(endHour, endMin),
@@ -150,9 +149,10 @@ class StudyPlanGenerator(private val context: Context) {
 
         for (day in 0..6) {
             val dayDate = DateTimeUtils.formatDate(calendar.timeInMillis)
-            val planContext = contextBuilder.buildForDate(dayDate)
-            val courses = planContext.courses
-            val tasks = planContext.tasks
+            val dayWeekday = calculateWeekday(calendar.timeInMillis)
+
+            val courses = courseRepository.getCoursesByWeekday(dayWeekday)
+            val tasks = getTasksForDate(dayDate)
 
             var currentHour = 7
             var currentMinute = 30
@@ -224,11 +224,35 @@ class StudyPlanGenerator(private val context: Context) {
         )
     }
 
+    private fun calculateWeekday(dateMillis: Long): Int {
+        val calendar = java.util.Calendar.getInstance()
+        calendar.timeInMillis = dateMillis
+        val dayOfWeek = calendar.get(java.util.Calendar.DAY_OF_WEEK)
+        return when (dayOfWeek) {
+            java.util.Calendar.SUNDAY -> 7
+            else -> dayOfWeek - 1
+        }
+    }
+
     private fun calculateCourseDuration(course: Course): Int {
         val sections = course.endSection - course.startSection + 1
         val classDuration = 45
         val breakAfterClass = if (sections > 1) (sections - 1) * 5 else 0
         return sections * classDuration + breakAfterClass
+    }
+
+    private fun getTasksForDate(date: String): List<StudyTask> {
+        val allTasks = taskRepository.getAllTasks()
+        val dateMillis = try {
+            java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).parse(date)?.time ?: 0L
+        } catch (e: Exception) {
+            0L
+        }
+
+        return allTasks.filter { task ->
+            task.status == StudyTask.STATUS_TODO && !task.isDeleted &&
+                (task.dueAt == null || task.dueAt >= dateMillis - (7 * 24 * 60 * 60 * 1000L))
+        }
     }
 
     private fun estimateTaskDuration(task: StudyTask): Int {
