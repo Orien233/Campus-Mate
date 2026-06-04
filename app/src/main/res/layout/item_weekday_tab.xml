@@ -2,7 +2,7 @@
 <com.google.android.material.button.MaterialButton xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/weekdayButton"
-    style="@style/Widget.MaterialComponents.Button.TextButton"
+    style="@style/Widget.Material3.Button.TextButton"
     android:layout_width="56dp"
     android:layout_height="64dp"
     android:layout_marginEnd="4dp"
@@ -12,6 +12,9 @@
     android:textColor="@drawable/selector_tab_text"
     android:textSize="13sp"
     android:textStyle="bold"
+    android:checkable="true"
+    app:backgroundTint="@android:color/transparent"
     app:cornerRadius="8dp"
     app:iconGravity="textStart"
-    app:iconPadding="0dp" />
+    app:iconPadding="0dp"
+    app:iconTint="@null" />

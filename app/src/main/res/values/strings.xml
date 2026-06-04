@@ -42,6 +42,12 @@
     <string name="dashboard_weather_permission_denied">未授予位置权限，将继续使用手动城市</string>
     <string name="dashboard_weather_location_failed">未能定位城市，已改用手动城市或缓存</string>
     <string name="duration_minutes">%1$d 分钟</string>
+    <string name="dashboard_plan_completion_format">%1$d/%2$d 计划 · %3$d%% 完成</string>
+    <string name="dashboard_plan_completion_empty">暂无今日计划</string>
+    <string name="dashboard_today_trend_format">较昨日 %1$s%2$d 分钟</string>
+    <string name="dashboard_week_trend_format">较上周 %1$s%2$d 分钟</string>
+    <string name="dashboard_today_trend_placeholder">较昨日 +0 分钟</string>
+    <string name="dashboard_week_trend_placeholder">较上周 +0 分钟</string>
     <string name="placeholder_next_stage">该入口将在后续阶段接入</string>
 
     <string name="empty_courses_title">暂无课程</string>
@@ -134,6 +140,7 @@
     <string name="course_weekday">星期</string>
     <string name="course_start_section">开始节次</string>
     <string name="course_end_section">结束节次</string>
+    <string name="course_time_slot">时间段</string>
     <string name="course_start_week">开始周</string>
     <string name="course_end_week">结束周</string>
     <string name="course_week_type">单双周</string>
@@ -150,6 +157,8 @@
     <string name="course_week_range_format">第%1$d-%2$d周 %3$s</string>
     <string name="course_time_summary_format">%1$s %2$s%3$s · %4$s</string>
     <string name="course_clock_time_format">（%1$s-%2$s）</string>
+    <string name="course_time_header">时间</string>
+    <string name="course_time_slot_label">第%1$d节\n%2$s</string>
     <string name="course_teacher_room_empty">未填写教师和教室</string>
     <string name="course_more_actions">更多操作</string>
     <string name="course_action_edit">编辑</string>
@@ -454,6 +463,8 @@
     <string name="plan_today_summary">今日计划: %1$d 项 · %2$d 分钟</string>
     <string name="plan_week_summary">本周计划: %1$d 项 · %2$d 分钟</string>
     <string name="plan_completion_rate">完成率: %1$d%%</string>
+    <string name="plan_selected_date_content_description">已选择%1$s，%2$s日</string>
+    <string name="plan_date_content_description">选择%1$s，%2$s日</string>
     <string name="plan_week_preview_title">本周计划预览</string>
     <string name="plan_week_generating">正在生成本周计划…</string>
     <string name="plan_week_day_empty">当天暂无计划</string>
@@ -561,4 +572,6 @@
     <string name="settings_llm_model_required">请填写 Model</string>
     <string name="settings_llm_number_invalid">请输入有效数值</string>
     <string name="settings_llm_preset_restored">已恢复 %1$s 预设</string>
+    <string name="settings_llm_advanced_toggle">展开高级设置</string>
+    <string name="settings_llm_advanced_hide">收起高级设置</string>
 </resources>

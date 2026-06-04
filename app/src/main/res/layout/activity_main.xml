@@ -40,8 +40,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/campus_surface"
-            app:itemIconTint="@color/campus_primary"
-            app:itemTextColor="@color/campus_primary"
+            app:itemIconTint="@color/selector_bottom_nav_icon"
+            app:itemTextColor="@color/selector_bottom_nav_text"
             app:labelVisibilityMode="labeled"
             app:menu="@menu/menu_bottom_navigation" />
     </LinearLayout>
