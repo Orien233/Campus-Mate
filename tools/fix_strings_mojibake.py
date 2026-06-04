@@ -4,21 +4,25 @@ import re
 from pathlib import Path
 
 
-# Typical characters that appear frequently in "UTF-8 bytes decoded as GBK/CP936" Chinese mojibake.
-MOJIBAKE_HINT_CHARS = set(
-    "鍙鍒鏁楂樻棩瀛璇绋瀵寮缁熻鎻闂锛锟鏇宸鏈€浠诲姟璁剧疆"
-)
+# Characters commonly seen when UTF-8 Chinese text was decoded as GBK/CP936.
+# Keep this list ASCII-escaped so the repair tool itself cannot become mojibake.
+MOJIBAKE_HINT_CHARS = {
+    "\u9359",
+    "\u9352",
+    "\u93c1",
+    "\u6942",
+    "\u6d93",
+    "\u7f01",
+    "\u7f02",
+    "\u95bf",
+    "\u6553",
+}
 
 
 def to_cp_bytes(s: str) -> bytes | None:
-    """
-    Convert the mojibake string back to the original CP936 byte sequence.
-    We primarily use gb18030 since it covers the private-use mappings sometimes seen in bad decodes.
-    """
     out = bytearray()
     for ch in s:
-        # CP936 byte 0x80 often appears as the Euro sign.
-        if ch == "€":
+        if ch == "\u20ac":
             out.append(0x80)
             continue
         try:
@@ -31,31 +35,23 @@ def to_cp_bytes(s: str) -> bytes | None:
 def looks_mojibake(s: str) -> bool:
     if not s:
         return False
-    if "�" in s or "€" in s:
-        return True
-    if "锛" in s:
+    if "\ufffd" in s or "\u20ac" in s:
         return True
     hits = sum(1 for ch in s if ch in MOJIBAKE_HINT_CHARS)
     return hits >= 2
 
 
 def postprocess(s: str) -> str:
-    # Restore placeholders where '%' became '?'.
-    s = re.sub(r"\\?(\\d+)\\$", r"%\\1$", s)
-    # Replace commonly broken punctuation.
-    s = s.replace(" · ", " · ")
-    # Drop any remaining replacement chars (best-effort; some strings may still need manual fix).
-    s = s.replace("�", "")
-    return s
+    # Restore placeholders where '%' became '?' during manual recovery.
+    s = re.sub(r"\?(\d+)\$", r"%\1$", s)
+    return s.replace("\ufffd", "")
 
 
 def decode_mojibake(value: str) -> str | None:
     b = to_cp_bytes(value)
     if b is None:
         return None
-    decoded = b.decode("utf-8", "replace")
-    decoded = postprocess(decoded)
-    return decoded
+    return postprocess(b.decode("utf-8", "replace"))
 
 
 def main() -> int:
@@ -70,11 +66,9 @@ def main() -> int:
     )
 
     changed = 0
-    matched = 0
     out: list[str] = []
     last = 0
     for m in pat.finditer(text):
-        matched += 1
         out.append(text[last : m.start()])
         head, val, tail = m.group(1), m.group("val"), m.group(4)
 
@@ -90,7 +84,7 @@ def main() -> int:
     out.append(text[last:])
 
     p.write_text("".join(out), encoding="utf-8", newline="\n")
-    print(f"matched={matched} updated={changed} in {p}")
+    print(f"updated={changed} in {p}")
     return 0
 
 
