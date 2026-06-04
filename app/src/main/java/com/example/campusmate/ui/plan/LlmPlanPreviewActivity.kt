@@ -11,23 +11,18 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.campusmate.R
 import com.example.campusmate.data.model.StudyPlan
-import com.example.campusmate.data.repository.CourseRepository
 import com.example.campusmate.data.repository.LlmSettingsRepository
-import com.example.campusmate.data.repository.SettingsRepository
 import com.example.campusmate.data.repository.StudyPlanRepository
-import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.domain.llm.LlmClientFactory
-import com.example.campusmate.domain.llm.LlmGenerateRequest
 import com.example.campusmate.domain.plan.LlmPlanGenerateService
 import com.example.campusmate.domain.plan.LlmPlanValidator
+import com.example.campusmate.domain.plan.StudyPlanContextBuilder
+import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
 
 class LlmPlanPreviewActivity : AppCompatActivity() {
 
@@ -184,47 +179,12 @@ class LlmPlanPreviewActivity : AppCompatActivity() {
     }
 
     private fun buildPrompt(): String {
-        val courseRepository = CourseRepository(this)
-        val taskRepository = TaskRepository(this)
-        val settingsRepository = SettingsRepository(this)
-
-        val weekday = getWeekday(planDate)
-        val courses = courseRepository.getCoursesByWeekday(weekday)
-        val tasks = taskRepository.getAllTasks().filter {
-            !it.isDeleted && it.status == com.example.campusmate.data.model.StudyTask.STATUS_TODO
-        }
-        val dailyGoal = settingsRepository.getDailyGoalMinutes()
-
-        val coursesText = if (courses.isEmpty()) {
-            "今日无课程安排"
-        } else {
-            courses.joinToString("\n") { course ->
-                "课程: ${course.name}, 教师: ${course.teacher ?: "未指定"}, " +
-                "教室: ${course.classroom ?: "未指定"}, 节次: ${course.startSection}-${course.endSection}"
-            }
-        }
-
-        val tasksText = if (tasks.isEmpty()) {
-            "暂无待办任务"
-        } else {
-            tasks.take(10).joinToString("\n") { task ->
-                "任务: ${task.title}, 类型: ${getTaskTypeName(task.type)}, " +
-                "优先级: ${getPriorityName(task.priority)}" +
-                (task.dueAt?.let { ", 截止: ${formatDate(it)}" } ?: "")
-            }
-        }
+        val contextText = StudyPlanContextBuilder(this)
+            .buildForDate(planDate)
+            .toPromptText(maxTasks = 12)
 
         return """
-请根据以下信息为 $planDate（${getWeekdayName(weekday)}）生成学习计划。
-
-## 今日课程
-$coursesText
-
-## 待办任务
-$tasksText
-
-## 学习目标
-每日学习目标: ${dailyGoal} 分钟
+$contextText
 
 ## 输出要求
 请以 JSON 格式返回学习计划，格式如下：
@@ -250,54 +210,8 @@ $tasksText
         """.trimIndent()
     }
 
-    private fun getWeekday(dateStr: String): Int {
-        return try {
-            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-            val date = sdf.parse(dateStr)
-            val calendar = Calendar.getInstance()
-            calendar.time = date!!
-            val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-            when (dayOfWeek) {
-                Calendar.SUNDAY -> 7
-                else -> dayOfWeek - 1
-            }
-        } catch (e: Exception) {
-            1
-        }
-    }
-
-    private fun getWeekdayName(weekday: Int): String {
-        val names = arrayOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
-        return names.getOrElse(weekday - 1) { "周一" }
-    }
-
     private fun getTodayDate(): String {
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        return sdf.format(java.util.Date())
-    }
-
-    private fun getTaskTypeName(type: Int): String {
-        return when (type) {
-            com.example.campusmate.data.model.StudyTask.TYPE_HOMEWORK -> "作业"
-            com.example.campusmate.data.model.StudyTask.TYPE_EXAM -> "考试"
-            com.example.campusmate.data.model.StudyTask.TYPE_REVIEW -> "复习"
-            com.example.campusmate.data.model.StudyTask.TYPE_EXPERIMENT -> "实验"
-            com.example.campusmate.data.model.StudyTask.TYPE_PROJECT -> "项目"
-            else -> "其他"
-        }
-    }
-
-    private fun getPriorityName(priority: Int): String {
-        return when (priority) {
-            com.example.campusmate.data.model.StudyTask.PRIORITY_HIGH -> "高"
-            com.example.campusmate.data.model.StudyTask.PRIORITY_MEDIUM -> "中"
-            else -> "低"
-        }
-    }
-
-    private fun formatDate(timeMillis: Long): String {
-        val sdf = SimpleDateFormat("MM-dd", Locale.US)
-        return sdf.format(java.util.Date(timeMillis))
+        return DateTimeUtils.todayDate()
     }
 
     private fun mapExceptionToMessage(e: Exception): String {
