@@ -2,12 +2,14 @@ package com.example.campusmate.ui.task
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.example.campusmate.R
 import com.example.campusmate.data.model.Course
@@ -16,6 +18,7 @@ import com.example.campusmate.data.repository.CourseRepository
 import com.example.campusmate.data.repository.SettingsRepository
 import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.domain.reminder.AlarmReminderScheduler
+import com.example.campusmate.domain.task.TaskDraft
 import com.example.campusmate.util.DateTimeUtils
 import com.example.campusmate.util.PermissionUtils
 import com.google.android.material.appbar.MaterialToolbar
@@ -47,6 +50,18 @@ class TaskEditActivity : AppCompatActivity() {
     private var selectedDueAt: Long? = null
     private var selectedRemindAt: Long? = null
 
+    private val taskParseLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode != RESULT_OK) return@registerForActivityResult
+        val data = result.data ?: return@registerForActivityResult
+        @Suppress("DEPRECATION")
+        val draft = data.getSerializableExtra(TaskWebViewParseActivity.EXTRA_TASK_DRAFT) as? TaskDraft
+            ?: return@registerForActivityResult
+        val warningSummary = data.getStringExtra(TaskWebViewParseActivity.EXTRA_WARNING_SUMMARY).orEmpty()
+        applyTaskDraft(draft, warningSummary)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_task_edit)
@@ -62,6 +77,7 @@ class TaskEditActivity : AppCompatActivity() {
         setupToolbar()
         setupSpinners()
         setupDateButtons()
+        setupAiParseAction()
 
         if (editingTaskId > 0L) {
             editingTask = taskRepository.getTaskById(editingTaskId)
@@ -140,6 +156,12 @@ class TaskEditActivity : AppCompatActivity() {
         updateDateLabels()
     }
 
+    private fun setupAiParseAction() {
+        findViewById<MaterialButton>(R.id.parseTaskFromWebButton).setOnClickListener {
+            taskParseLauncher.launch(Intent(this, TaskWebViewParseActivity::class.java))
+        }
+    }
+
     private fun bindTask(task: StudyTask) {
         titleInput.setText(task.title)
         descriptionInput.setText(task.description.orEmpty())
@@ -150,6 +172,36 @@ class TaskEditActivity : AppCompatActivity() {
         selectedDueAt = task.dueAt
         selectedRemindAt = task.remindAt
         updateDateLabels()
+    }
+
+    private fun applyTaskDraft(draft: TaskDraft, warningSummary: String) {
+        titleInput.setText(draft.title)
+        descriptionInput.setText(draft.description.orEmpty())
+        selectCourseByDraftName(draft.courseName)
+        typeSpinner.setSelection(draft.type.coerceIn(0, 5))
+        prioritySpinner.setSelection(draft.priority.coerceIn(0, 2))
+        selectedDueAt = draft.dueAt
+        selectedRemindAt = draft.remindAt
+        updateDateLabels()
+
+        val message = warningSummary.takeIf { it.isNotBlank() }
+            ?: getString(R.string.task_ai_parse_prefilled)
+        Snackbar.make(rootView, message, Snackbar.LENGTH_LONG).show()
+    }
+
+    private fun selectCourseByDraftName(courseName: String?) {
+        val normalizedCourseName = courseName?.trim().orEmpty()
+        if (normalizedCourseName.isBlank()) {
+            courseSpinner.setSelection(0)
+            return
+        }
+        val index = courses.indexOfFirst { course ->
+            val normalizedExisting = course.name.trim()
+            normalizedExisting.equals(normalizedCourseName, ignoreCase = true) ||
+                normalizedCourseName.contains(normalizedExisting, ignoreCase = true) ||
+                normalizedExisting.contains(normalizedCourseName, ignoreCase = true)
+        }
+        courseSpinner.setSelection(if (index >= 0) index + 1 else 0)
     }
 
     private fun saveTask() {

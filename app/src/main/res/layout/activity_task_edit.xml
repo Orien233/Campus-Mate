@@ -54,6 +54,15 @@
                     android:minLines="3" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/parseTaskFromWebButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_s"
+                android:text="@string/task_ai_parse_from_web"
+                app:icon="@drawable/ic_import" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

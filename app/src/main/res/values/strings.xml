@@ -215,6 +215,25 @@
     <string name="task_attachment_delete_title">删除附件</string>
     <string name="task_attachment_delete_message">确定删除%1$s”吗</string>
     <string name="task_attachment_delete_failed">删除附件失败</string>
+    <string name="task_ai_parse_from_web">从网页解析任务</string>
+    <string name="task_ai_webview_title">AI 网页任务解析</string>
+    <string name="task_ai_webview_body">手动打开课程平台或作业页面，确认页面加载完成后提取当前网页内容。解析结果只会回填任务表单，保存前仍需你确认。</string>
+    <string name="task_ai_webview_url_hint">课程平台或作业页面网址</string>
+    <string name="task_ai_webview_open">打开网页</string>
+    <string name="task_ai_webview_extract">提取并解析</string>
+    <string name="task_ai_webview_url_empty">请先输入网址</string>
+    <string name="task_ai_webview_url_invalid">网址格式不正确</string>
+    <string name="task_ai_webview_extracting">正在提取当前页面内容…</string>
+    <string name="task_ai_webview_extract_failed">提取失败，请确认页面已加载完成</string>
+    <string name="task_ai_open_settings">前往 AI 设置</string>
+    <string name="task_ai_privacy_title">AI 任务解析隐私说明</string>
+    <string name="task_ai_privacy_message">当前网页内容会发送给你选择的模型服务商进行解析。CampusMate 不提供模型服务，不代理请求，也不会在此页面保存账号、密码或 Cookie。解析结果只会先回填表单。</string>
+    <string name="task_ai_privacy_continue">我已了解，继续解析</string>
+    <string name="task_ai_parse_unavailable">AI 当前不可用，请先在设置中启用 AI 并填写 API Key</string>
+    <string name="task_ai_parse_failed">AI 任务解析失败</string>
+    <string name="task_ai_parse_prefill_ready">已解析任务，请确认后保存</string>
+    <string name="task_ai_parse_prefilled">已回填解析结果，请检查后保存</string>
+    <string name="task_ai_parse_multiple_result">识别到 %1$d 条任务，已默认回填第一条</string>
 
     <string name="notification_channel_task_reminders">任务提醒</string>
     <string name="notification_channel_task_reminders_desc">作业、考试和复习任务的提醒通知</string>
