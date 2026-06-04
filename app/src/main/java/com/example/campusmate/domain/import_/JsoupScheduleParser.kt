@@ -252,13 +252,11 @@ class JsoupScheduleParser : ScheduleParser {
 
     private fun parseGenericCourseText(text: String, weekday: Int, startSection: Int, endSection: Int): CourseDraft? {
         val lines = text.lines().map { it.trim() }.filter { it.isNotBlank() }
-        val name = extractGenericCourseName(lines)
+        val name = lines.firstOrNull()?.trim().orEmpty()
         if (name.isBlank()) return null
         val weekRange = parseWeekRange(text)
         return CourseDraft(
             name = name,
-            teacher = extractGenericTeacher(text),
-            classroom = extractGenericClassroom(text, lines),
             weekday = weekday,
             startSection = startSection,
             endSection = endSection,
@@ -267,59 +265,6 @@ class JsoupScheduleParser : ScheduleParser {
             weekType = parseWeekType(text),
             sourceText = text
         )
-    }
-
-    private fun extractGenericCourseName(lines: List<String>): String {
-        return lines.firstOrNull { line ->
-            !isGenericMetadataLine(line)
-        }?.trim().orEmpty()
-    }
-
-    private fun isGenericMetadataLine(line: String): Boolean {
-        return line.contains("教师") ||
-            line.contains("老师") ||
-            line.contains("地点") ||
-            line.contains("教室") ||
-            line.contains("校区") ||
-            line.contains("楼") ||
-            line.contains("第") && line.contains("周") ||
-            line.contains("单周") ||
-            line.contains("双周") ||
-            line.contains("Teacher", ignoreCase = true) ||
-            line.contains("Room", ignoreCase = true) ||
-            line.contains("Location", ignoreCase = true) ||
-            line.contains("Venue", ignoreCase = true)
-    }
-
-    private fun extractGenericTeacher(text: String): String? {
-        val match = GENERIC_TEACHER_PATTERN.find(text) ?: return null
-        return match.groupValues.getOrNull(1)?.trim()?.takeIf { it.isNotBlank() }
-    }
-
-    private fun extractGenericClassroom(text: String, lines: List<String>): String? {
-        GENERIC_CLASSROOM_PATTERN.find(text)?.let { match ->
-            val value = match.groupValues.getOrNull(1)?.trim()
-            if (!value.isNullOrBlank()) return value
-        }
-
-        val locationLine = lines.firstOrNull { line ->
-                line.contains("校区") ||
-                line.contains("教学楼") ||
-                line.contains("楼") && GENERIC_ROOM_TOKEN_PATTERN.containsMatchIn(line) ||
-                line.contains("Room", ignoreCase = true) ||
-                line.contains("Location", ignoreCase = true) ||
-                line.contains("Venue", ignoreCase = true)
-        }
-        locationLine?.let { return stripGenericLocationLabel(it) }
-
-        return GENERIC_ROOM_TOKEN_PATTERN.find(text)?.value
-    }
-
-    private fun stripGenericLocationLabel(text: String): String {
-        return text.replace(
-            Regex("""^(?:上课地点|地点|教室|校区|楼宇|教学楼|Venue|Location|Room)\s*[:：]?\s*""", RegexOption.IGNORE_CASE),
-            ""
-        ).trim()
     }
 
     private fun parseWeekday(text: String): Int? {
@@ -348,11 +293,6 @@ class JsoupScheduleParser : ScheduleParser {
             val end = match.groupValues[2].toIntOrNull() ?: start
             return Pair(start, end)
         }
-        WEEK_RANGE_WITHOUT_PREFIX_PATTERN.find(text)?.let { match ->
-            val start = match.groupValues[1].toIntOrNull() ?: return null
-            val end = match.groupValues[2].toIntOrNull() ?: start
-            return Pair(start, end)
-        }
         WEEK_SINGLE_PATTERN.find(text)?.let { match ->
             val week = match.groupValues[1].toIntOrNull() ?: return null
             return Pair(week, week)
@@ -373,17 +313,11 @@ class JsoupScheduleParser : ScheduleParser {
     }
 
     companion object {
-        private val SECTION_RANGE_PATTERN = Regex("""第?\s*(\d+)\s*节?(?:\s*[-~到]\s*(\d+)\s*节?)?""")
+        private val SECTION_RANGE_PATTERN = Regex("""第?\s*(\d+)\s*节(?:\s*[-~到]\s*(\d+)\s*节)?""")
         private val SECTION_IN_TITLE_PATTERN = Regex("""第\s*(\d+)\s*节""")
         private val WEEK_RANGE_PATTERN = Regex("""第\s*(\d{1,2})\s*-\s*(\d{1,2})\s*周""")
-        private val WEEK_RANGE_WITHOUT_PREFIX_PATTERN = Regex("""(?:周次\s*[:：]?\s*)?(\d{1,2})\s*[-~到]\s*(\d{1,2})\s*周""")
         private val WEEK_SINGLE_PATTERN = Regex("""第\s*(\d{1,2})\s*周""")
         private val COURSE_CODE_PATTERN = Regex("""^[A-Za-z]{1,4}\d{3,4}[A-Za-z]?$""")
         private val ROOM_CODE_PATTERN = Regex("""^[A-Za-z]{0,6}\d{2,4}$""")
-        private val GENERIC_ROOM_TOKEN_PATTERN = Regex("""[A-Za-z]{0,6}\d{2,4}""")
-        private val GENERIC_TEACHER_PATTERN =
-            Regex("""(?:教师|老师|授课教师|任课教师|Teacher|Instructor)\s*[:：]?\s*([^\n;；,，]+)""", RegexOption.IGNORE_CASE)
-        private val GENERIC_CLASSROOM_PATTERN =
-            Regex("""(?:上课地点|地点|教室|校区|楼宇|教学楼|Venue|Location|Room)\s*[:：]?\s*([^\n;；]+)""", RegexOption.IGNORE_CASE)
     }
 }

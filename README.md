@@ -23,7 +23,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 
 - 课程阶段版本：`V1.1-stage-15-p0-3`
 - Gradle `versionName`：`1.0`
-- 当前阶段：学习计划 + AI 辅助解析 + 定位天气协同，已合并 WebView 课表导入、任务图片附件、NFC、天气、LLM API 设置和 LLM 学习计划预览确认能力。
+- 当前阶段：学习计划 + 通知弱化/勿扰增强，已合并 WebView 课表导入、任务图片附件、NFC、天气和 LLM API 设置基础能力。P0-3：LLM 学习计划生成正式接入（预览确认 + 本地规则回退）。
 - 主闭环状态：课程、任务、提醒、导入、专注、记录、统计、设置页已跑通。
 - 当前扩展功能状态：阶段 9-15 基础能力已进入代码；项目展示页、JSON 导出/备份和完整演示数据仍未完成。
 - 数据库版本：`CampusMateDbHelper.DATABASE_VERSION = 5`
@@ -45,7 +45,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 | --- | --- | --- |
 | 首页 Dashboard | 已完成 | 展示今日课程、待办任务、今日/本周学习时长、下一节课、天气卡片和快捷入口。 |
 | 课程管理 | 已完成 | 支持新增、编辑、详情、软删除、按星期筛选、时间冲突提示。 |
-| 任务管理 | 已完成 | 支持新增、编辑、详情、软删除、完成状态切换、类型、优先级、截止时间、提醒时间和 AI 网页解析预填。 |
+| 任务管理 | 已完成 | 支持新增、编辑、详情、软删除、完成状态切换、类型、优先级、截止时间和提醒时间。 |
 | 任务提醒 | 已完成 | `AlarmManager` + `ReminderReceiver` + 通知渠道；开机后通过 `BootReminderReceiver` 恢复未来提醒。 |
 | 课表导入 | 已完成 | 支持内置 `sample_schedule.html`、粘贴 HTML、导入预览、冲突标记和确认写入。 |
 | WebView 课表导入基础页 | 基础完成 / 待验证 | `WebViewImportActivity` 可手动打开页面并提取当前 HTML；真实教务系统页面结构仍需现场验证。 |
@@ -54,17 +54,17 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 | 前台服务 | 已完成 | `FocusService` 使用前台通知展示计时状态，并负责 FocusSession 和 StudyRecord 写入。 |
 | 学习记录 | 已完成 | 专注完成后写入 `focus_sessions` 和 `study_records`。 |
 | 热力图统计 | 已完成 | `StatisticsFragment` 展示今日/本周学习、连续学习、任务完成情况和最近学习热力图。 |
-| 设置页 | 已完成 | 包含学习目标、提醒开关、沉浸模式、天气城市/当前位置、权限入口、学习名片入口、演示数据、清空数据和 LLM 设置。 |
-| 学习计划 | 已完成 | `PlanListFragment` 支持今日/本周规则生成、AI 今日/本周预览确认、手动添加，完成状态切换、删除和详情页；生成上下文会参考课程、任务、天气、学习记录、已有计划和每日目标，并要求避开课程时间。 |
+| 设置页 | 已完成 | 包含学习目标、提醒开关、沉浸模式、天气城市/Mock、权限入口、学习名片入口、演示数据、清空数据和 LLM 设置。 |
+| 学习计划 | 已完成 | `PlanListFragment` 支持今日/本周规则生成、AI 生成今日（含预览确认）、手动添加，完成状态切换、删除和详情页；按课程/考试生成入口仍是占位。AI 生成调用 LLM，失败时回退本地规则。 |
 | 任务图片附件 | 基础完成 | 任务详情页通过 SAF 选择图片，保存 Uri 到 `task_attachments`，可打开和删除；未接入拍照、裁剪或内置大图预览。 |
 | 学习名片 | 已完成 | 本地编辑文本资料，保存到 `user_profile`，不需要登录。 |
 | 二维码 | 已完成 | `StudyCardActivity` 生成公开 JSON 二维码；`ScanQrActivity` 扫码后先预览，再手动确认添加。 |
 | NFC | 基础完成 / 待真机验证 | 复用学习名片公开 JSON，支持 NDEF MIME payload 写入/接收、预览确认和设备不支持/未开启降级。 |
 | 学习伙伴 | 已完成 | 扫码或 NFC 确认后写入 `study_buddies`，支持列表、详情和删除。 |
-| 天气 | 已完成 / 待真机验证 | 手动城市配置、粗略定位辅助、`wttr.in` 远程请求、30 分钟缓存和无网缓存降级；不再提供 Mock 数据，不保存经纬度。 |
+| 天气 | 已完成 | 手动城市配置、Mock 数据、`wttr.in` 远程请求、30 分钟缓存、缓存/Mock 降级；不申请定位权限。 |
 | 通知弱化 / 勿扰增强 | 实验功能 / 待真机验证 | `FocusService` 可按设置调用 `DndManager` 并启用 `NotificationFilterService` 标记；依赖用户系统授权。 |
 | 演示数据 | 基础完成 | `DemoDataRepository` 生成课程、任务、学习记录和导入日志样例；尚未完整覆盖学习伙伴、附件、计划。 |
-| LLM 接口基础设施 | 已完成 | 已有设置页、加密 API Key 存储、OpenAI-Compatible/Gemini Client、连接测试、课表解析、任务网页解析预填和学习计划生成；业务结果必须预览或回填确认。 |
+| LLM 接口基础设施 | 已完成 | 已有设置页、加密 API Key 存储、OpenAI-Compatible/Gemini Client、连接测试、prompt 构造服务。P0-3 已接入学习计划主流程：AI 生成必须预览确认，失败时回退本地规则生成器。 |
 | 项目展示页 / 技术点展示页 | 待实现 | 当前代码中未发现独立项目展示页。 |
 | JSON 导出 / 备份 | 待实现 | 当前未实现本地 JSON 导出/导入流程。 |
 
@@ -78,10 +78,10 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 - NFC：需要支持 NFC 的真机和可写 NFC 标签或兼容 NDEF 发送源；当前 compile SDK 下不再依赖旧 Android Beam 手机对手机发送 API。
 - NotificationListenerService：服务已声明，但通知访问权限必须由用户在系统设置中授权；当前设置页未看到专门跳转通知访问授权页的按钮，需真机验证。
 - 勿扰模式：需要用户授予通知策略访问权限；未授权时不应影响普通专注计时。
-- 天气：远程请求依赖网络；失败时只回退缓存。定位使用粗略位置反查城市，只保存城市名，不保存经纬度；权限授予/拒绝需真机验证。
+- 天气：默认 Mock 数据保证演示稳定；关闭 Mock 后远程请求依赖网络，失败时回退缓存或 Mock。
 - 图片附件：当前只通过 Storage Access Framework 选择图片并持久化 Uri；不申请相册读取权限，不支持拍照、裁剪、压缩或内置大图预览。
 - 学习计划：已有手动添加、本地规则生成、AI 今日/本周计划预览、状态切换和详情页；按课程/考试细分生成、计划提醒和复杂编辑尚未接入。
-- LLM：当前已有设置、Client、连接测试、课表解析、任务解析和学习计划主流程接入。任何 AI 结果都必须先进入预览确认页或回填表单，不能直接静默写入数据库。
+- LLM：当前已有设置、Client、连接测试、prompt 构造能力和学习计划主流程接入；课表解析按钮尚未真正调用 LLM。任何 AI 结果都必须先进入预览确认页，不能直接静默写入数据库。
 
 ## 5. 项目结构说明
 
@@ -239,8 +239,7 @@ ImportScheduleActivity / WebViewImportActivity
 - `CourseRepository`：确认后批量写入课程。
 - `ImportLogRepository` / `import_logs`：记录来源、导入数、跳过数、冲突数和消息。
 - WebView 流程不保存教务系统账号、密码、Cookie，不绕过验证码。
-- `LlmScheduleParseService` 已接入粘贴 HTML 和 WebView 导入流程；AI 可用时优先解析，失败时可回退本地规则，所有结果仍进入 `ImportPreviewActivity`。
-- LLM 与本地 fallback 已拓展地点、楼宇、教室、教师、周次和单双周解析；真实教务系统页面仍需现场验证。
+- `LlmScheduleParseService` 当前只构造 LLM 请求和可用性判断，尚未接入导入按钮；后续接入也必须继续进入 `ImportPreviewActivity`。
 
 ### D. 专注计时闭环
 
@@ -268,25 +267,21 @@ FocusActivity
 ```text
 PlanListFragment
   -> LlmPlanPreviewActivity (AI 生成入口)
-  -> LlmWeekPlanPreviewActivity (AI 本周预览)
-  -> StudyPlanContextBuilder
   -> StudyPlanGenerator (本地规则生成)
-  -> CourseRepository / TaskRepository / WeatherRepository / StudyRecordRepository
+  -> CourseRepository / TaskRepository
   -> StudyPlanRepository
   -> study_plans 表
   -> PlanAdapter / PlanDetailActivity 展示
 ```
 
 - `LlmPlanPreviewActivity`：AI 生成计划预览页，调用 LLM 生成计划后展示预览，用户可选择「追加到现有」或「替换当日」；失败时可回退本地规则生成。
-- `LlmWeekPlanPreviewActivity`：本周计划预览页，逐日生成并展示，用户确认后才写入。
 - `LlmPlanGenerateService`：构造 LLM 请求和可用性判断。
 - `LlmPlanValidator`：解析 LLM 返回的 JSON，校验计划时间、时长等合法性。
-- `StudyPlanContextBuilder`：统一构建计划上下文，包含当天课程、课程占用时间、待办任务、天气缓存、近 7 天学习记录、已有计划和每日目标。
-- `StudyPlanGenerator`：本地规则生成器，基于统一上下文生成每日/每周计划，作为 AI 不可用时的回退方案。
+- `StudyPlanGenerator`：本地规则生成器，基于课程和待办任务生成每日/每周计划，作为 AI 不可用时的回退方案。
 - `StudyPlanRepository`：负责计划批量写入、按日期查询、状态更新、删除和详情查询。
 - `PlanListFragment`：触发今日/本周生成、AI 生成今日、手动添加、切换完成状态和删除。
 - `PlanAdapter` / `PlanDetailActivity`：展示列表和详情。
-- AI 生成结果必须先在预览页确认，不能直接写入数据库；Prompt 中明确要求避开课程占用时间和已有计划时间。
+- AI 生成结果必须先在 `LlmPlanPreviewActivity` 预览确认，不能直接写入数据库。
 - 按课程生成、按考试生成按钮目前显示后续阶段占位提示。
 
 ### F. 任务图片附件闭环
@@ -333,20 +328,19 @@ EditProfileActivity
 
 ```text
 DashboardFragment
-  -> WeatherLocationResolver
   -> WeatherRepository
   -> WeatherDataSource
-  -> RemoteWeatherDataSource
+  -> RemoteWeatherDataSource / MockWeatherDataSource
   -> WeatherParser
   -> weather_cache 表
   -> Dashboard 天气卡片
 ```
 
-- `SettingsRepository` 保存天气城市、城市更新时间和定位引导状态，默认城市为北京。
-- `WeatherLocationResolver` 使用 `LocationManager` + `Geocoder` 将粗略位置反查为城市名，只保存城市名，不保存经纬度。
+- `SettingsRepository` 保存天气城市和 Mock 开关，默认城市为北京，Mock 默认开启。
 - `WeatherRepository` 优先使用 30 分钟内新鲜缓存；强制刷新或缓存过期时再取数据。
-- `RemoteWeatherDataSource` 当前远程源为 `wttr.in` JSON；失败时只回退缓存，无缓存时显示不可用提示。
-- Dashboard 首次天气卡片会引导粗略定位授权；Dashboard 和设置页都支持手动重新定位。
+- Mock 开启时使用 `MockWeatherDataSource`，保证演示稳定。
+- Mock 关闭时请求 `RemoteWeatherDataSource`，当前远程源为 `wttr.in` JSON；失败时回退缓存或 Mock。
+- 天气模块不申请定位权限，不自动获取用户位置。
 
 ### I. 通知弱化 / 勿扰增强闭环
 
@@ -405,8 +399,7 @@ SettingsFragment
 - 连接测试从手机直接请求用户选择的模型服务商。
 - 错误详情会通过 `LlmHttpUtils` 屏蔽当前 API Key，避免完整密钥出现在 UI 或测试输出中。
 - 当前支持 OpenAI-Compatible 和 Gemini 两类客户端；预设只用于填表，用户可以按控制台实际配置修改。
-- 当前已把 LLM 接入课表导入、任务网页解析和学习计划主流程：课表进入导入预览，任务只回填编辑表单，计划进入预览确认；失败时可回退本地规则或提示用户配置。
-- AI 解析字段已拓展到地点别名（`location`、`venue`、`campus`、`building`、`room` 等）、教师别名、周次和单双周；仍需用户在预览页或表单里确认。
+- 当前已把 LLM 接入学习计划主流程：计划页在 API Key 可用且功能开启时进入 AI 计划预览页，用户确认后才追加或替换计划；失败时可回退本地规则生成。课表解析按钮尚未真正调用 LLM；后续接入仍必须进入导入预览，不能让 AI 结果直接写数据库。
 
 ## 8. 数据库设计说明
 
@@ -421,7 +414,7 @@ SettingsFragment
 | `import_logs` | 课表导入记录 | `source_type`、`imported_count`、`skipped_count`、`conflict_count`、`created_at`、`message` | `ImportLogRepository` | 记录导入行为，不直接外键关联课程。 |
 | `user_profile` | 本机学习名片 | `nickname`、`school`、`major`、`grade`、`bio`、`avatar_uri`、`github`、`email`、`phone`、`show_email`、`show_phone` | `UserProfileRepository` | 用于生成公开 JSON，不上传云端。 |
 | `study_buddies` | 二维码/NFC 确认添加的学习伙伴 | `nickname`、`school`、`major`、`grade`、`bio`、`github`、`email`、`phone`、`source`、`added_at`、`note` | `StudyBuddyRepository` | `source=0` 二维码，`source=1` NFC，`source=2` 手动预留。 |
-| `weather_cache` | 天气缓存 | `city`、`weather_text`、`temperature`、`humidity`、`wind`、`source`、`raw_json`、`updated_at` | `WeatherRepository` | Dashboard 天气卡片读取；只缓存城市天气，不保存经纬度。 |
+| `weather_cache` | 天气缓存 | `city`、`weather_text`、`temperature`、`humidity`、`wind`、`source`、`raw_json`、`updated_at` | `WeatherRepository` | Dashboard 天气卡片读取；不关联定位。 |
 | `study_plans` | 学习计划 | `title`、`plan_date`、`planned_minutes`、`actual_minutes`、`start_time`、`end_time`、`type`、`status`、`source_type` | `StudyPlanRepository` | 由本地规则生成器、AI 预览确认或手动添加写入，供计划列表和详情展示。 |
 | `task_attachments` | 任务图片附件 Uri | `task_id`、`uri`、`mime_type`、`title`、`created_at` | `TaskAttachmentRepository` | 按 `task_id` 关联任务详情页。 |
 
@@ -440,12 +433,11 @@ Manifest 当前声明：
 | `SCHEDULE_EXACT_ALARM` | 尽量准时触发任务提醒 | 不可用时 `AlarmReminderScheduler` 降级到 `setWindow`。 |
 | `CAMERA` | 二维码扫描 | 运行时授权；拒绝后扫码不可用，二维码生成仍可用。 |
 | `NFC` | NFC 名片写入和接收 | 无 NFC 或未开启时提示降级到二维码。 |
-| `INTERNET` | 远程天气、WebView 导入、LLM 连接测试和 AI 请求 | 无网络时天气可回退缓存；LLM 测试失败不影响本地功能。 |
-| `ACCESS_COARSE_LOCATION` | 根据粗略位置辅助判断天气城市 | 运行时授权；拒绝后继续使用手动城市和天气缓存。 |
+| `INTERNET` | 可选远程天气、WebView 导入、LLM 连接测试 | 无网络时天气可回退缓存/Mock；LLM 测试失败不影响本地功能。 |
 | `android.hardware.camera required=false` | 相机硬件声明 | 没有相机时扫码不可用。 |
 | `android.hardware.nfc required=false` | NFC 硬件声明 | 没有 NFC 时显示降级提示。 |
 
-Manifest 当前未声明相册读取权限。图片附件通过 SAF 选择图片，不需要 `READ_MEDIA_IMAGES` 或 `READ_EXTERNAL_STORAGE`。定位仅用于反查天气城市，代码不保存经纬度。
+Manifest 当前未声明定位权限，也未声明相册读取权限。图片附件通过 SAF 选择图片，不需要 `READ_MEDIA_IMAGES` 或 `READ_EXTERNAL_STORAGE`。
 
 勿扰模式和通知访问属于系统设置授权：应用只能引导或提示用户授权，不能绕过系统限制；相关功能需要真机验证。
 
@@ -473,7 +465,7 @@ Debug APK 输出路径：
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-当前已有 JVM/仪器测试文件包括 `ScheduleParserTest`、`LlmTaskDraftValidatorTest`、`StudyPlanContextBuilderTest`、`FocusStateMachineTest`、`HeatmapCalculatorTest`、`TaskReminderPolicyTest`、`LlmProviderPresetsTest`、`LlmSettingsRepositoryTest`、`OpenAiCompatibleRequestBuilderTest`、`GeminiRequestBuilderTest`、`RepositoryInstrumentedTest`、`WeatherParserInstrumentedTest` 等。
+当前已有 JVM/仪器测试文件包括 `ScheduleParserTest`、`FocusStateMachineTest`、`HeatmapCalculatorTest`、`TaskReminderPolicyTest`、`LlmProviderPresetsTest`、`LlmSettingsRepositoryTest`、`OpenAiCompatibleRequestBuilderTest`、`GeminiRequestBuilderTest`、`RepositoryInstrumentedTest`、`WeatherParserInstrumentedTest` 等。
 
 真机验证清单：
 
@@ -486,6 +478,6 @@ app/build/outputs/apk/debug/app-debug.apk
 - NFC 不支持、未开启、写入标签、接收 payload 和确认保存。
 - SAF 图片附件选择、持久 Uri、外部打开和删除。
 - WebView 打开真实教务系统页面并提取当前 HTML。
-- Android 粗略定位权限授予/拒绝、天气城市反查、远程天气有网/无网缓存降级。
+- 远程天气在有网/无网时的缓存和 Mock 降级。
 
 本 README 只说明可运行命令和验证项；是否已通过以本次实际执行结果为准。

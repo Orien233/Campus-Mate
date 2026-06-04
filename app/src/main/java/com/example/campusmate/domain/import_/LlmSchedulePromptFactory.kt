@@ -48,8 +48,6 @@ object LlmSchedulePromptFactory {
             - 如果字段缺失或不确定，不要编造数据；请丢弃该课程，并在 warnings 里说明原因。
             - 不要把原始 HTML 直接塞进课程字段。
             - 如果存在多门课程，请全部输出。
-            - 地点信息尽量写入 classroom；如果页面拆成 campus/building/room/location/venue/place，也要合并成可读地点。
-            - 教师可来自 teacher/teacherName/instructor/lecturer 等字段或页面中的“教师/老师/授课教师”文案。
 
             常见中文模式提示：
             - “星期一/星期二/…/星期日” 对应 weekday 1..7。
@@ -67,7 +65,6 @@ object LlmSchedulePromptFactory {
               校区/楼宇  教室号
               [选中]/[置入] 等状态文本
               请提取：课程名、教师、教室、weekday、start/endSection、start/endWeek、weekType；忽略“[选中]”“[置入]”等状态词。
-            - 如果地点拆成“校区、教学楼、房间号”，请组合成类似“海淀校区 主楼 A101”的 classroom。
         """.trimIndent()
     }
 
