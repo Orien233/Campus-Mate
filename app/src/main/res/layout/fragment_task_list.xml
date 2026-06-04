@@ -38,10 +38,13 @@
                     android:orientation="horizontal">
 
                     <LinearLayout
+                        android:id="@+id/taskTodoCountContainer"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="4dp">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -62,10 +65,13 @@
                     </LinearLayout>
 
                     <LinearLayout
+                        android:id="@+id/taskUpcomingCountContainer"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="4dp">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -80,16 +86,19 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/space_xs"
                             android:text="@string/dashboard_zero_count"
-                            android:textColor="@color/campus_text_primary"
+                            android:textColor="@color/warning"
                             android:textSize="24sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
                     <LinearLayout
+                        android:id="@+id/taskOverdueCountContainer"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="4dp">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -104,7 +113,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/space_xs"
                             android:text="@string/dashboard_zero_count"
-                            android:textColor="@color/campus_accent"
+                            android:textColor="@color/error"
                             android:textSize="24sp"
                             android:textStyle="bold" />
                     </LinearLayout>

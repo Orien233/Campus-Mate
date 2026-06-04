@@ -25,8 +25,7 @@ class CourseEditActivity : AppCompatActivity() {
     private lateinit var teacherInput: TextInputEditText
     private lateinit var classroomInput: TextInputEditText
     private lateinit var weekdaySpinner: Spinner
-    private lateinit var startSectionInput: TextInputEditText
-    private lateinit var endSectionInput: TextInputEditText
+    private lateinit var timeSlotSpinner: Spinner
     private lateinit var startWeekInput: TextInputEditText
     private lateinit var endWeekInput: TextInputEditText
     private lateinit var weekTypeSpinner: Spinner
@@ -70,8 +69,7 @@ class CourseEditActivity : AppCompatActivity() {
         teacherInput = findViewById(R.id.courseTeacherInput)
         classroomInput = findViewById(R.id.courseClassroomInput)
         weekdaySpinner = findViewById(R.id.courseWeekdaySpinner)
-        startSectionInput = findViewById(R.id.courseStartSectionInput)
-        endSectionInput = findViewById(R.id.courseEndSectionInput)
+        timeSlotSpinner = findViewById(R.id.courseTimeSlotSpinner)
         startWeekInput = findViewById(R.id.courseStartWeekInput)
         endWeekInput = findViewById(R.id.courseEndWeekInput)
         weekTypeSpinner = findViewById(R.id.courseWeekTypeSpinner)
@@ -92,6 +90,11 @@ class CourseEditActivity : AppCompatActivity() {
             R.array.course_weekdays,
             android.R.layout.simple_spinner_dropdown_item
         )
+        timeSlotSpinner.adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_dropdown_item,
+            timeSlotLabels
+        )
         weekTypeSpinner.adapter = ArrayAdapter.createFromResource(
             this,
             R.array.course_week_types,
@@ -109,8 +112,7 @@ class CourseEditActivity : AppCompatActivity() {
         teacherInput.setText(course.teacher.orEmpty())
         classroomInput.setText(course.classroom.orEmpty())
         weekdaySpinner.setSelection((course.weekday - 1).coerceIn(0, 6))
-        startSectionInput.setText(course.startSection.toString())
-        endSectionInput.setText(course.endSection.toString())
+        timeSlotSpinner.setSelection((course.startSection - 1).coerceIn(0, timeSlotLabels.lastIndex))
         startWeekInput.setText(course.startWeek.toString())
         endWeekInput.setText(course.endWeek.toString())
         weekTypeSpinner.setSelection(course.weekType.coerceIn(0, 2))
@@ -141,15 +143,10 @@ class CourseEditActivity : AppCompatActivity() {
             return null
         }
 
-        val startSection = parsePositiveInt(startSectionInput, R.string.course_start_section)
-        val endSection = parsePositiveInt(endSectionInput, R.string.course_end_section)
+        val timeSlot = timeSlotSpinner.selectedItemPosition + 1
         val startWeek = parsePositiveInt(startWeekInput, R.string.course_start_week)
         val endWeek = parsePositiveInt(endWeekInput, R.string.course_end_week)
-        if (startSection == null || endSection == null || startWeek == null || endWeek == null) {
-            return null
-        }
-        if (endSection < startSection) {
-            showMessage(getString(R.string.course_section_range_error))
+        if (startWeek == null || endWeek == null) {
             return null
         }
         if (endWeek < startWeek) {
@@ -163,8 +160,8 @@ class CourseEditActivity : AppCompatActivity() {
             teacher = teacherInput.text?.toString()?.trim()?.takeIf { it.isNotBlank() },
             classroom = classroomInput.text?.toString()?.trim()?.takeIf { it.isNotBlank() },
             weekday = weekdaySpinner.selectedItemPosition + 1,
-            startSection = startSection,
-            endSection = endSection,
+            startSection = timeSlot,
+            endSection = timeSlot,
             startWeek = startWeek,
             endWeek = endWeek,
             weekType = weekTypeSpinner.selectedItemPosition,
@@ -215,6 +212,15 @@ class CourseEditActivity : AppCompatActivity() {
             "#B54848",
             "#6B5BA7",
             "#3C7D4E"
+        )
+        private val timeSlotLabels = listOf(
+            "1  8:00-9:50",
+            "2  10:10-12:00",
+            "3  12:10-13:50",
+            "4  14:10-16:00",
+            "5  16:20-18:10",
+            "6  19:00-20:50",
+            "7  21:00-21:50"
         )
     }
 }

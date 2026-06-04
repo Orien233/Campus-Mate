@@ -22,7 +22,7 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="104dp"
+                android:layout_height="120dp"
                 android:layout_columnWeight="1"
                 android:layout_gravity="fill">
 
@@ -54,7 +54,7 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="104dp"
+                android:layout_height="120dp"
                 android:layout_columnWeight="1"
                 android:layout_gravity="fill">
 
@@ -86,7 +86,7 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="104dp"
+                android:layout_height="120dp"
                 android:layout_columnWeight="1"
                 android:layout_gravity="fill">
 
@@ -113,12 +113,33 @@
                         android:textColor="@color/campus_text_primary"
                         android:textSize="22sp"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvTodayPlanCompletion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/dashboard_plan_completion_empty"
+                        android:textColor="@color/campus_text_secondary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tvTodayTrend"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/dashboard_today_trend_placeholder"
+                        android:textColor="@color/campus_text_secondary"
+                        android:textSize="12sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="104dp"
+                android:layout_height="120dp"
                 android:layout_columnWeight="1"
                 android:layout_gravity="fill">
 
@@ -145,6 +166,17 @@
                         android:textColor="@color/campus_text_primary"
                         android:textSize="22sp"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvWeekTrend"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/dashboard_week_trend_placeholder"
+                        android:textColor="@color/campus_text_secondary"
+                        android:textSize="12sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </GridLayout>

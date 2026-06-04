@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.text.InputType
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -44,6 +45,7 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
     private lateinit var emptyStateView: LinearLayout
     private lateinit var summaryText: TextView
     private lateinit var completionText: TextView
+    private lateinit var progressBar: ProgressBar
     private lateinit var weekDaySelector: LinearLayout
     private lateinit var generateTodayButton: MaterialButton
     private lateinit var generateWeekButton: MaterialButton
@@ -76,6 +78,7 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
         emptyStateView = view.findViewById(R.id.planEmptyState)
         summaryText = view.findViewById(R.id.planSummaryText)
         completionText = view.findViewById(R.id.planCompletionText)
+        progressBar = view.findViewById(R.id.planProgressBar)
         weekDaySelector = view.findViewById(R.id.weekDaySelector)
         generateTodayButton = view.findViewById(R.id.generateTodayButton)
         generateWeekButton = view.findViewById(R.id.generateWeekButton)
@@ -139,13 +142,23 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
 
             val dayView = layoutInflater.inflate(R.layout.item_weekday_tab, weekDaySelector, false)
             val dayButton = dayView.findViewById<MaterialButton>(R.id.weekdayButton)
-            dayButton.text = "$dayOfWeek\n$dayNumber"
-            dayButton.isChecked = dayDate == selectedDate
+            val isSelected = dayDate == selectedDate
+            dayButton.text = "$dayNumber\n$dayOfWeek"
+            dayButton.isChecked = isSelected
+            dayButton.isSelected = isSelected
+            dayButton.jumpDrawablesToCurrentState()
+            dayButton.contentDescription = if (isSelected) {
+                getString(R.string.plan_selected_date_content_description, dayOfWeek, dayNumber)
+            } else {
+                getString(R.string.plan_date_content_description, dayOfWeek, dayNumber)
+            }
 
             dayButton.setOnClickListener {
-                selectedDate = dayDate
-                setupWeekDaySelector()
-                loadPlans()
+                if (selectedDate != dayDate) {
+                    selectedDate = dayDate
+                    setupWeekDaySelector()
+                    loadPlans()
+                }
             }
 
             weekDaySelector.addView(dayView)
@@ -165,6 +178,11 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
             getString(R.string.plan_completion_rate, rate)
         } else {
             ""
+        }
+        progressBar.progress = if (totalCount > 0) {
+            (completedCount * 100) / totalCount
+        } else {
+            0
         }
 
         adapter.submitList(plans.map { PlanListItem(it) })

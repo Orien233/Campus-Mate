@@ -241,50 +241,66 @@
                     android:textColor="@color/campus_text_secondary"
                     android:textSize="13sp" />
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/llmTemperatureInputLayout"
-                    android:layout_width="match_parent"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/llmAdvancedToggleButton"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_m"
-                    android:hint="@string/settings_llm_temperature">
+                    android:text="@string/settings_llm_advanced_toggle" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/llmTemperatureInput"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="numberDecimal"
-                        android:maxLines="1" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/llmTimeoutInputLayout"
+                <LinearLayout
+                    android:id="@+id/llmAdvancedSettingsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_s"
-                    android:hint="@string/settings_llm_timeout_millis">
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/llmTimeoutInput"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/llmTemperatureInputLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="number"
-                        android:maxLines="1" />
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:layout_marginTop="@dimen/space_s"
+                        android:hint="@string/settings_llm_temperature">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/llmMaxTokensInputLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_s"
-                    android:hint="@string/settings_llm_max_output_tokens">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/llmTemperatureInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="numberDecimal"
+                            android:maxLines="1" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/llmMaxTokensInput"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/llmTimeoutInputLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="number"
-                        android:maxLines="1" />
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:layout_marginTop="@dimen/space_s"
+                        android:hint="@string/settings_llm_timeout_millis">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/llmTimeoutInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="number"
+                            android:maxLines="1" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/llmMaxTokensInputLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_s"
+                        android:hint="@string/settings_llm_max_output_tokens">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/llmMaxTokensInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="number"
+                            android:maxLines="1" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/llmSaveButton"

@@ -40,6 +40,16 @@
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
+                <ProgressBar
+                    android:id="@+id/planProgressBar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:max="100"
+                    android:progressTint="@color/campus_primary"
+                    android:progressBackgroundTint="@color/campus_outline" />
+
                 <TextView
                     android:id="@+id/planCompletionText"
                     android:layout_width="wrap_content"
@@ -102,16 +112,17 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:orientation="vertical">
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/generateTodayButton"
                             style="@style/Widget.Material3.Button"
-                            android:layout_width="0dp"
-                            android:layout_height="56dp"
-                            android:layout_weight="1"
-                            android:layout_marginEnd="@dimen/space_s"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="@dimen/space_s"
+                            android:minHeight="56dp"
                             android:text="@string/plan_generate_today"
+                            android:maxLines="2"
                             android:textSize="16sp"
                             android:textStyle="bold"
                             app:icon="@drawable/ic_plan"
@@ -121,10 +132,11 @@
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/generateWeekButton"
                             style="@style/Widget.Material3.Button"
-                            android:layout_width="0dp"
-                            android:layout_height="56dp"
-                            android:layout_weight="1"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="56dp"
                             android:text="@string/plan_generate_week"
+                            android:maxLines="2"
                             android:textSize="16sp"
                             android:textStyle="bold"
                             app:icon="@drawable/ic_calendar"

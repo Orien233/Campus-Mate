@@ -3,10 +3,9 @@ package com.example.campusmate.ui.course
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.campusmate.R
 import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.repository.CourseRepository
@@ -22,8 +21,9 @@ import com.google.android.material.snackbar.Snackbar
 /** Shows the user's course list and weekday filter. */
 class CourseListFragment : Fragment(R.layout.fragment_course_list) {
     private lateinit var repository: CourseRepository
-    private lateinit var adapter: CourseAdapter
-    private lateinit var recyclerView: RecyclerView
+    private lateinit var timetableScrollView: View
+    private lateinit var timetableContainer: LinearLayout
+    private lateinit var recyclerView: View
     private lateinit var emptyStateView: View
     private lateinit var totalCountText: TextView
     private lateinit var todayCountText: TextView
@@ -37,14 +37,9 @@ class CourseListFragment : Fragment(R.layout.fragment_course_list) {
         totalCountText = view.findViewById(R.id.courseTotalCountText)
         todayCountText = view.findViewById(R.id.courseTodayCountText)
         visibleCountText = view.findViewById(R.id.courseVisibleCountText)
+        timetableScrollView = view.findViewById(R.id.courseTimetableScroll)
+        timetableContainer = view.findViewById(R.id.courseTimetableContainer)
         recyclerView = view.findViewById(R.id.courseRecyclerView)
-        adapter = CourseAdapter(
-            onCourseClick = { openDetail(it.id) },
-            onEditClick = { openEdit(it.id) },
-            onDeleteClick = { confirmDelete(it) }
-        )
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = adapter
 
         view.findViewById<FloatingActionButton>(R.id.addCourseFab).setOnClickListener {
             openEdit()
@@ -95,10 +90,122 @@ class CourseListFragment : Fragment(R.layout.fragment_course_list) {
         totalCountText.text = allCourses.size.toString()
         todayCountText.text = allCourses.count { it.weekday == DateTimeUtils.currentWeekday() }.toString()
         visibleCountText.text = courses.size.toString()
-        adapter.submitList(courses)
+        renderTimetable(courses)
         val isEmpty = courses.isEmpty()
         emptyStateView.visibility = if (isEmpty) View.VISIBLE else View.GONE
-        recyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
+        timetableScrollView.visibility = if (isEmpty) View.GONE else View.VISIBLE
+        recyclerView.visibility = View.GONE
+    }
+
+    private fun renderTimetable(courses: List<Course>) {
+        timetableContainer.removeAllViews()
+
+        val days = (1..7).toList()
+        val maxSection = maxOf(7, courses.maxOfOrNull { it.endSection } ?: 7)
+
+        val headerRow = createRow()
+        headerRow.addView(createBaseCell(getString(R.string.course_time_header), TIME_CELL_WIDTH_DP, HEADER_CELL_HEIGHT_DP))
+        days.forEach { weekday ->
+            headerRow.addView(
+                createBaseCell(
+                    CourseUiFormatter.weekdayLabel(requireContext(), weekday),
+                    COURSE_CELL_WIDTH_DP,
+                    HEADER_CELL_HEIGHT_DP
+                )
+            )
+        }
+        timetableContainer.addView(headerRow)
+
+        for (section in 1..maxSection) {
+            val row = createRow()
+            row.addView(
+                createBaseCell(
+                    getString(R.string.course_time_slot_label, section, courseTimeRanges.getOrNull(section - 1).orEmpty()),
+                    TIME_CELL_WIDTH_DP,
+                    COURSE_CELL_HEIGHT_DP
+                )
+            )
+            days.forEach { weekday ->
+                val cellCourses = courses.filter { course ->
+                    course.weekday == weekday && section in course.startSection..course.endSection
+                }
+                row.addView(createCourseCell(cellCourses.firstOrNull(), cellCourses.size > 1))
+            }
+            timetableContainer.addView(row)
+        }
+    }
+
+    private fun createRow(): LinearLayout = LinearLayout(requireContext()).apply {
+        orientation = LinearLayout.HORIZONTAL
+        layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+    }
+
+    private fun createCourseCell(course: Course?, conflict: Boolean): View {
+        val cell = layoutInflater.inflate(R.layout.item_course_grid, timetableContainer, false)
+        cell.layoutParams = LinearLayout.LayoutParams(dp(COURSE_CELL_WIDTH_DP), dp(COURSE_CELL_HEIGHT_DP)).apply {
+            rightMargin = resources.getDimensionPixelSize(R.dimen.space_xs)
+            bottomMargin = resources.getDimensionPixelSize(R.dimen.space_xs)
+        }
+
+        val nameText = cell.findViewById<TextView>(R.id.courseNameText)
+        val metaText = cell.findViewById<TextView>(R.id.courseMetaText)
+        val timeText = cell.findViewById<TextView>(R.id.courseTimeText)
+
+        if (course == null) {
+            nameText.text = ""
+            metaText.text = ""
+            timeText.text = ""
+            cell.alpha = EMPTY_CELL_ALPHA
+            cell.isClickable = false
+            return cell
+        }
+
+        nameText.text = course.name
+        metaText.text = CourseUiFormatter.teacherAndRoom(requireContext(), course)
+        timeText.text = CourseUiFormatter.timeSummary(requireContext(), course)
+        if (conflict) {
+            timeText.append("\n${getString(R.string.course_conflict_title)}")
+        }
+        cell.alpha = 1f
+        cell.background = CourseGridCellBackgroundFactory.create(requireContext(), course.color)
+        cell.setOnClickListener { openDetail(course.id) }
+        cell.setOnLongClickListener {
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(course.name)
+                .setItems(arrayOf(getString(R.string.course_action_edit), getString(R.string.course_action_delete))) { _, which ->
+                    when (which) {
+                        0 -> openEdit(course.id)
+                        1 -> confirmDelete(course)
+                    }
+                }
+                .show()
+            true
+        }
+        return cell
+    }
+
+    private fun createBaseCell(text: String, widthDp: Int, heightDp: Int): TextView = TextView(requireContext()).apply {
+        layoutParams = LinearLayout.LayoutParams(dp(widthDp), dp(heightDp)).apply {
+            rightMargin = resources.getDimensionPixelSize(R.dimen.space_xs)
+            bottomMargin = resources.getDimensionPixelSize(R.dimen.space_xs)
+        }
+        setPadding(
+            resources.getDimensionPixelSize(R.dimen.space_s),
+            resources.getDimensionPixelSize(R.dimen.space_s),
+            resources.getDimensionPixelSize(R.dimen.space_s),
+            resources.getDimensionPixelSize(R.dimen.space_s)
+        )
+        this.text = text
+        textSize = 12f
+        setTextColor(resources.getColor(R.color.campus_text_primary, null))
+        setBackgroundResource(R.drawable.bg_tag)
+    }
+
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
     }
 
     private fun openDetail(courseId: Long) {
@@ -145,5 +252,19 @@ class CourseListFragment : Fragment(R.layout.fragment_course_list) {
 
     companion object {
         private const val WEEKDAY_ALL = 0
+        private const val TIME_CELL_WIDTH_DP = 92
+        private const val COURSE_CELL_WIDTH_DP = 96
+        private const val HEADER_CELL_HEIGHT_DP = 40
+        private const val COURSE_CELL_HEIGHT_DP = 120
+        private const val EMPTY_CELL_ALPHA = 0.18f
+        private val courseTimeRanges = listOf(
+            "8:00-9:50",
+            "10:10-12:00",
+            "12:10-13:50",
+            "14:10-16:00",
+            "16:20-18:10",
+            "19:00-20:50",
+            "21:00-21:50"
+        )
     }
 }

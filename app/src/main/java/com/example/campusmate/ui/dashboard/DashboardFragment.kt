@@ -8,10 +8,11 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.example.campusmate.R
+import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.data.model.StudyTask
 import com.example.campusmate.data.repository.CourseRepository
 import com.example.campusmate.data.repository.SettingsRepository
-import com.example.campusmate.data.repository.StudyRecordRepository
+import com.example.campusmate.data.repository.StudyPlanRepository
 import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.data.repository.WeatherRepository
 import com.example.campusmate.domain.weather.WeatherLocationResolver
@@ -31,7 +32,7 @@ import com.google.android.material.snackbar.Snackbar
 class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     private lateinit var courseRepository: CourseRepository
     private lateinit var taskRepository: TaskRepository
-    private lateinit var studyRecordRepository: StudyRecordRepository
+    private lateinit var planRepository: StudyPlanRepository
     private lateinit var settingsRepository: SettingsRepository
     private lateinit var weatherRepository: WeatherRepository
     private var weatherLoadToken: Long = 0L
@@ -54,7 +55,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         super.onViewCreated(view, savedInstanceState)
         courseRepository = CourseRepository(requireContext())
         taskRepository = TaskRepository(requireContext())
-        studyRecordRepository = StudyRecordRepository(requireContext())
+        planRepository = StudyPlanRepository(requireContext())
         settingsRepository = SettingsRepository(requireContext())
         weatherRepository = WeatherRepository(requireContext())
 
@@ -95,19 +96,63 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val currentView = view ?: return
         val todayCourses = courseRepository.getTodayCourses()
         val pendingTasks = taskRepository.getAllTasks().count { it.status == StudyTask.STATUS_TODO }
-        val todayDurationMinutes = studyRecordRepository.getTodayDuration() / 60
-        val weeklyDurationMinutes = studyRecordRepository.getWeeklyDuration() / 60
+        val todayDate = DateTimeUtils.todayDate()
+        val weekStartDate = DateTimeUtils.startOfWeekDate()
+        val todayPlans = planRepository.getPlansByDate(todayDate)
+        val totalPlans = todayPlans.size
+        val completedPlans = todayPlans.count { it.status == StudyPlan.STATUS_COMPLETED }
+        val todayDurationMinutes = getCompletedPlanMinutesForDate(todayDate)
+        val weeklyDurationMinutes = getWeekCompletedMinutes(weekStartDate)
+        val todayTrendDelta = todayDurationMinutes - getCompletedPlanMinutesForDate(DateTimeUtils.datePlusDays(todayDate, -1))
+        val weekTrendDelta = weeklyDurationMinutes - getWeekCompletedMinutes(DateTimeUtils.datePlusDays(weekStartDate, -7))
 
         currentView.findViewById<TextView>(R.id.tvTodayCourseCount).text = todayCourses.size.toString()
         currentView.findViewById<TextView>(R.id.tvPendingTaskCount).text = pendingTasks.toString()
         currentView.findViewById<TextView>(R.id.tvTodayFocusMinutes).text = getString(R.string.duration_minutes, todayDurationMinutes)
         currentView.findViewById<TextView>(R.id.tvWeekFocusMinutes).text = getString(R.string.duration_minutes, weeklyDurationMinutes)
+        currentView.findViewById<TextView>(R.id.tvTodayPlanCompletion).text =
+            if (totalPlans > 0) {
+                val completionRate = completedPlans * 100 / totalPlans
+                getString(R.string.dashboard_plan_completion_format, completedPlans, totalPlans, completionRate)
+            } else {
+                getString(R.string.dashboard_plan_completion_empty)
+            }
+        currentView.findViewById<TextView>(R.id.tvTodayTrend).apply {
+            text = formatTrend(R.string.dashboard_today_trend_format, todayTrendDelta)
+            setTextColor(requireContext().getColor(colorForDelta(todayTrendDelta)))
+        }
+        currentView.findViewById<TextView>(R.id.tvWeekTrend).apply {
+            text = formatTrend(R.string.dashboard_week_trend_format, weekTrendDelta)
+            setTextColor(requireContext().getColor(colorForDelta(weekTrendDelta)))
+        }
         currentView.findViewById<TextView>(R.id.tvNextCourseValue).text =
             todayCourses.firstOrNull()?.let { getString(R.string.dashboard_next_course_format, it.name, it.startSection, it.endSection) }
                 ?: getString(R.string.dashboard_no_next_course)
         if (!maybeShowWeatherLocationGuide()) {
             loadWeather(forceRefresh = false)
         }
+    }
+
+    private fun getCompletedPlanMinutesForDate(date: String): Int {
+        return planRepository.getPlansByDate(date)
+            .filter { it.status == StudyPlan.STATUS_COMPLETED }
+            .sumOf { it.actualMinutes.takeIf { minutes -> minutes > 0 } ?: it.plannedMinutes }
+    }
+
+    private fun getWeekCompletedMinutes(weekStartDate: String): Int {
+        val weekEndDate = DateTimeUtils.datePlusDays(weekStartDate, 6)
+        return planRepository.getWeeklyPlans(weekStartDate, weekEndDate)
+            .filter { it.status == StudyPlan.STATUS_COMPLETED }
+            .sumOf { it.actualMinutes.takeIf { minutes -> minutes > 0 } ?: it.plannedMinutes }
+    }
+
+    private fun formatTrend(formatRes: Int, delta: Int): String {
+        val sign = if (delta >= 0) "+" else "-"
+        return getString(formatRes, sign, kotlin.math.abs(delta))
+    }
+
+    private fun colorForDelta(delta: Int): Int {
+        return if (delta >= 0) R.color.success else R.color.campus_accent
     }
 
     private fun loadWeather(forceRefresh: Boolean) {
