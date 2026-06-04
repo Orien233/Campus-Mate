@@ -5,7 +5,7 @@ import java.net.URLEncoder
 import java.net.URL
 import java.nio.charset.StandardCharsets
 
-/** Optional remote weather source. It uses no location permission and no hardcoded API key. */
+/** Optional remote weather source with no hardcoded API key. */
 class RemoteWeatherDataSource : WeatherDataSource {
     override fun fetchWeather(city: String): WeatherResult? {
         val normalizedCity = city.trim()

@@ -4,7 +4,6 @@ import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import com.example.campusmate.data.db.CampusMateContract
-import com.example.campusmate.domain.weather.MockWeatherDataSource
 import com.example.campusmate.domain.weather.RemoteWeatherDataSource
 import com.example.campusmate.domain.weather.WeatherDataSource
 import com.example.campusmate.domain.weather.WeatherResult
@@ -16,28 +15,22 @@ import com.example.campusmate.util.DbUtils.getRequiredString
 /** Weather cache and source orchestration through ContentResolver. */
 class WeatherRepository(
     context: Context,
-    private val remoteDataSource: WeatherDataSource = RemoteWeatherDataSource(),
-    private val mockDataSource: WeatherDataSource = MockWeatherDataSource()
+    private val remoteDataSource: WeatherDataSource = RemoteWeatherDataSource()
 ) {
     private val resolver = context.applicationContext.contentResolver
 
-    fun getWeather(city: String, useMock: Boolean, forceRefresh: Boolean = false): WeatherResult {
+    fun getWeather(city: String, forceRefresh: Boolean = false): WeatherResult? {
         val normalizedCity = city.trim().ifBlank { DEFAULT_CITY }
         val freshCache = getCachedWeather(normalizedCity)
             ?.takeIf { !forceRefresh && isCacheFresh(it, CACHE_MAX_AGE_MILLIS) }
         if (freshCache != null) return freshCache
 
-        val fetched = if (useMock) {
-            mockDataSource.fetchWeather(normalizedCity) ?: fallbackMock(normalizedCity)
-        } else {
-            remoteDataSource.fetchWeather(normalizedCity)
-                ?: getCachedWeather(normalizedCity)
-                ?: mockDataSource.fetchWeather(normalizedCity)
-                ?: fallbackMock(normalizedCity)
+        val fetched = remoteDataSource.fetchWeather(normalizedCity)
+        if (fetched != null) {
+            saveWeatherCache(fetched.copy(city = normalizedCity))
+            return fetched
         }
-
-        saveWeatherCache(fetched)
-        return fetched
+        return getCachedWeather(normalizedCity) ?: getCachedWeather()
     }
 
     fun getCachedWeather(city: String? = null): WeatherResult? {
@@ -104,19 +97,6 @@ class WeatherRepository(
             }
         }
         return results
-    }
-
-    private fun fallbackMock(city: String): WeatherResult {
-        return WeatherResult(
-            city = city,
-            weatherText = "\u6674",
-            temperature = "26\u00B0C",
-            humidity = "45%",
-            wind = "\u4e1c\u5357\u98ce 3 \u7ea7",
-            source = "mock",
-            rawJson = null,
-            updatedAt = DateTimeUtils.nowMillis()
-        )
     }
 
     private fun WeatherResult.toContentValues(): ContentValues {

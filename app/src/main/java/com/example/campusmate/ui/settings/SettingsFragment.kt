@@ -16,6 +16,7 @@ import com.example.campusmate.data.repository.DemoDataRepository
 import com.example.campusmate.data.repository.SettingsRepository
 import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.domain.reminder.AlarmReminderScheduler
+import com.example.campusmate.domain.weather.WeatherLocationResolver
 import com.example.campusmate.ui.buddy.BuddyListActivity
 import com.example.campusmate.ui.profile.ProfileActivity
 import com.example.campusmate.util.DateTimeUtils
@@ -43,9 +44,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var weatherCityInput: TextInputEditText
     private lateinit var reminderSwitch: SwitchMaterial
     private lateinit var immersiveSwitch: SwitchMaterial
-    private lateinit var mockWeatherSwitch: SwitchMaterial
     private lateinit var focusDndSwitch: SwitchMaterial
     private lateinit var notificationFilterSwitch: SwitchMaterial
+    private lateinit var weatherLocationStatusText: TextView
     private lateinit var notificationStatusText: TextView
     private lateinit var exactAlarmStatusText: TextView
     private lateinit var dndStatusText: TextView
@@ -60,6 +61,17 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                     getString(R.string.settings_notification_permission_denied)
                 }
             )
+        }
+
+    private val weatherLocationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            settingsRepository.setWeatherLocationGuideShown(true)
+            if (granted) {
+                updateWeatherCityFromLocation()
+            } else {
+                refreshWeatherLocationStatus()
+                showMessage(getString(R.string.settings_weather_location_permission_denied))
+            }
         }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -81,6 +93,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         super.onResume()
         if (::notificationStatusText.isInitialized) {
             refreshPermissionStatus()
+            refreshWeatherLocationStatus()
         }
     }
 
@@ -99,9 +112,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         weatherCityInput = view.findViewById(R.id.weatherCityInput)
         reminderSwitch = view.findViewById(R.id.reminderSwitch)
         immersiveSwitch = view.findViewById(R.id.immersiveSwitch)
-        mockWeatherSwitch = view.findViewById(R.id.mockWeatherSwitch)
         focusDndSwitch = view.findViewById(R.id.focusDndSwitch)
         notificationFilterSwitch = view.findViewById(R.id.notificationFilterSwitch)
+        weatherLocationStatusText = view.findViewById(R.id.weatherLocationStatusText)
         notificationStatusText = view.findViewById(R.id.notificationStatusText)
         exactAlarmStatusText = view.findViewById(R.id.exactAlarmStatusText)
         dndStatusText = view.findViewById(R.id.dndStatusText)
@@ -112,9 +125,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         weatherCityInput.setText(settingsRepository.getWeatherCity())
         reminderSwitch.isChecked = settingsRepository.isReminderEnabled()
         immersiveSwitch.isChecked = settingsRepository.isImmersiveModeEnabled()
-        mockWeatherSwitch.isChecked = settingsRepository.isMockWeatherEnabled()
         focusDndSwitch.isChecked = settingsRepository.isFocusDndEnabled()
         notificationFilterSwitch.isChecked = settingsRepository.isNotificationFilterEnabled()
+        refreshWeatherLocationStatus()
     }
 
     private fun setupActions(view: View) {
@@ -124,17 +137,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         view.findViewById<MaterialButton>(R.id.saveWeatherCityButton).setOnClickListener {
             saveWeatherCity()
         }
-        mockWeatherSwitch.setOnCheckedChangeListener { _, checked ->
-            settingsRepository.setMockWeatherEnabled(checked)
-            showMessage(
-                getString(
-                    if (checked) {
-                        R.string.settings_weather_mock_enabled_result
-                    } else {
-                        R.string.settings_weather_remote_enabled_result
-                    }
-                )
-            )
+        view.findViewById<MaterialButton>(R.id.useCurrentWeatherLocationButton).setOnClickListener {
+            requestWeatherLocation()
         }
         reminderSwitch.setOnCheckedChangeListener { _, checked ->
             settingsRepository.setReminderEnabled(checked)
@@ -225,7 +229,37 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         }
         weatherCityInputLayout.error = null
         settingsRepository.setWeatherCity(city)
+        refreshWeatherLocationStatus()
         showMessage(getString(R.string.settings_weather_city_saved, city))
+    }
+
+    private fun requestWeatherLocation() {
+        if (!PermissionUtils.hasCoarseLocationPermission(requireContext())) {
+            settingsRepository.setWeatherLocationGuideShown(true)
+            weatherLocationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+            return
+        }
+        updateWeatherCityFromLocation()
+    }
+
+    private fun updateWeatherCityFromLocation() {
+        val appContext = requireContext().applicationContext
+        weatherLocationStatusText.text = getString(R.string.settings_weather_location_resolving)
+        Thread {
+            val city = WeatherLocationResolver(appContext).resolveCity()
+            val targetView = view ?: return@Thread
+            targetView.post {
+                if (city.isNullOrBlank()) {
+                    refreshWeatherLocationStatus()
+                    showMessage(getString(R.string.settings_weather_location_failed))
+                    return@post
+                }
+                weatherCityInput.setText(city)
+                settingsRepository.setWeatherCity(city)
+                refreshWeatherLocationStatus()
+                showMessage(getString(R.string.settings_weather_location_saved, city))
+            }
+        }.start()
     }
 
     private fun requestOrOpenNotificationSettings() {
@@ -334,6 +368,20 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 R.string.settings_dnd_status_disabled
             }
         )
+    }
+
+    private fun refreshWeatherLocationStatus() {
+        if (!::weatherLocationStatusText.isInitialized) return
+        val updatedAt = settingsRepository.getWeatherCityUpdatedAt()
+        weatherLocationStatusText.text = if (PermissionUtils.hasCoarseLocationPermission(requireContext())) {
+            if (updatedAt > 0L) {
+                getString(R.string.settings_weather_location_status_enabled, DateTimeUtils.formatDateTime(updatedAt))
+            } else {
+                getString(R.string.settings_weather_location_status_ready)
+            }
+        } else {
+            getString(R.string.settings_weather_location_status_disabled)
+        }
     }
 
     private fun openSystemSettings(intent: Intent?) {
