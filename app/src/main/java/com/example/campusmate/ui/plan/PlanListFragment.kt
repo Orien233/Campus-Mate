@@ -201,7 +201,7 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
             } else {
                 Snackbar.make(requireView(), R.string.plan_generate_fallback_to_local, Snackbar.LENGTH_SHORT).show()
             }
-            generateLocalTodayPlan(replaceExisting = hasExisting)
+            generateLocalTodayPlan()
         }
     }
 
@@ -295,21 +295,20 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
         startActivity(intent)
     }
 
-    private fun generateLocalTodayPlan(replaceExisting: Boolean = false) {
-        if (hasExistingPlansForDate(selectedDate) && !replaceExisting) {
+    private fun generateLocalTodayPlan() {
+        if (hasExistingPlansForDate(selectedDate)) {
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.plan_generate_today)
                 .setMessage(R.string.plan_regenerate_confirm)
                 .setNegativeButton(R.string.action_cancel, null)
                 .setPositiveButton(R.string.action_replace) { _, _ ->
-                    generateLocalTodayPlan(replaceExisting = true)
+                    planRepository.deletePlansByDate(selectedDate)
+                    val result = planGenerator.generateDailyPlan()
+                    showGenerationResult(result)
                 }
                 .show()
         } else {
-            if (replaceExisting) {
-                planRepository.deletePlansByDate(selectedDate)
-            }
-            val result = planGenerator.generateDailyPlan(selectedDate)
+            val result = planGenerator.generateDailyPlan()
             showGenerationResult(result)
         }
     }
@@ -346,7 +345,7 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
     private fun useLocalFallback(planDate: String) {
         selectedDate = planDate
         planRepository.deletePlansByDate(planDate)
-        val result = planGenerator.generateDailyPlan(planDate)
+        val result = planGenerator.generateDailyPlan()
         showGenerationResult(result)
     }
 

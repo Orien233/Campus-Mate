@@ -17,31 +17,12 @@ object DateTimeUtils {
         return SimpleDateFormat(DATE_PATTERN, Locale.US).format(Date(timeMillis))
     }
 
-    fun parseDateMillis(date: String): Long? {
-        return runCatching {
-            SimpleDateFormat(DATE_PATTERN, Locale.US).apply { isLenient = false }
-                .parse(date)
-                ?.time
-        }.getOrNull()
-    }
-
     fun formatDateTime(timeMillis: Long): String {
         return SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date(timeMillis))
     }
 
     fun currentWeekday(): Int {
         return androidDayOfWeekToCourseWeekday(Calendar.getInstance().get(Calendar.DAY_OF_WEEK))
-    }
-
-    fun weekdayForDate(date: String): Int {
-        val millis = parseDateMillis(date) ?: return currentWeekday()
-        return weekdayForMillis(millis)
-    }
-
-    fun weekdayForMillis(timeMillis: Long): Int {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timeMillis
-        return androidDayOfWeekToCourseWeekday(calendar.get(Calendar.DAY_OF_WEEK))
     }
 
     fun startOfTodayMillis(): Long {
@@ -52,28 +33,6 @@ object DateTimeUtils {
         val calendar = startOfDay(Calendar.getInstance())
         calendar.add(Calendar.DAY_OF_MONTH, 1)
         return calendar.timeInMillis - 1L
-    }
-
-    fun startOfDayMillis(timeMillis: Long): Long {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timeMillis
-        return startOfDay(calendar).timeInMillis
-    }
-
-    fun endOfDayMillis(timeMillis: Long): Long {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timeMillis
-        startOfDay(calendar)
-        calendar.add(Calendar.DAY_OF_MONTH, 1)
-        return calendar.timeInMillis - 1L
-    }
-
-    fun datePlusDays(date: String, days: Int): String {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = parseDateMillis(date) ?: nowMillis()
-        startOfDay(calendar)
-        calendar.add(Calendar.DAY_OF_MONTH, days)
-        return formatDate(calendar.timeInMillis)
     }
 
     fun startOfWeekDate(): String {

@@ -10,13 +10,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.campusmate.R
 import com.example.campusmate.data.model.StudyPlan
+import com.example.campusmate.data.repository.CourseRepository
 import com.example.campusmate.data.repository.LlmSettingsRepository
+import com.example.campusmate.data.repository.SettingsRepository
 import com.example.campusmate.data.repository.StudyPlanRepository
+import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.domain.llm.LlmClientFactory
 import com.example.campusmate.domain.llm.LlmGenerateResult
 import com.example.campusmate.domain.plan.LlmPlanGenerateService
 import com.example.campusmate.domain.plan.LlmPlanValidator
-import com.example.campusmate.domain.plan.StudyPlanContextBuilder
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.snackbar.Snackbar
@@ -35,7 +37,6 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
     private lateinit var planRepository: StudyPlanRepository
     private lateinit var llmPlanGenerateService: LlmPlanGenerateService
     private lateinit var planValidator: LlmPlanValidator
-    private lateinit var planContextBuilder: StudyPlanContextBuilder
 
     private lateinit var loadingContainer: LinearLayout
     private lateinit var errorContainer: LinearLayout
@@ -116,7 +117,6 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
         planRepository = StudyPlanRepository(this)
         llmPlanGenerateService = LlmPlanGenerateService(llmSettingsRepository, LlmClientFactory)
         planValidator = LlmPlanValidator()
-        planContextBuilder = StudyPlanContextBuilder(this)
     }
 
     private fun setupTabs() {
@@ -203,15 +203,15 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
         showLoading()
         lifecycleScope.launch {
             try {
-                val aiAvailable = llmPlanGenerateService.isAvailable() && llmSettingsRepository.hasApiKey()
+                val apiKeyAvailable = llmSettingsRepository.hasApiKey()
                 val plans = withContext(Dispatchers.IO) {
-                    generateWeekPlansWithLlm(aiAvailable)
+                    generateWeekPlansWithLlm(apiKeyAvailable)
                 }
                 if (plans.isEmpty()) {
                     showError(getString(R.string.llm_plan_parse_error))
                 } else {
                     allWeekPlans = plans
-                    usedLocalGeneration = !aiAvailable
+                    usedLocalGeneration = !apiKeyAvailable
                     showContent()
                 }
             } catch (e: Exception) {
@@ -220,7 +220,7 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun generateWeekPlansWithLlm(aiAvailable: Boolean): Map<String, List<StudyPlan>> {
+    private suspend fun generateWeekPlansWithLlm(apiKeyAvailable: Boolean): Map<String, List<StudyPlan>> {
         val weekPlans = mutableMapOf<String, List<StudyPlan>>()
         val calendar = Calendar.getInstance()
         calendar.set(Calendar.HOUR_OF_DAY, 0)
@@ -236,9 +236,10 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
 
         for (day in 0..6) {
             val dayDate = dateFormat.format(calendar.time)
+            val dayWeekday = weekday
 
-            if (aiAvailable) {
-                val prompt = buildDayPrompt(dayDate)
+            if (apiKeyAvailable) {
+                val prompt = buildDayPrompt(dayDate, dayWeekday)
                 val request = llmPlanGenerateService.buildPrompt(prompt)
                 val config = llmSettingsRepository.getConfig()
                 val apiKey = llmSettingsRepository.getApiKey() ?: return emptyMap()
@@ -271,9 +272,15 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
     }
 
     private fun generateLocalDayPlans(date: String): List<StudyPlan> {
-        val planContext = planContextBuilder.buildForDate(date)
-        val courses = planContext.courses
-        val tasks = planContext.tasks
+        val courseRepository = CourseRepository(this)
+        val taskRepository = TaskRepository(this)
+        val settingsRepository = SettingsRepository(this)
+
+        val weekday = getWeekday(date)
+        val courses = courseRepository.getCoursesByWeekday(weekday)
+        val tasks = taskRepository.getAllTasks().filter {
+            !it.isDeleted && it.status == com.example.campusmate.data.model.StudyTask.STATUS_TODO
+        }
         val plans = mutableListOf<StudyPlan>()
 
         var currentHour = 7
@@ -293,7 +300,7 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
                     startTime = startTime,
                     endTime = formatTime(endHour, endMin),
                     type = StudyPlan.TYPE_WEEKLY,
-                    sourceType = StudyPlan.SOURCE_AUTO
+                    sourceType = StudyPlan.SOURCE_LLM
                 )
             )
 
@@ -318,7 +325,7 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
                     startTime = formatTime(currentHour, currentMinute),
                     endTime = formatTime(endHour, endMin),
                     type = StudyPlan.TYPE_WEEKLY,
-                    sourceType = StudyPlan.SOURCE_AUTO
+                    sourceType = StudyPlan.SOURCE_LLM
                 )
             )
         }
@@ -326,10 +333,45 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
         return plans
     }
 
-    private fun buildDayPrompt(date: String): String {
-        val contextText = planContextBuilder.buildForDate(date).toPromptText(maxTasks = 8)
+    private fun buildDayPrompt(date: String, weekday: Int): String {
+        val courseRepository = CourseRepository(this)
+        val taskRepository = TaskRepository(this)
+        val settingsRepository = SettingsRepository(this)
+
+        val weekdayName = weekdayNames.getOrElse(weekday - 1) { "周一" }
+        val courses = courseRepository.getCoursesByWeekday(weekday)
+        val tasks = taskRepository.getAllTasks().filter {
+            !it.isDeleted && it.status == com.example.campusmate.data.model.StudyTask.STATUS_TODO
+        }
+        val dailyGoal = settingsRepository.getDailyGoalMinutes()
+
+        val coursesText = if (courses.isEmpty()) {
+            "今日无课程安排"
+        } else {
+            courses.joinToString("\n") { course ->
+                "课程: ${course.name}, 教师: ${course.teacher ?: "未指定"}, 节次: ${course.startSection}-${course.endSection}"
+            }
+        }
+
+        val tasksText = if (tasks.isEmpty()) {
+            "暂无待办任务"
+        } else {
+            tasks.take(5).joinToString("\n") { task ->
+                "任务: ${task.title}, 类型: ${getTaskTypeName(task.type)}"
+            }
+        }
+
         return """
-$contextText
+请根据以下信息为 $date（$weekdayName）生成学习计划。
+
+## 今日课程
+$coursesText
+
+## 待办任务
+$tasksText
+
+## 学习目标
+每日学习目标: ${dailyGoal} 分钟
 
 ## 输出要求
 请以 JSON 格式返回学习计划：
@@ -346,6 +388,33 @@ $contextText
   ]
 }
         """.trimIndent()
+    }
+
+    private fun getWeekday(dateStr: String): Int {
+        return try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            val date = sdf.parse(dateStr)
+            val calendar = Calendar.getInstance()
+            calendar.time = date!!
+            val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+            when (dayOfWeek) {
+                Calendar.SUNDAY -> 7
+                else -> dayOfWeek - 1
+            }
+        } catch (e: Exception) {
+            1
+        }
+    }
+
+    private fun getTaskTypeName(type: Int): String {
+        return when (type) {
+            com.example.campusmate.data.model.StudyTask.TYPE_HOMEWORK -> "作业"
+            com.example.campusmate.data.model.StudyTask.TYPE_EXAM -> "考试"
+            com.example.campusmate.data.model.StudyTask.TYPE_REVIEW -> "复习"
+            com.example.campusmate.data.model.StudyTask.TYPE_EXPERIMENT -> "实验"
+            com.example.campusmate.data.model.StudyTask.TYPE_PROJECT -> "项目"
+            else -> "其他"
+        }
     }
 
     private fun calculateCourseDuration(course: com.example.campusmate.data.model.Course): Int {
