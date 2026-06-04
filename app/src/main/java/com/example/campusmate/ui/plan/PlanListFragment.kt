@@ -8,6 +8,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.campusmate.R
@@ -25,11 +26,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import androidx.lifecycle.lifecycleScope
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -44,6 +41,7 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
     private lateinit var emptyStateView: LinearLayout
     private lateinit var summaryText: TextView
     private lateinit var completionText: TextView
+    private lateinit var progressBar: View
     private lateinit var weekDaySelector: LinearLayout
     private lateinit var generateTodayButton: MaterialButton
     private lateinit var generateWeekButton: MaterialButton
@@ -76,6 +74,7 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
         emptyStateView = view.findViewById(R.id.planEmptyState)
         summaryText = view.findViewById(R.id.planSummaryText)
         completionText = view.findViewById(R.id.planCompletionText)
+        progressBar = view.findViewById(R.id.planProgressBar)
         weekDaySelector = view.findViewById(R.id.weekDaySelector)
         generateTodayButton = view.findViewById(R.id.generateTodayButton)
         generateWeekButton = view.findViewById(R.id.generateWeekButton)
@@ -88,21 +87,10 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
 
-        generateTodayButton.setOnClickListener {
-            handleGenerateToday()
-        }
-
-        generateWeekButton.setOnClickListener {
-            handleGenerateWeek()
-        }
-
-        view.findViewById<MaterialButton>(R.id.planEmptyActionButton).setOnClickListener {
-            handleGenerateToday()
-        }
-
-        view.findViewById<FloatingActionButton>(R.id.addPlanFab).setOnClickListener {
-            showAddPlanDialog()
-        }
+        generateTodayButton.setOnClickListener { handleGenerateToday() }
+        generateWeekButton.setOnClickListener { handleGenerateWeek() }
+        view.findViewById<MaterialButton>(R.id.planEmptyActionButton).setOnClickListener { handleGenerateToday() }
+        view.findViewById<FloatingActionButton>(R.id.addPlanFab).setOnClickListener { showAddPlanDialog() }
 
         CollapsibleSection.bind(
             root = view,
@@ -122,32 +110,39 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
 
     private fun setupWeekDaySelector() {
         weekDaySelector.removeAllViews()
-        val calendar = Calendar.getInstance()
-        val todayWeekday = DateTimeUtils.currentWeekday()
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            add(Calendar.DAY_OF_MONTH, -(DateTimeUtils.currentWeekday() - 1))
+        }
 
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        calendar.add(Calendar.DAY_OF_MONTH, -(todayWeekday - 1))
+        val dayNumberFormat = SimpleDateFormat("d", Locale.US)
 
         for (i in 0..6) {
             val dayDate = dateFormat.format(calendar.time)
-            val dayOfWeek = weekdayNames[i]
-            val dayNumber = SimpleDateFormat("d", Locale.US).format(calendar.time)
-
             val dayView = layoutInflater.inflate(R.layout.item_weekday_tab, weekDaySelector, false)
             val dayButton = dayView.findViewById<MaterialButton>(R.id.weekdayButton)
-            dayButton.text = "$dayOfWeek\n$dayNumber"
-            dayButton.isChecked = dayDate == selectedDate
-
-            dayButton.setOnClickListener {
-                selectedDate = dayDate
-                setupWeekDaySelector()
-                loadPlans()
+            val isSelected = dayDate == selectedDate
+            val dayNumber = dayNumberFormat.format(calendar.time)
+            dayButton.text = "$dayNumber\n${weekdayNames[i]}"
+            dayButton.isChecked = isSelected
+            dayButton.isSelected = isSelected
+            dayButton.jumpDrawablesToCurrentState()
+            dayButton.contentDescription = if (isSelected) {
+                getString(R.string.plan_selected_date_content_description, weekdayNames[i], dayNumber)
+            } else {
+                getString(R.string.plan_date_content_description, weekdayNames[i], dayNumber)
             }
-
+            dayButton.setOnClickListener {
+                if (selectedDate != dayDate) {
+                    selectedDate = dayDate
+                    setupWeekDaySelector()
+                    loadPlans()
+                }
+            }
             weekDaySelector.addView(dayView)
             calendar.add(Calendar.DAY_OF_MONTH, 1)
         }
@@ -155,18 +150,13 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
 
     private fun loadPlans() {
         val plans = planRepository.getPlansByDate(selectedDate)
-        val totalMinutes = plans.sumOf { it.plannedMinutes }
-        val completedCount = plans.count { it.status == StudyPlan.STATUS_COMPLETED }
         val totalCount = plans.size
+        val completedCount = plans.count { it.status == StudyPlan.STATUS_COMPLETED }
+        val completionRate = if (totalCount > 0) (completedCount * 100 / totalCount) else 0
 
-        summaryText.text = getString(R.string.plan_today_summary, totalCount, totalMinutes)
-        completionText.text = if (totalCount > 0) {
-            val rate = (completedCount * 100) / totalCount
-            getString(R.string.plan_completion_rate, rate)
-        } else {
-            ""
-        }
-
+        summaryText.text = getString(R.string.plan_today_summary, totalCount, 0)
+        completionText.text = getString(R.string.plan_completion_rate, completionRate)
+        progressBar.post { (progressBar as android.widget.ProgressBar).progress = completionRate }
         adapter.submitList(plans.map { PlanListItem(it) })
 
         val isEmpty = plans.isEmpty()
@@ -176,18 +166,15 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
 
     private fun handleGenerateToday() {
         val hasExisting = planRepository.getPlansByDate(selectedDate).isNotEmpty()
-
         if (hasExisting) {
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.plan_generate_today)
                 .setMessage(R.string.plan_regenerate_confirm)
                 .setNegativeButton(R.string.action_cancel, null)
-                .setPositiveButton(R.string.action_replace) { _, _ ->
-                    executeGenerateToday(hasExisting = true)
-                }
+                .setPositiveButton(R.string.action_replace) { _, _ -> executeGenerateToday(true) }
                 .show()
         } else {
-            executeGenerateToday(hasExisting = false)
+            executeGenerateToday(false)
         }
     }
 
@@ -201,7 +188,7 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
             } else {
                 Snackbar.make(requireView(), R.string.plan_generate_fallback_to_local, Snackbar.LENGTH_SHORT).show()
             }
-            generateLocalTodayPlan()
+            showLoadingHintAndGenerate { generateLocalTodayPlan() }
         }
     }
 
@@ -210,9 +197,7 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
             .setTitle(R.string.plan_generate_week)
             .setMessage(R.string.plan_regenerate_confirm)
             .setNegativeButton(R.string.action_cancel, null)
-            .setPositiveButton(R.string.action_replace) { _, _ ->
-                executeGenerateWeek()
-            }
+            .setPositiveButton(R.string.action_replace) { _, _ -> executeGenerateWeek() }
             .show()
     }
 
@@ -226,51 +211,44 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
             } else {
                 Snackbar.make(requireView(), R.string.plan_generate_fallback_to_local, Snackbar.LENGTH_SHORT).show()
             }
-            generateLocalWeekPlan()
+            showLoadingHintAndGenerate { generateLocalWeekPlan() }
         }
     }
+
 
     private fun launchLlmWeekPlanPreview() {
         val intent = Intent(requireContext(), LlmWeekPlanPreviewActivity::class.java)
         startActivity(intent)
     }
 
+    private fun showLoadingHintAndGenerate(action: () -> Unit) {
+        Snackbar.make(requireView(), getString(R.string.plan_generating_loading), Snackbar.LENGTH_SHORT).show()
+        action()
+    }
+
+
     private fun generateLlmWeekPlan() {
         lifecycleScope.launch {
             try {
-                val calendar = java.util.Calendar.getInstance()
-                calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                calendar.set(java.util.Calendar.MINUTE, 0)
-                calendar.set(java.util.Calendar.SECOND, 0)
-                calendar.set(java.util.Calendar.MILLISECOND, 0)
-
-                val weekday = DateTimeUtils.currentWeekday()
-                calendar.add(java.util.Calendar.DAY_OF_MONTH, -(weekday - 1))
-
+                val calendar = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                    add(Calendar.DAY_OF_MONTH, -(DateTimeUtils.currentWeekday() - 1))
+                }
                 var totalPlans = 0
                 var totalMinutes = 0
-
                 for (day in 0..6) {
                     val dayDate = DateTimeUtils.formatDate(calendar.timeInMillis)
                     planRepository.deletePlansByDate(dayDate)
-
-                    // Launch LLM preview for each day
-                    val hasExisting = false
-                    launchLlmPlanPreviewSync(dayDate, hasExisting)
-
+                    launchLlmPlanPreviewSync(dayDate, false)
                     val plans = planRepository.getPlansByDate(dayDate)
                     totalPlans += plans.size
                     totalMinutes += plans.sumOf { it.plannedMinutes }
-
-                    calendar.add(java.util.Calendar.DAY_OF_MONTH, 1)
+                    calendar.add(Calendar.DAY_OF_MONTH, 1)
                 }
-
-                Snackbar.make(
-                    requireView(),
-                    getString(R.string.plan_generate_success, "已生成本周 $totalPlans 项计划，共 $totalMinutes 分钟"),
-                    Snackbar.LENGTH_LONG
-                ).show()
-
+                Snackbar.make(requireView(), getString(R.string.plan_generate_success, "已生成本周 $totalPlans 项计划，共 $totalMinutes 分钟"), Snackbar.LENGTH_LONG).show()
                 loadPlans()
                 setupWeekDaySelector()
             } catch (e: Exception) {
@@ -303,40 +281,27 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
                 .setNegativeButton(R.string.action_cancel, null)
                 .setPositiveButton(R.string.action_replace) { _, _ ->
                     planRepository.deletePlansByDate(selectedDate)
-                    val result = planGenerator.generateDailyPlan()
-                    showGenerationResult(result)
+                    showGenerationResult(planGenerator.generateDailyPlan())
                 }
                 .show()
         } else {
-            val result = planGenerator.generateDailyPlan()
-            showGenerationResult(result)
+            showGenerationResult(planGenerator.generateDailyPlan())
         }
     }
 
-    private fun hasExistingPlansForDate(date: String): Boolean {
-        return planRepository.getPlansByDate(date).isNotEmpty()
-    }
+    private fun hasExistingPlansForDate(date: String): Boolean = planRepository.getPlansByDate(date).isNotEmpty()
 
     private fun generateLocalWeekPlan() {
-        val result = planGenerator.generateWeeklyPlan()
-        showGenerationResult(result)
+        showGenerationResult(planGenerator.generateWeeklyPlan())
         loadPlans()
         setupWeekDaySelector()
     }
 
-    private fun showGenerationResult(result: com.example.campusmate.domain.plan.StudyPlanGenerator.PlanGenerationResult) {
+    private fun showGenerationResult(result: StudyPlanGenerator.PlanGenerationResult) {
         if (result.success) {
-            Snackbar.make(
-                requireView(),
-                getString(R.string.plan_generate_success, result.message),
-                Snackbar.LENGTH_LONG
-            ).show()
+            Snackbar.make(requireView(), getString(R.string.plan_generate_success, result.message), Snackbar.LENGTH_LONG).show()
         } else {
-            Snackbar.make(
-                requireView(),
-                getString(R.string.plan_generate_failed, result.message),
-                Snackbar.LENGTH_LONG
-            ).show()
+            Snackbar.make(requireView(), getString(R.string.plan_generate_failed, result.message), Snackbar.LENGTH_LONG).show()
         }
         loadPlans()
         setupWeekDaySelector()
@@ -345,13 +310,7 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
     private fun useLocalFallback(planDate: String) {
         selectedDate = planDate
         planRepository.deletePlansByDate(planDate)
-        val result = planGenerator.generateDailyPlan()
-        showGenerationResult(result)
-    }
-
-    private fun generateTodayPlan() {
-        // Legacy method - delegate to new handler
-        handleGenerateToday()
+        showGenerationResult(planGenerator.generateDailyPlan())
     }
 
     private fun showAddPlanDialog() {
@@ -410,11 +369,7 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
     }
 
     private fun togglePlanComplete(plan: StudyPlan) {
-        val newStatus = if (plan.status == StudyPlan.STATUS_COMPLETED) {
-            StudyPlan.STATUS_PENDING
-        } else {
-            StudyPlan.STATUS_COMPLETED
-        }
+        val newStatus = if (plan.status == StudyPlan.STATUS_COMPLETED) StudyPlan.STATUS_PENDING else StudyPlan.STATUS_COMPLETED
         if (planRepository.updatePlanStatus(plan.id, newStatus)) {
             loadPlans()
         } else {
@@ -439,10 +394,7 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
     }
 
     private fun openDetail(planId: Long) {
-        startActivity(
-            Intent(requireContext(), PlanDetailActivity::class.java)
-                .putExtra(PlanDetailActivity.EXTRA_PLAN_ID, planId)
-        )
+        startActivity(Intent(requireContext(), PlanDetailActivity::class.java).putExtra(PlanDetailActivity.EXTRA_PLAN_ID, planId))
     }
 
     companion object {

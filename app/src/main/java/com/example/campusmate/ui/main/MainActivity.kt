@@ -41,11 +41,8 @@ class MainActivity : AppCompatActivity() {
             showFragment(item.itemId)
         }
 
-        if (!isBottomNavigationItem(selectedItemId)) {
-            showFragment(selectedItemId)
-        } else if (bottomNavigationView.selectedItemId != selectedItemId) {
-            bottomNavigationView.selectedItemId = selectedItemId
-        } else {
+        bottomNavigationView.selectedItemId = selectedItemId
+        if (savedInstanceState == null && !isBottomNavigationItem(selectedItemId)) {
             showFragment(selectedItemId)
         }
     }

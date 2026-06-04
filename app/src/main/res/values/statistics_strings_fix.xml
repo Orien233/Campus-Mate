@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="statistics_overview_title">学习概览</string>
+    <string name="statistics_today">今日</string>
+    <string name="statistics_week">本周</string>
+    <string name="statistics_streak">连续学习</string>
+    <string name="statistics_heatmap_title">学习热力图</string>
+    <string name="statistics_records_section_title">学习记录</string>
+    <string name="statistics_task_section_title">任务完成</string>
+</resources>

@@ -67,4 +67,3 @@ object CourseUiFormatter {
 
     private const val DEFAULT_COLOR = "#1B6B5F"
 }
-

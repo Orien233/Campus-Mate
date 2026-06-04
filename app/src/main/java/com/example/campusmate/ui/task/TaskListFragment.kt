@@ -3,6 +3,7 @@ package com.example.campusmate.ui.task
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -34,6 +35,9 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
     private lateinit var todoCountText: TextView
     private lateinit var upcomingCountText: TextView
     private lateinit var overdueCountText: TextView
+    private lateinit var todoCountContainer: LinearLayout
+    private lateinit var upcomingCountContainer: LinearLayout
+    private lateinit var overdueCountContainer: LinearLayout
     private var currentFilter: TaskFilter = TaskFilter.ALL
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -46,6 +50,9 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         todoCountText = view.findViewById(R.id.taskTodoCountText)
         upcomingCountText = view.findViewById(R.id.taskUpcomingCountText)
         overdueCountText = view.findViewById(R.id.taskOverdueCountText)
+        todoCountContainer = view.findViewById(R.id.taskTodoCountContainer)
+        upcomingCountContainer = view.findViewById(R.id.taskUpcomingCountContainer)
+        overdueCountContainer = view.findViewById(R.id.taskOverdueCountContainer)
         recyclerView = view.findViewById(R.id.taskRecyclerView)
         adapter = TaskAdapter(
             onTaskClick = { openDetail(it.id) },
@@ -94,13 +101,20 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         val courseNameById = courseRepository.getAllCourses().associate { it.id to it.name }
         val now = System.currentTimeMillis()
         val allTasks = taskRepository.getAllTasks()
-        todoCountText.text = allTasks.count { it.status == StudyTask.STATUS_TODO }.toString()
-        upcomingCountText.text = allTasks.count {
+        val todoCount = allTasks.count { it.status == StudyTask.STATUS_TODO }
+        val upcomingCount = allTasks.count {
             it.status == StudyTask.STATUS_TODO && it.dueAt?.let { dueAt -> dueAt >= now } == true
-        }.toString()
-        overdueCountText.text = allTasks.count {
+        }
+        val overdueCount = allTasks.count {
             it.status == StudyTask.STATUS_TODO && it.dueAt?.let { dueAt -> dueAt < now } == true
-        }.toString()
+        }
+        todoCountText.text = todoCount.toString()
+        upcomingCountText.text = upcomingCount.toString()
+        overdueCountText.text = overdueCount.toString()
+
+        highlightCountContainer(todoCountContainer, todoCount)
+        highlightCountContainer(upcomingCountContainer, upcomingCount)
+        highlightCountContainer(overdueCountContainer, overdueCount)
 
         val tasks = allTasks.filter { task ->
             when (currentFilter) {
@@ -199,5 +213,13 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         DONE,
         UPCOMING,
         OVERDUE
+    }
+
+    private fun highlightCountContainer(container: LinearLayout, count: Int) {
+        if (count > 0) {
+            container.setBackgroundResource(R.drawable.bg_count_highlight)
+        } else {
+            container.background = null
+        }
     }
 }

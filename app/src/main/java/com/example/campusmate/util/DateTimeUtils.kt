@@ -36,10 +36,24 @@ object DateTimeUtils {
     }
 
     fun startOfWeekDate(): String {
+        return startOfWeekDate(offsetWeeks = 0)
+    }
+
+    fun startOfWeekDate(offsetWeeks: Int): String {
         val calendar = startOfDay(Calendar.getInstance())
         val weekday = currentWeekday()
         calendar.add(Calendar.DAY_OF_MONTH, -(weekday - 1))
+        calendar.add(Calendar.WEEK_OF_YEAR, -offsetWeeks)
         return formatDate(calendar.timeInMillis)
+    }
+
+    fun offsetDate(dateStr: String, days: Int): String {
+        val sdf = SimpleDateFormat(DATE_PATTERN, Locale.US)
+        val date = sdf.parse(dateStr) ?: return dateStr
+        val calendar = Calendar.getInstance()
+        calendar.time = date
+        calendar.add(Calendar.DAY_OF_MONTH, days)
+        return sdf.format(calendar.time)
     }
 
     private fun startOfDay(calendar: Calendar): Calendar {

@@ -173,9 +173,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             showMessage(
                 getString(
                     if (checked) {
-                        R.string.focus_dnd_enabled
+                        R.string.settings_focus_dnd_enabled_result
                     } else {
-                        R.string.focus_dnd_disabled
+                        R.string.settings_focus_dnd_disabled_result
                     }
                 )
             )
@@ -185,9 +185,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             showMessage(
                 getString(
                     if (checked) {
-                        R.string.notification_filter_enabled
+                        R.string.settings_notification_filter_enabled_result
                     } else {
-                        R.string.notification_filter_disabled
+                        R.string.settings_notification_filter_disabled_result
                     }
                 )
             )

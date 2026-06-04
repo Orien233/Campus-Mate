@@ -32,6 +32,7 @@ class CourseEditActivity : AppCompatActivity() {
     private lateinit var weekTypeSpinner: Spinner
     private lateinit var colorSpinner: Spinner
     private lateinit var noteInput: TextInputEditText
+    private lateinit var timeSlotSpinner: Spinner
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,6 +78,7 @@ class CourseEditActivity : AppCompatActivity() {
         weekTypeSpinner = findViewById(R.id.courseWeekTypeSpinner)
         colorSpinner = findViewById(R.id.courseColorSpinner)
         noteInput = findViewById(R.id.courseNoteInput)
+        timeSlotSpinner = findViewById(R.id.courseTimeSlotSpinner)
     }
 
     private fun setupToolbar() {
@@ -91,6 +93,11 @@ class CourseEditActivity : AppCompatActivity() {
             this,
             R.array.course_weekdays,
             android.R.layout.simple_spinner_dropdown_item
+        )
+        timeSlotSpinner.adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_dropdown_item,
+            timeSlotLabels
         )
         weekTypeSpinner.adapter = ArrayAdapter.createFromResource(
             this,
@@ -109,7 +116,7 @@ class CourseEditActivity : AppCompatActivity() {
         teacherInput.setText(course.teacher.orEmpty())
         classroomInput.setText(course.classroom.orEmpty())
         weekdaySpinner.setSelection((course.weekday - 1).coerceIn(0, 6))
-        startSectionInput.setText(course.startSection.toString())
+        timeSlotSpinner.setSelection((course.startSection - 1).coerceIn(0, 6))
         endSectionInput.setText(course.endSection.toString())
         startWeekInput.setText(course.startWeek.toString())
         endWeekInput.setText(course.endWeek.toString())
@@ -141,8 +148,8 @@ class CourseEditActivity : AppCompatActivity() {
             return null
         }
 
-        val startSection = parsePositiveInt(startSectionInput, R.string.course_start_section)
-        val endSection = parsePositiveInt(endSectionInput, R.string.course_end_section)
+        val startSection = timeSlotSpinner.selectedItemPosition + 1
+        val endSection = startSection
         val startWeek = parsePositiveInt(startWeekInput, R.string.course_start_week)
         val endWeek = parsePositiveInt(endWeekInput, R.string.course_end_week)
         if (startSection == null || endSection == null || startWeek == null || endWeek == null) {
@@ -215,6 +222,15 @@ class CourseEditActivity : AppCompatActivity() {
             "#B54848",
             "#6B5BA7",
             "#3C7D4E"
+        )
+        private val timeSlotLabels = listOf(
+            "1  8:00-9:50",
+            "2  10:10-12:00",
+            "3  12:10-13:50",
+            "4  14:10-16:00",
+            "5  16:20-18:10",
+            "6  19:00-20:50",
+            "7  21:00-21:50"
         )
     }
 }

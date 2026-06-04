@@ -5,6 +5,7 @@
     <color name="campus_primary_light">#E0F2F1</color>
     <color name="campus_secondary">#2F5D9E</color>
     <color name="campus_accent">#E8A23A</color>
+    <color name="campus_success">#388E3C</color>
     <color name="campus_background">#F7F8FA</color>
     <color name="campus_surface">#FFFFFFFF</color>
     <color name="campus_text_primary">#1E2528</color>

@@ -113,6 +113,22 @@
                         android:textColor="@color/campus_text_primary"
                         android:textSize="22sp"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvTodayPlanCompletion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textColor="@color/campus_text_secondary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/tvTodayTrend"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs"
+                        android:textColor="@color/campus_text_secondary"
+                        android:textSize="12sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -123,8 +139,9 @@
                 android:layout_gravity="fill">
 
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
+                    android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:orientation="vertical"
                     android:padding="@dimen/space_m">
@@ -145,6 +162,14 @@
                         android:textColor="@color/campus_text_primary"
                         android:textSize="22sp"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvWeekTrend"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs"
+                        android:textColor="@color/campus_text_secondary"
+                        android:textSize="12sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </GridLayout>
