@@ -1,6 +1,7 @@
 package com.example.campusmate.data.repository
 
 import android.content.Context
+import com.example.campusmate.util.DateTimeUtils
 
 /** SharedPreferences-backed settings used by features before the full settings UI lands. */
 class SettingsRepository(context: Context) {
@@ -27,13 +28,18 @@ class SettingsRepository(context: Context) {
     fun getWeatherCity(): String = preferences.getString(KEY_WEATHER_CITY, DEFAULT_WEATHER_CITY) ?: DEFAULT_WEATHER_CITY
 
     fun setWeatherCity(value: String) {
-        preferences.edit().putString(KEY_WEATHER_CITY, value.trim().ifBlank { DEFAULT_WEATHER_CITY }).apply()
+        preferences.edit()
+            .putString(KEY_WEATHER_CITY, value.trim().ifBlank { DEFAULT_WEATHER_CITY })
+            .putLong(KEY_WEATHER_CITY_UPDATED_AT, DateTimeUtils.nowMillis())
+            .apply()
     }
 
-    fun isMockWeatherEnabled(): Boolean = preferences.getBoolean(KEY_MOCK_WEATHER_ENABLED, true)
+    fun getWeatherCityUpdatedAt(): Long = preferences.getLong(KEY_WEATHER_CITY_UPDATED_AT, 0L)
 
-    fun setMockWeatherEnabled(value: Boolean) {
-        preferences.edit().putBoolean(KEY_MOCK_WEATHER_ENABLED, value).apply()
+    fun hasSeenWeatherLocationGuide(): Boolean = preferences.getBoolean(KEY_WEATHER_LOCATION_GUIDE_SHOWN, false)
+
+    fun setWeatherLocationGuideShown(value: Boolean) {
+        preferences.edit().putBoolean(KEY_WEATHER_LOCATION_GUIDE_SHOWN, value).apply()
     }
 
     fun isFocusDndEnabled(): Boolean = preferences.getBoolean(KEY_FOCUS_DND_ENABLED, false)
@@ -93,7 +99,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_REMINDER_ENABLED = "reminder_enabled"
         private const val KEY_IMMERSIVE_MODE_ENABLED = "immersive_mode_enabled"
         private const val KEY_WEATHER_CITY = "weather_city"
-        private const val KEY_MOCK_WEATHER_ENABLED = "mock_weather_enabled"
+        private const val KEY_WEATHER_CITY_UPDATED_AT = "weather_city_updated_at"
+        private const val KEY_WEATHER_LOCATION_GUIDE_SHOWN = "weather_location_guide_shown"
         private const val KEY_FOCUS_DND_ENABLED = "focus_dnd_enabled"
         private const val KEY_NOTIFICATION_FILTER_ENABLED = "notification_filter_enabled"
         private const val KEY_SECTION_TIME_SLOTS_JSON = "section_time_slots_json"

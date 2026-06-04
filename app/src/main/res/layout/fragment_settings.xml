@@ -364,14 +364,13 @@
                         android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/mockWeatherSwitch"
+                <TextView
+                    android:id="@+id/weatherLocationStatusText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_xs"
-                    android:text="@string/settings_weather_mock_enabled"
-                    android:textColor="@color/campus_text_primary"
-                    android:textSize="16sp" />
+                    android:textColor="@color/campus_text_secondary"
+                    android:textSize="13sp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/saveWeatherCityButton"
@@ -379,6 +378,15 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_s"
                     android:text="@string/action_save"
+                    app:icon="@drawable/ic_settings" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/useCurrentWeatherLocationButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:text="@string/settings_weather_use_current_location"
                     app:icon="@drawable/ic_settings" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
