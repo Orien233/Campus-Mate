@@ -114,11 +114,14 @@ class LlmCourseDraftValidator {
             return ParsedCourse(draft = null, warnings = warnings)
         }
 
+        val classroom = readClassroom(courseObject)
+        val note = readNote(courseObject, classroom)
+
         return ParsedCourse(
             draft = CourseDraft(
                 name = name,
-                teacher = readStringOrNull(courseObject, "teacher", "teacherName", "teacher_name"),
-                classroom = readStringOrNull(courseObject, "classroom", "room", "classRoom", "class_room"),
+                teacher = readStringOrNull(courseObject, "teacher", "teacherName", "teacher_name", "instructor", "lecturer"),
+                classroom = classroom,
                 weekday = weekday!!,
                 startSection = startSection!!,
                 endSection = endSection!!,
@@ -126,15 +129,46 @@ class LlmCourseDraftValidator {
                 endWeek = endWeek!!,
                 weekType = weekType!!,
                 color = readStringOrNull(courseObject, "color", "courseColor"),
-                note = readStringOrNull(courseObject, "note", "remark", "comments"),
+                note = note,
                 sourceText = courseObject.toString()
             ),
             warnings = warnings
         )
     }
 
+    private fun readClassroom(courseObject: JSONObject): String? {
+        val campus = readStringOrNull(courseObject, "campus", "campusName", "campus_name")
+        val building = readStringOrNull(courseObject, "building", "buildingName", "building_name", "teachingBuilding")
+        val room = readStringOrNull(courseObject, "room", "roomNo", "roomNumber", "room_number", "classroomNo")
+        val structuredLocation = listOfNotNull(campus, building, room)
+            .joinToString(" ")
+            .takeIf { it.isNotBlank() }
+        return structuredLocation
+            ?: readStringOrNull(
+                courseObject,
+                "classroom",
+                "classRoom",
+                "class_room",
+                "location",
+                "venue",
+                "place",
+                "address",
+                "site"
+            )
+    }
+
+    private fun readNote(courseObject: JSONObject, classroom: String?): String? {
+        val note = readStringOrNull(courseObject, "note", "remark", "remarks", "comments", "comment")
+        val extraLocation = readStringOrNull(courseObject, "location", "venue", "place", "address", "site")
+            ?.takeIf { value -> classroom == null || !classroom.contains(value) }
+            ?.let { "地点: $it" }
+        return listOfNotNull(note, extraLocation)
+            .joinToString("\n")
+            .takeIf { it.isNotBlank() }
+    }
+
     private fun parseWeekType(courseObject: JSONObject): Int? {
-        val raw = readJsonValue(courseObject, "weekType", "week_type", "type")
+        val raw = readJsonValue(courseObject, "weekType", "week_type", "type", "oddEven", "weekMode")
             ?: return Course.WEEK_TYPE_EVERY
         return when (raw) {
             is Number -> when (raw.toInt()) {
@@ -142,9 +176,9 @@ class LlmCourseDraftValidator {
                 else -> null
             }
             is String -> when (raw.trim().lowercase()) {
-                "", "0", "every", "all", "full", "both" -> Course.WEEK_TYPE_EVERY
-                "1", "odd", "odd_weeks", "oddweek" -> Course.WEEK_TYPE_ODD
-                "2", "even", "even_weeks", "evenweek" -> Course.WEEK_TYPE_EVEN
+                "", "0", "every", "all", "full", "both", "每周", "全周", "单双周" -> Course.WEEK_TYPE_EVERY
+                "1", "odd", "odd_weeks", "oddweek", "单周", "单", "奇数周" -> Course.WEEK_TYPE_ODD
+                "2", "even", "even_weeks", "evenweek", "双周", "双", "偶数周" -> Course.WEEK_TYPE_EVEN
                 else -> null
             }
             else -> null
