@@ -32,7 +32,19 @@ object SystemBarsInsets {
         }
 
         val content = activity.findViewById<ViewGroup>(android.R.id.content) ?: return
-        val root = content.getChildAt(0) ?: return
+        val root = content.getChildAt(0)
+        if (root == null) {
+            // setContentView() has not been called yet (onActivityCreated fires before it).
+            // Defer insets setup until after the current handler message completes,
+            // at which point setContentView() will have been called.
+            content.post {
+                val deferredRoot = content.getChildAt(0) ?: return@post
+                if (deferredRoot.getTag(R.id.tag_system_bars_insets_applied) == true) return@post
+                deferredRoot.setTag(R.id.tag_system_bars_insets_applied, true)
+                apply(deferredRoot)
+            }
+            return
+        }
         if (root.getTag(R.id.tag_system_bars_insets_applied) == true) return
         root.setTag(R.id.tag_system_bars_insets_applied, true)
         apply(root)
