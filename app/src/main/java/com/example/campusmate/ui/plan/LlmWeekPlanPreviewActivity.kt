@@ -17,6 +17,7 @@ import com.example.campusmate.domain.llm.LlmGenerateResult
 import com.example.campusmate.domain.plan.LlmPlanGenerateService
 import com.example.campusmate.domain.plan.LlmPlanValidator
 import com.example.campusmate.domain.plan.PlanCourseConflictChecker
+import com.example.campusmate.domain.plan.StudyPlanGenerator
 import com.example.campusmate.domain.plan.StudyPlanContextBuilder
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
@@ -37,6 +38,7 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
     private lateinit var llmPlanGenerateService: LlmPlanGenerateService
     private lateinit var planValidator: LlmPlanValidator
     private lateinit var planContextBuilder: StudyPlanContextBuilder
+    private lateinit var localPlanGenerator: StudyPlanGenerator
 
     private lateinit var loadingContainer: LinearLayout
     private lateinit var errorContainer: LinearLayout
@@ -122,6 +124,7 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
         llmPlanGenerateService = LlmPlanGenerateService(llmSettingsRepository, LlmClientFactory)
         planValidator = LlmPlanValidator()
         planContextBuilder = StudyPlanContextBuilder(this)
+        localPlanGenerator = StudyPlanGenerator(this)
     }
 
     private fun setupTabs() {
@@ -276,59 +279,7 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
     }
 
     private fun generateLocalDayPlans(date: String): List<StudyPlan> {
-        val planContext = planContextBuilder.buildForDate(date)
-        val courses = planContext.courses
-        val tasks = planContext.tasks
-        val plans = mutableListOf<StudyPlan>()
-
-        var currentHour = 7
-        var currentMinute = 30
-
-        for (course in courses.sortedBy { it.startSection }) {
-            val startTime = formatTime(currentHour, currentMinute)
-            val courseMinutes = calculateCourseDuration(course)
-            val endMinute = currentMinute + courseMinutes
-            val (endHour, endMin) = adjustTime(currentHour, endMinute)
-
-            plans.add(
-                StudyPlan(
-                    title = "上课: ${course.name}",
-                    planDate = date,
-                    plannedMinutes = courseMinutes,
-                    startTime = startTime,
-                    endTime = formatTime(endHour, endMin),
-                    type = StudyPlan.TYPE_WEEKLY,
-                    sourceType = StudyPlan.SOURCE_AUTO
-                )
-            )
-
-            currentHour = endHour
-            currentMinute = endMin + 10
-            if (currentMinute >= 60) {
-                currentHour += currentMinute / 60
-                currentMinute = currentMinute % 60
-            }
-        }
-
-        if (tasks.isNotEmpty()) {
-            val taskMinutes = tasks.take(5).sumOf { 60 }
-            val endMinute = currentMinute + taskMinutes
-            val (endHour, endMin) = adjustTime(currentHour, endMinute)
-
-            plans.add(
-                StudyPlan(
-                    title = "自主学习: ${tasks.size}项待办",
-                    planDate = date,
-                    plannedMinutes = taskMinutes,
-                    startTime = formatTime(currentHour, currentMinute),
-                    endTime = formatTime(endHour, endMin),
-                    type = StudyPlan.TYPE_WEEKLY,
-                    sourceType = StudyPlan.SOURCE_AUTO
-                )
-            )
-        }
-
-        return plans
+        return localPlanGenerator.generatePreviewPlans(date, StudyPlan.TYPE_WEEKLY)
     }
 
     private fun buildDayPrompt(date: String): String {
@@ -351,23 +302,6 @@ $contextText
   ]
 }
         """.trimIndent()
-    }
-
-    private fun calculateCourseDuration(course: com.example.campusmate.data.model.Course): Int {
-        val sections = course.endSection - course.startSection + 1
-        val classDuration = 45
-        val breakAfterClass = if (sections > 1) (sections - 1) * 5 else 0
-        return sections * classDuration + breakAfterClass
-    }
-
-    private fun formatTime(hour: Int, minute: Int): String {
-        return String.format(Locale.US, "%02d:%02d", hour, minute)
-    }
-
-    private fun adjustTime(hour: Int, totalMinutes: Int): Pair<Int, Int> {
-        val adjustedHour = hour + totalMinutes / 60
-        val adjustedMinute = totalMinutes % 60
-        return Pair(adjustedHour.coerceAtMost(23), adjustedMinute)
     }
 
     private fun mapExceptionToMessage(e: Exception): String {
@@ -491,6 +425,7 @@ $contextText
             try {
                 withContext(Dispatchers.IO) {
                     val allPlans = allWeekPlans.values.flatten()
+                    planRepository.deletePlansOverlapping(allPlans)
                     for (plan in allPlans) {
                         planRepository.addPlan(plan.copy(id = 0L))
                     }

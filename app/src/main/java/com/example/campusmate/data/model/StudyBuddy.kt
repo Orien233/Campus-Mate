@@ -1,6 +1,6 @@
 package com.example.campusmate.data.model
 
-/** A study partner imported from QR, NFC, or future manual entry. */
+/** A study partner imported from QR or future manual entry. */
 data class StudyBuddy(
     val id: Long = 0L,
     val nickname: String,
@@ -17,7 +17,7 @@ data class StudyBuddy(
 ) {
     companion object {
         const val SOURCE_QR = 0
-        const val SOURCE_NFC = 1
+        const val SOURCE_LEGACY_REMOVED = 1
         const val SOURCE_MANUAL = 2
     }
 }

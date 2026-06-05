@@ -299,6 +299,8 @@ $contextText
                 withContext(Dispatchers.IO) {
                     if (!append) {
                         planRepository.deletePlansByDate(planDate)
+                    } else {
+                        planRepository.deletePlansOverlapping(generatedPlans)
                     }
                     planRepository.addPlans(generatedPlans.map { it.copy(id = 0L) })
                 }

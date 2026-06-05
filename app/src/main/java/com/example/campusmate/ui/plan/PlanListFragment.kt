@@ -8,6 +8,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -18,7 +19,6 @@ import com.example.campusmate.data.repository.StudyPlanRepository
 import com.example.campusmate.domain.llm.LlmClientFactory
 import com.example.campusmate.domain.plan.LlmPlanGenerateService
 import com.example.campusmate.domain.plan.StudyPlanGenerator
-import com.example.campusmate.ui.common.CollapsibleSection
 import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -47,8 +47,6 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
     private lateinit var completionText: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var weekDaySelector: LinearLayout
-    private lateinit var generateTodayButton: MaterialButton
-    private lateinit var generateWeekButton: MaterialButton
 
     private var selectedDate: String = DateTimeUtils.todayDate()
     private val weekdayNames = arrayOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
@@ -80,8 +78,6 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
         completionText = view.findViewById(R.id.planCompletionText)
         progressBar = view.findViewById(R.id.planProgressBar)
         weekDaySelector = view.findViewById(R.id.weekDaySelector)
-        generateTodayButton = view.findViewById(R.id.generateTodayButton)
-        generateWeekButton = view.findViewById(R.id.generateWeekButton)
 
         adapter = PlanAdapter(
             onPlanClick = { openDetail(it.id) },
@@ -91,28 +87,13 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
 
-        generateTodayButton.setOnClickListener {
-            handleGenerateToday()
-        }
-
-        generateWeekButton.setOnClickListener {
-            handleGenerateWeek()
-        }
-
         view.findViewById<MaterialButton>(R.id.planEmptyActionButton).setOnClickListener {
-            handleGenerateToday()
-        }
-
-        view.findViewById<FloatingActionButton>(R.id.addPlanFab).setOnClickListener {
             showAddPlanDialog()
         }
 
-        CollapsibleSection.bind(
-            root = view,
-            headerId = R.id.planGenerateHeader,
-            contentId = R.id.planGenerateContent,
-            indicatorId = R.id.planGenerateIndicator
-        )
+        view.findViewById<FloatingActionButton>(R.id.addPlanFab).setOnClickListener {
+            showPlanActionMenu(it)
+        }
 
         setupWeekDaySelector()
         loadPlans()
@@ -373,6 +354,23 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
         handleGenerateToday()
     }
 
+    private fun showPlanActionMenu(anchor: View) {
+        PopupMenu(requireContext(), anchor).apply {
+            menu.add(0, MENU_ADD_MANUAL, 0, R.string.plan_add_title)
+            menu.add(0, MENU_GENERATE_TODAY, 1, R.string.plan_generate_today)
+            menu.add(0, MENU_GENERATE_WEEK, 2, R.string.plan_generate_week)
+            setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    MENU_ADD_MANUAL -> showAddPlanDialog()
+                    MENU_GENERATE_TODAY -> handleGenerateToday()
+                    MENU_GENERATE_WEEK -> handleGenerateWeek()
+                }
+                true
+            }
+            show()
+        }
+    }
+
     private fun showAddPlanDialog() {
         val context = requireContext()
         val sidePadding = resources.getDimensionPixelSize(R.dimen.space_m)
@@ -466,5 +464,8 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
 
     companion object {
         private const val DEFAULT_MANUAL_PLAN_MINUTES = 60
+        private const val MENU_ADD_MANUAL = 1
+        private const val MENU_GENERATE_TODAY = 2
+        private const val MENU_GENERATE_WEEK = 3
     }
 }

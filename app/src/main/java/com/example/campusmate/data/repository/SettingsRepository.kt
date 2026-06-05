@@ -68,6 +68,29 @@ class SettingsRepository(context: Context) {
         preferences.edit().putBoolean(KEY_NOTIFICATION_FILTER_ENABLED, value).apply()
     }
 
+    fun getPlanEarliestTime(): String = getPlanTime(KEY_PLAN_EARLIEST_TIME, DEFAULT_PLAN_EARLIEST_TIME)
+
+    fun setPlanEarliestTime(value: String) {
+        preferences.edit().putString(KEY_PLAN_EARLIEST_TIME, normalizePlanTime(value, DEFAULT_PLAN_EARLIEST_TIME)).apply()
+    }
+
+    fun getPlanLatestTime(): String = getPlanTime(KEY_PLAN_LATEST_TIME, DEFAULT_PLAN_LATEST_TIME)
+
+    fun setPlanLatestTime(value: String) {
+        preferences.edit().putString(KEY_PLAN_LATEST_TIME, normalizePlanTime(value, DEFAULT_PLAN_LATEST_TIME)).apply()
+    }
+
+    private fun getPlanTime(key: String, defaultValue: String): String {
+        return normalizePlanTime(preferences.getString(key, defaultValue).orEmpty(), defaultValue)
+    }
+
+    private fun normalizePlanTime(value: String, defaultValue: String): String {
+        val match = Regex("""^(\d{1,2}):(\d{2})$""").find(value.trim()) ?: return defaultValue
+        val hour = match.groupValues[1].toIntOrNull()?.takeIf { it in 0..23 } ?: return defaultValue
+        val minute = match.groupValues[2].toIntOrNull()?.takeIf { it in 0..59 } ?: return defaultValue
+        return String.format(java.util.Locale.US, "%02d:%02d", hour, minute)
+    }
+
     /**
      * Optional "section -> clock time range" mapping for timetable display.
      *
@@ -118,9 +141,13 @@ class SettingsRepository(context: Context) {
         private const val KEY_WEATHER_LOCATION_GUIDE_SHOWN = "weather_location_guide_shown"
         private const val KEY_FOCUS_DND_ENABLED = "focus_dnd_enabled"
         private const val KEY_NOTIFICATION_FILTER_ENABLED = "notification_filter_enabled"
+        private const val KEY_PLAN_EARLIEST_TIME = "plan_earliest_time"
+        private const val KEY_PLAN_LATEST_TIME = "plan_latest_time"
         private const val KEY_SECTION_TIME_SLOTS_JSON = "section_time_slots_json"
         private const val DEFAULT_DAILY_GOAL_MINUTES = 60
         private const val DEFAULT_WEATHER_CITY = "\u5317\u4eac"
+        private const val DEFAULT_PLAN_EARLIEST_TIME = "08:00"
+        private const val DEFAULT_PLAN_LATEST_TIME = "22:00"
         const val WEATHER_CITY_SOURCE_MANUAL = "manual"
         const val WEATHER_CITY_SOURCE_LOCATION = "location"
     }

@@ -14,6 +14,54 @@
         android:padding="@dimen/space_m">
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/settingsHomeCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/space_m">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_sections_title"
+                    android:textColor="@color/campus_text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/openAiSettingsButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:text="@string/settings_section_ai"
+                    app:icon="@drawable/ic_settings" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/openFeatureSettingsButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:text="@string/settings_section_features"
+                    app:icon="@drawable/ic_focus" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/openBuddySettingsButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:text="@string/settings_section_buddy"
+                    app:icon="@drawable/ic_buddy" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/settingsGoalCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -53,10 +101,68 @@
                     android:layout_marginTop="@dimen/space_s"
                     android:text="@string/action_save"
                     app:icon="@drawable/ic_settings" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:text="@string/settings_plan_time_window"
+                    android:textColor="@color/campus_text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/planEarliestTimeInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/space_s"
+                        android:layout_weight="1"
+                        android:hint="@string/settings_plan_earliest_time">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/planEarliestTimeInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="time"
+                            android:maxLines="1" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/planLatestTimeInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_s"
+                        android:layout_weight="1"
+                        android:hint="@string/settings_plan_latest_time">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/planLatestTimeInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="time"
+                            android:maxLines="1" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/savePlanTimeWindowButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:text="@string/settings_plan_time_window_save"
+                    app:icon="@drawable/ic_plan" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/settingsPreferencesCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_m">
@@ -95,6 +201,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/settingsLlmCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_m">
@@ -185,9 +292,13 @@
                         android:id="@+id/llmProviderInput"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
+                        android:dropDownHeight="wrap_content"
+                        android:dropDownVerticalOffset="4dp"
                         android:ellipsize="end"
                         android:inputType="none"
-                        android:maxLines="1" />
+                        android:maxLines="1"
+                        android:popupWidth="match_parent"
+                        android:singleLine="true" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <TextView
@@ -240,9 +351,13 @@
                         android:id="@+id/llmAuthHeaderInput"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
+                        android:dropDownHeight="wrap_content"
+                        android:dropDownVerticalOffset="4dp"
                         android:ellipsize="end"
                         android:inputType="none"
-                        android:maxLines="1" />
+                        android:maxLines="1"
+                        android:popupWidth="match_parent"
+                        android:singleLine="true" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -368,6 +483,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/settingsWeatherCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_m">
@@ -437,6 +553,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/settingsProfileCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_m">
@@ -483,6 +600,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/settingsPermissionsCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_m">
@@ -573,6 +691,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/settingsDemoCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_m">

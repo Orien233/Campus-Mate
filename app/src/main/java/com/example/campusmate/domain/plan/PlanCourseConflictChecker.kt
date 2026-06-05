@@ -17,18 +17,24 @@ object PlanCourseConflictChecker {
             context.courses.mapNotNull { course ->
                 val range = context.courseTimeRanges[course.id] ?: return@mapNotNull null
                 val (courseStart, courseEnd) = parseRange(range) ?: return@mapNotNull null
-                if (
-                    planStart < courseEnd &&
-                    planEnd > courseStart &&
-                    !isCourseLearningPlan(plan, course)
-                ) {
-                    PlanCourseConflict(
-                        planTitle = plan.title,
-                        courseName = course.name,
-                        courseTimeRange = range
-                    )
-                } else {
-                    null
+                val isCourseLearning = isCourseLearningPlan(plan, course)
+                val overlapsCourse = planStart < courseEnd && planEnd > courseStart
+                when {
+                    isCourseLearning && (planStart < courseStart || planEnd > courseEnd) -> {
+                        PlanCourseConflict(
+                            planTitle = plan.title,
+                            courseName = course.name,
+                            courseTimeRange = range
+                        )
+                    }
+                    !isCourseLearning && overlapsCourse -> {
+                        PlanCourseConflict(
+                            planTitle = plan.title,
+                            courseName = course.name,
+                            courseTimeRange = range
+                        )
+                    }
+                    else -> null
                 }
             }
         }

@@ -9,8 +9,6 @@ import com.example.campusmate.R
 import com.example.campusmate.data.model.UserProfile
 import com.example.campusmate.data.repository.UserProfileRepository
 import com.example.campusmate.ui.buddy.BuddyListActivity
-import com.example.campusmate.ui.nfc.NfcReceiveActivity
-import com.example.campusmate.ui.nfc.NfcShareActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
@@ -62,16 +60,6 @@ class ProfileActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.scanQrButton).setOnClickListener {
             startActivity(Intent(this, ScanQrActivity::class.java))
         }
-        findViewById<MaterialButton>(R.id.nfcShareButton).setOnClickListener {
-            if (currentProfile == null) {
-                Snackbar.make(rootView, R.string.nfc_share_failed, Snackbar.LENGTH_SHORT).show()
-            } else {
-                startActivity(Intent(this, NfcShareActivity::class.java))
-            }
-        }
-        findViewById<MaterialButton>(R.id.nfcReceiveButton).setOnClickListener {
-            startActivity(Intent(this, NfcReceiveActivity::class.java))
-        }
         findViewById<MaterialButton>(R.id.buddyListButton).setOnClickListener {
             startActivity(Intent(this, BuddyListActivity::class.java))
         }
@@ -95,7 +83,6 @@ class ProfileActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.profileEmptyText).visibility = View.GONE
         findViewById<MaterialButton>(R.id.editProfileButton).setText(R.string.profile_create_action)
         findViewById<MaterialButton>(R.id.showQrButton).isEnabled = false
-        findViewById<MaterialButton>(R.id.nfcShareButton).isEnabled = false
     }
 
     private fun bindProfile(profile: UserProfile) {
@@ -116,6 +103,5 @@ class ProfileActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.profileEmptyText).visibility = View.GONE
         findViewById<MaterialButton>(R.id.editProfileButton).setText(R.string.profile_edit_action)
         findViewById<MaterialButton>(R.id.showQrButton).isEnabled = true
-        findViewById<MaterialButton>(R.id.nfcShareButton).isEnabled = true
     }
 }

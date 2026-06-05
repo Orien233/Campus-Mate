@@ -192,7 +192,7 @@ object CampusMateContract {
         const val COLUMN_NOTE = "note"
 
         const val SOURCE_QR = 0
-        const val SOURCE_NFC = 1
+        const val SOURCE_LEGACY_REMOVED = 1
         const val SOURCE_MANUAL = 2
 
         fun buildItemUri(id: Long): Uri = CONTENT_URI.buildUpon().appendPath(id.toString()).build()

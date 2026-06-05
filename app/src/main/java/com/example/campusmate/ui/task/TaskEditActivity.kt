@@ -3,6 +3,7 @@ package com.example.campusmate.ui.task
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
@@ -16,6 +17,7 @@ import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.model.StudyTask
 import com.example.campusmate.data.repository.CourseRepository
 import com.example.campusmate.data.repository.SettingsRepository
+import com.example.campusmate.data.repository.TaskAttachmentRepository
 import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.domain.reminder.AlarmReminderScheduler
 import com.example.campusmate.domain.task.TaskDraft
@@ -32,6 +34,7 @@ class TaskEditActivity : AppCompatActivity() {
     private lateinit var taskRepository: TaskRepository
     private lateinit var courseRepository: CourseRepository
     private lateinit var settingsRepository: SettingsRepository
+    private lateinit var attachmentRepository: TaskAttachmentRepository
     private lateinit var reminderScheduler: AlarmReminderScheduler
 
     private lateinit var rootView: View
@@ -43,6 +46,7 @@ class TaskEditActivity : AppCompatActivity() {
     private lateinit var dueTimeText: TextView
     private lateinit var remindTimeText: TextView
     private lateinit var aiPrefillStatusText: TextView
+    private lateinit var attachmentStatusText: TextView
 
     private var editingTaskId: Long = 0L
     private var editingTask: StudyTask? = null
@@ -50,6 +54,7 @@ class TaskEditActivity : AppCompatActivity() {
     private var courses: List<Course> = emptyList()
     private var selectedDueAt: Long? = null
     private var selectedRemindAt: Long? = null
+    private val pendingAttachments = mutableListOf<PendingAttachment>()
 
     private val taskParseLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -63,6 +68,12 @@ class TaskEditActivity : AppCompatActivity() {
         applyTaskDraft(draft, warningSummary)
     }
 
+    private val pickAttachmentLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            if (uri == null) return@registerForActivityResult
+            addPendingAttachment(uri)
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_task_edit)
@@ -70,6 +81,7 @@ class TaskEditActivity : AppCompatActivity() {
         taskRepository = TaskRepository(this)
         courseRepository = CourseRepository(this)
         settingsRepository = SettingsRepository(this)
+        attachmentRepository = TaskAttachmentRepository(this)
         reminderScheduler = AlarmReminderScheduler(this)
         editingTaskId = intent.getLongExtra(EXTRA_TASK_ID, 0L)
         initialTaskType = intent.getIntExtra(EXTRA_TASK_TYPE, StudyTask.TYPE_HOMEWORK)
@@ -79,6 +91,7 @@ class TaskEditActivity : AppCompatActivity() {
         setupSpinners()
         setupDateButtons()
         setupAiParseAction()
+        setupAttachmentAction()
 
         if (editingTaskId > 0L) {
             editingTask = taskRepository.getTaskById(editingTaskId)
@@ -111,6 +124,7 @@ class TaskEditActivity : AppCompatActivity() {
         dueTimeText = findViewById(R.id.taskDueTimeText)
         remindTimeText = findViewById(R.id.taskRemindTimeText)
         aiPrefillStatusText = findViewById(R.id.taskAiPrefillStatusText)
+        attachmentStatusText = findViewById(R.id.taskEditAttachmentStatusText)
     }
 
     private fun setupToolbar() {
@@ -162,6 +176,13 @@ class TaskEditActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.parseTaskFromWebButton).setOnClickListener {
             taskParseLauncher.launch(Intent(this, TaskWebViewParseActivity::class.java))
         }
+    }
+
+    private fun setupAttachmentAction() {
+        findViewById<MaterialButton>(R.id.pickTaskAttachmentButton).setOnClickListener {
+            pickAttachmentLauncher.launch(arrayOf("image/*"))
+        }
+        updateAttachmentStatus()
     }
 
     private fun bindTask(task: StudyTask) {
@@ -247,9 +268,56 @@ class TaskEditActivity : AppCompatActivity() {
         }
 
         val savedTask = task.copy(id = savedTaskId)
+        val failedAttachments = savePendingAttachments(savedTaskId)
         handleReminderAfterSave(savedTask)
+        if (failedAttachments > 0) {
+            Toast.makeText(this, R.string.task_attachment_add_failed, Toast.LENGTH_LONG).show()
+        }
         setResult(RESULT_OK)
         finish()
+    }
+
+    private fun addPendingAttachment(uri: Uri) {
+        try {
+            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } catch (_: SecurityException) {
+            // Some providers do not support persistable permissions; best effort only.
+        }
+        pendingAttachments += PendingAttachment(
+            uri = uri,
+            mimeType = contentResolver.getType(uri),
+            title = TaskAttachmentUiUtils.queryDisplayName(this, uri)
+        )
+        updateAttachmentStatus()
+    }
+
+    private fun updateAttachmentStatus() {
+        attachmentStatusText.text = if (pendingAttachments.isEmpty()) {
+            getString(R.string.task_attachment_pending_empty)
+        } else {
+            getString(
+                R.string.task_attachment_pending_format,
+                pendingAttachments.size,
+                pendingAttachments.mapIndexed { index, attachment ->
+                    attachment.title ?: getString(R.string.task_attachment_pending_default, index + 1)
+                }.joinToString("、")
+            )
+        }
+    }
+
+    private fun savePendingAttachments(taskId: Long): Int {
+        if (pendingAttachments.isEmpty()) return 0
+        var failed = 0
+        pendingAttachments.forEach { attachment ->
+            val id = attachmentRepository.addAttachment(
+                taskId = taskId,
+                uri = attachment.uri.toString(),
+                mimeType = attachment.mimeType,
+                title = attachment.title
+            )
+            if (id <= 0L) failed += 1
+        }
+        return failed
     }
 
     private fun collectTaskOrShowError(): StudyTask? {
@@ -335,4 +403,10 @@ class TaskEditActivity : AppCompatActivity() {
         const val EXTRA_TASK_TYPE = "extra_task_type"
         private const val DEMO_REMINDER_DELAY_MILLIS = 10_000L
     }
+
+    private data class PendingAttachment(
+        val uri: Uri,
+        val mimeType: String?,
+        val title: String?
+    )
 }

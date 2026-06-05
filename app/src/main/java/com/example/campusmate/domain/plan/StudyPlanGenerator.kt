@@ -6,22 +6,14 @@ import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.data.model.StudyTask
 import com.example.campusmate.data.repository.StudyPlanRepository
 import com.example.campusmate.util.DateTimeUtils
+import java.util.Calendar
+import java.util.Locale
+import kotlin.math.max
+import kotlin.math.min
 
 class StudyPlanGenerator(private val context: Context) {
     private val planRepository = StudyPlanRepository(context)
     private val contextBuilder = StudyPlanContextBuilder(context)
-
-    private val sectionStartHours = mapOf(
-        1 to 8, 2 to 8, 3 to 9, 4 to 10, 5 to 10, 6 to 11,
-        7 to 11, 8 to 14, 9 to 14, 10 to 15, 11 to 16, 12 to 16
-    )
-
-    private val sectionDurationMinutes = mapOf(
-        1 to 45, 2 to 45, 3 to 45, 4 to 45, 5 to 45, 6 to 45,
-        7 to 45, 8 to 45, 9 to 45, 10 to 45, 11 to 45, 12 to 45
-    )
-
-    private val breakBetweenSections = 10
 
     data class PlanGenerationResult(
         val success: Boolean,
@@ -31,6 +23,8 @@ class StudyPlanGenerator(private val context: Context) {
         val totalPlannedMinutes: Int = 0,
         val message: String = ""
     )
+
+    private data class TimeBlock(val start: Int, val end: Int)
 
     fun generateDailyPlan(dateMillis: Long = System.currentTimeMillis()): PlanGenerationResult {
         return generateDailyPlan(DateTimeUtils.formatDate(dateMillis))
@@ -47,208 +41,191 @@ class StudyPlanGenerator(private val context: Context) {
             )
         }
 
-        val courses = planContext.courses
-        val tasks = planContext.tasks
-        val plans = mutableListOf<StudyPlan>()
-
-        var currentHour = 7
-        var currentMinute = 30
-
-        for (course in courses.sortedBy { it.startSection }) {
-            val startTime = formatTime(currentHour, currentMinute)
-            val courseMinutes = calculateCourseDuration(course)
-            val endMinute = currentMinute + courseMinutes
-            val (endHour, endMin) = adjustTime(currentHour, endMinute)
-
-            plans.add(
-                StudyPlan(
-                    title = "上课: ${course.name}",
-                    planDate = planDate,
-                    plannedMinutes = courseMinutes,
-                    startTime = startTime,
-                    endTime = formatTime(endHour, endMin),
-                    type = StudyPlan.TYPE_DAILY,
-                    sourceType = StudyPlan.SOURCE_AUTO
-                )
-            )
-
-            currentHour = endHour
-            currentMinute = endMin + breakBetweenSections
-
-            if (currentMinute >= 60) {
-                currentHour += currentMinute / 60
-                currentMinute = currentMinute % 60
-            }
+        val plans = generatePlansForContext(planContext, StudyPlan.TYPE_DAILY)
+        if (plans.isNotEmpty()) {
+            planRepository.addPlans(plans)
         }
-
-        if (tasks.isNotEmpty()) {
-            val taskMinutes = tasks.sumOf { estimateTaskDuration(it) }
-            val endMinute = currentMinute + taskMinutes
-            val (endHour, endMin) = adjustTime(currentHour, endMinute)
-
-            plans.add(
-                StudyPlan(
-                    title = "自主学习: ${tasks.size}项待办任务",
-                    planDate = planDate,
-                    plannedMinutes = taskMinutes,
-                    startTime = formatTime(currentHour, currentMinute),
-                    endTime = formatTime(endHour, endMin),
-                    type = StudyPlan.TYPE_DAILY,
-                    sourceType = StudyPlan.SOURCE_AUTO
-                )
-            )
-        }
-
-        if (plans.isEmpty()) {
-            val endMinute = currentMinute + 120
-            val (endHour, endMin) = adjustTime(currentHour, endMinute)
-            plans.add(
-                StudyPlan(
-                    title = "自主学习时间",
-                    planDate = planDate,
-                    plannedMinutes = 120,
-                    startTime = formatTime(currentHour, currentMinute),
-                    endTime = formatTime(endHour, endMin),
-                    type = StudyPlan.TYPE_DAILY,
-                    sourceType = StudyPlan.SOURCE_AUTO
-                )
-            )
-        }
-
-        val totalMinutes = plans.sumOf { it.plannedMinutes }
-        planRepository.addPlans(plans)
-
-        return PlanGenerationResult(
-            success = true,
-            plans = plans,
-            courseCount = courses.size,
-            taskCount = tasks.size,
-            totalPlannedMinutes = totalMinutes,
-            message = "已生成${plans.size}个计划项，涵盖${courses.size}节课和${tasks.size}项任务，共${totalMinutes}分钟"
-        )
+        return buildResult(plans, planContext.courses.size, planContext.tasks.size, "已生成")
     }
 
     fun generateWeeklyPlan(): PlanGenerationResult {
-        val calendar = java.util.Calendar.getInstance()
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        calendar.set(java.util.Calendar.MINUTE, 0)
-        calendar.set(java.util.Calendar.SECOND, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
-
-        val weekday = DateTimeUtils.currentWeekday()
-        calendar.add(java.util.Calendar.DAY_OF_MONTH, -(weekday - 1))
-
-        val startDate = DateTimeUtils.formatDate(calendar.timeInMillis)
-        calendar.add(java.util.Calendar.DAY_OF_MONTH, 6)
-        val endDate = DateTimeUtils.formatDate(calendar.timeInMillis)
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        calendar.add(Calendar.DAY_OF_MONTH, -(DateTimeUtils.currentWeekday() - 1))
 
         val allPlans = mutableListOf<StudyPlan>()
         var totalCourseCount = 0
         var totalTaskCount = 0
 
-        calendar.timeInMillis = calendar.timeInMillis - (6 * 24 * 60 * 60 * 1000L)
-
         for (day in 0..6) {
-            val dayDate = DateTimeUtils.formatDate(calendar.timeInMillis)
-            val planContext = contextBuilder.buildForDate(dayDate)
-            val courses = planContext.courses
-            val tasks = planContext.tasks
-
-            var currentHour = 7
-            var currentMinute = 30
-
-            for (course in courses.sortedBy { it.startSection }) {
-                val startTime = formatTime(currentHour, currentMinute)
-                val courseMinutes = calculateCourseDuration(course)
-                val endMinute = currentMinute + courseMinutes
-                val (endHour, endMin) = adjustTime(currentHour, endMinute)
-
-                allPlans.add(
-                    StudyPlan(
-                        title = "上课: ${course.name}",
-                        planDate = dayDate,
-                        plannedMinutes = courseMinutes,
-                        startTime = startTime,
-                        endTime = formatTime(endHour, endMin),
-                        type = StudyPlan.TYPE_WEEKLY,
-                        sourceType = StudyPlan.SOURCE_AUTO
-                    )
-                )
-
-                currentHour = endHour
-                currentMinute = endMin + breakBetweenSections
-
-                if (currentMinute >= 60) {
-                    currentHour += currentMinute / 60
-                    currentMinute = currentMinute % 60
-                }
-            }
-
-            if (tasks.isNotEmpty()) {
-                val taskMinutes = tasks.sumOf { estimateTaskDuration(it) }
-                val endMinute = currentMinute + taskMinutes
-                val (endHour, endMin) = adjustTime(currentHour, endMinute)
-
-                allPlans.add(
-                    StudyPlan(
-                        title = "自主学习: ${tasks.size}项待办任务",
-                        planDate = dayDate,
-                        plannedMinutes = taskMinutes,
-                        startTime = formatTime(currentHour, currentMinute),
-                        endTime = formatTime(endHour, endMin),
-                        type = StudyPlan.TYPE_WEEKLY,
-                        sourceType = StudyPlan.SOURCE_AUTO
-                    )
-                )
-            }
-
-            totalCourseCount += courses.size
-            totalTaskCount += tasks.size
-
-            calendar.add(java.util.Calendar.DAY_OF_MONTH, 1)
+            val dayContext = contextBuilder.buildForDate(DateTimeUtils.formatDate(calendar.timeInMillis))
+            val dayPlans = generatePlansForContext(dayContext, StudyPlan.TYPE_WEEKLY)
+            allPlans += dayPlans
+            totalCourseCount += dayContext.courses.size
+            totalTaskCount += dayContext.tasks.size
+            calendar.add(Calendar.DAY_OF_MONTH, 1)
         }
 
         if (allPlans.isNotEmpty()) {
+            planRepository.deletePlansOverlapping(allPlans)
             planRepository.addPlans(allPlans)
         }
-
-        val totalMinutes = allPlans.sumOf { it.plannedMinutes }
-
-        return PlanGenerationResult(
-            success = true,
-            plans = allPlans,
-            courseCount = totalCourseCount,
-            taskCount = totalTaskCount,
-            totalPlannedMinutes = totalMinutes,
-            message = "已生成本周${allPlans.size}个计划项，涵盖${totalCourseCount}节课和${totalTaskCount}项任务，共${totalMinutes}分钟"
-        )
+        return buildResult(allPlans, totalCourseCount, totalTaskCount, "已生成本周")
     }
 
-    private fun calculateCourseDuration(course: Course): Int {
-        val sections = course.endSection - course.startSection + 1
-        val classDuration = 45
-        val breakAfterClass = if (sections > 1) (sections - 1) * 5 else 0
-        return sections * classDuration + breakAfterClass
+    fun generatePreviewPlans(date: String, type: Int = StudyPlan.TYPE_DAILY): List<StudyPlan> {
+        return generatePlansForContext(contextBuilder.buildForDate(date), type)
+    }
+
+    private fun generatePlansForContext(planContext: StudyPlanContext, planType: Int): List<StudyPlan> {
+        val minStart = parseTime(planContext.generationStartTime) ?: parseTime(planContext.planEarliestTime) ?: 8 * 60
+        val maxEnd = parseTime(planContext.planLatestTime) ?: 22 * 60
+        if (minStart >= maxEnd) return emptyList()
+
+        val plans = mutableListOf<StudyPlan>()
+        val courseBlocks = planContext.courses.mapNotNull { course ->
+            courseBlock(planContext, course)?.let { course to it }
+        }
+
+        for ((course, block) in courseBlocks.sortedBy { it.second.start }) {
+            val start = max(block.start, minStart)
+            val end = min(block.end, maxEnd)
+            if (end <= start) continue
+            plans += StudyPlan(
+                title = "上课: ${course.name}",
+                planDate = planContext.date,
+                plannedMinutes = end - start,
+                startTime = formatTime(start),
+                endTime = formatTime(end),
+                type = planType,
+                sourceType = StudyPlan.SOURCE_AUTO
+            )
+        }
+
+        val occupied = (courseBlocks.map { it.second } + existingPlanBlocks(planContext))
+            .map { TimeBlock(max(it.start, minStart), min(it.end, maxEnd)) }
+            .filter { it.end > it.start }
+            .sortedBy { it.start }
+        var cursor = minStart
+        val ordinaryTasks = planContext.tasks.filterNot { isCourseLearningTask(it, planContext) }
+
+        for (task in ordinaryTasks.take(6)) {
+            val duration = estimateTaskDuration(task).coerceIn(30, 120)
+            val slot = nextFreeSlot(cursor, duration, maxEnd, occupied) ?: break
+            plans += StudyPlan(
+                title = task.title,
+                planDate = planContext.date,
+                plannedMinutes = slot.end - slot.start,
+                startTime = formatTime(slot.start),
+                endTime = formatTime(slot.end),
+                type = planType,
+                sourceType = StudyPlan.SOURCE_AUTO
+            )
+            cursor = slot.end + 10
+        }
+
+        if (plans.isEmpty()) {
+            nextFreeSlot(minStart, 60, maxEnd, occupied)?.let { slot ->
+                plans += StudyPlan(
+                    title = "自主学习时间",
+                    planDate = planContext.date,
+                    plannedMinutes = slot.end - slot.start,
+                    startTime = formatTime(slot.start),
+                    endTime = formatTime(slot.end),
+                    type = planType,
+                    sourceType = StudyPlan.SOURCE_AUTO
+                )
+            }
+        }
+
+        return plans.sortedWith(compareBy<StudyPlan> { it.planDate }.thenBy { it.startTime ?: "" })
+    }
+
+    private fun courseBlock(planContext: StudyPlanContext, course: Course): TimeBlock? {
+        val range = planContext.courseTimeRanges[course.id] ?: return null
+        val match = Regex("""(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})""").find(range) ?: return null
+        val start = toMinutes(match.groupValues[1], match.groupValues[2]) ?: return null
+        val end = toMinutes(match.groupValues[3], match.groupValues[4]) ?: return null
+        return TimeBlock(start, end).takeIf { it.end > it.start }
+    }
+
+    private fun existingPlanBlocks(planContext: StudyPlanContext): List<TimeBlock> {
+        return planContext.existingPlans.mapNotNull { plan ->
+            val start = parseTime(plan.startTime) ?: return@mapNotNull null
+            val end = parseTime(plan.endTime) ?: return@mapNotNull null
+            TimeBlock(start, end).takeIf { it.end > it.start }
+        }
+    }
+
+    private fun nextFreeSlot(startAt: Int, duration: Int, maxEnd: Int, occupied: List<TimeBlock>): TimeBlock? {
+        var cursor = startAt
+        for (block in occupied) {
+            if (cursor + duration <= block.start) return TimeBlock(cursor, cursor + duration)
+            if (cursor < block.end) cursor = block.end + 10
+        }
+        return if (cursor + duration <= maxEnd) TimeBlock(cursor, cursor + duration) else null
+    }
+
+    private fun isCourseLearningTask(task: StudyTask, planContext: StudyPlanContext): Boolean {
+        val courseId = task.courseId ?: return false
+        val courseName = planContext.coursesById[courseId]?.name ?: return false
+        val title = task.title
+        return planContext.courses.any { it.id == courseId } &&
+            title.contains(courseName, ignoreCase = true) &&
+            COURSE_LEARNING_KEYWORDS.any { title.contains(it, ignoreCase = true) }
     }
 
     private fun estimateTaskDuration(task: StudyTask): Int {
         return when (task.type) {
             StudyTask.TYPE_HOMEWORK -> 60
             StudyTask.TYPE_EXPERIMENT -> 120
-            StudyTask.TYPE_EXAM -> 180
+            StudyTask.TYPE_EXAM -> 120
             StudyTask.TYPE_REVIEW -> 90
             StudyTask.TYPE_PROJECT -> 120
             else -> 45
         }
     }
 
-    private fun formatTime(hour: Int, minute: Int): String {
-        return String.format(java.util.Locale.US, "%02d:%02d", hour, minute)
+    private fun buildResult(
+        plans: List<StudyPlan>,
+        courseCount: Int,
+        taskCount: Int,
+        prefix: String
+    ): PlanGenerationResult {
+        val totalMinutes = plans.sumOf { it.plannedMinutes }
+        return PlanGenerationResult(
+            success = plans.isNotEmpty(),
+            plans = plans,
+            courseCount = courseCount,
+            taskCount = taskCount,
+            totalPlannedMinutes = totalMinutes,
+            message = if (plans.isNotEmpty()) {
+                "$prefix ${plans.size} 个计划项，覆盖 $courseCount 节课和 $taskCount 项任务，共 $totalMinutes 分钟"
+            } else {
+                "当前时间窗口内没有可生成的计划"
+            }
+        )
     }
 
-    private fun adjustTime(hour: Int, totalMinutes: Int): Pair<Int, Int> {
-        val adjustedHour = hour + totalMinutes / 60
-        val adjustedMinute = totalMinutes % 60
-        return Pair(adjustedHour.coerceAtMost(23), adjustedMinute)
+    private fun parseTime(value: String?): Int? {
+        val match = Regex("""^(\d{1,2}):(\d{2})$""").find(value?.trim().orEmpty()) ?: return null
+        return toMinutes(match.groupValues[1], match.groupValues[2])
+    }
+
+    private fun toMinutes(hourText: String, minuteText: String): Int? {
+        val hour = hourText.toIntOrNull()?.takeIf { it in 0..23 } ?: return null
+        val minute = minuteText.toIntOrNull()?.takeIf { it in 0..59 } ?: return null
+        return hour * 60 + minute
+    }
+
+    private fun formatTime(minutes: Int): String {
+        return String.format(Locale.US, "%02d:%02d", minutes / 60, minutes % 60)
+    }
+
+    companion object {
+        private val COURSE_LEARNING_KEYWORDS = listOf("上课", "课程学习", "完成课程学习", "课堂", "听课")
     }
 }

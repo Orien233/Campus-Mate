@@ -19,9 +19,6 @@ import com.example.campusmate.domain.weather.WeatherLocationResolver
 import com.example.campusmate.domain.weather.WeatherResult
 import com.example.campusmate.ui.common.CollapsibleSection
 import com.example.campusmate.ui.focus.FocusActivity
-import com.example.campusmate.ui.import_.ImportScheduleActivity
-import com.example.campusmate.ui.main.MainActivity
-import com.example.campusmate.ui.task.TaskEditActivity
 import com.example.campusmate.util.DateTimeUtils
 import com.example.campusmate.util.PermissionUtils
 import com.google.android.material.button.MaterialButton
@@ -62,35 +59,17 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         view.findViewById<MaterialButton>(R.id.startFocusButton).setOnClickListener {
             startActivity(Intent(requireContext(), FocusActivity::class.java))
         }
-        view.findViewById<MaterialButton>(R.id.addTaskButton).setOnClickListener {
-            startActivity(Intent(requireContext(), TaskEditActivity::class.java))
-        }
-        view.findViewById<MaterialButton>(R.id.importScheduleButton).setOnClickListener {
-            startActivity(Intent(requireContext(), ImportScheduleActivity::class.java))
-        }
         view.findViewById<MaterialButton>(R.id.refreshWeatherButton).setOnClickListener {
             requestLocationAndLoadWeather(forceRefresh = true, userTriggered = true)
         }
         view.findViewById<MaterialButton>(R.id.refreshCurrentWeatherButton).setOnClickListener {
             loadWeather(forceRefresh = true)
         }
-        view.findViewById<MaterialButton>(R.id.generatePlanButton).setOnClickListener {
-            (activity as? MainActivity)?.navigateTo(R.id.nav_plan)
-        }
-        view.findViewById<MaterialButton>(R.id.viewStatisticsButton).setOnClickListener {
-            (activity as? MainActivity)?.navigateTo(R.id.nav_statistics)
-        }
         CollapsibleSection.bind(
             root = view,
             headerId = R.id.weatherHeader,
             contentId = R.id.weatherExpandedContent,
             indicatorId = R.id.weatherExpandIndicator
-        )
-        CollapsibleSection.bind(
-            root = view,
-            headerId = R.id.quickActionsHeader,
-            contentId = R.id.quickActionsExpandedContent,
-            indicatorId = R.id.quickActionsExpandIndicator
         )
     }
 

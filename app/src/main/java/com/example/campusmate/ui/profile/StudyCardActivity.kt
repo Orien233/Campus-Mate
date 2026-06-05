@@ -18,7 +18,7 @@ import com.google.zxing.MultiFormatWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import org.json.JSONObject
 
-/** Generates a QR bitmap from the same public profile JSON used by future NFC sharing. */
+/** Generates a QR bitmap from the public profile JSON. */
 class StudyCardActivity : AppCompatActivity() {
     private lateinit var repository: UserProfileRepository
     private lateinit var rootView: View

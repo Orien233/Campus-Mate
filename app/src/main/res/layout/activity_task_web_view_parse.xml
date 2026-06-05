@@ -67,14 +67,6 @@
                 app:icon="@drawable/ic_task" />
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/taskWebViewParseSettingsButton"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_s"
-            android:text="@string/task_ai_open_settings"
-            app:icon="@drawable/ic_settings" />
     </LinearLayout>
 
     <WebView

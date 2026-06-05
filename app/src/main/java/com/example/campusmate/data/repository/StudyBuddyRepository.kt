@@ -12,7 +12,7 @@ import com.example.campusmate.util.DbUtils.getRequiredInt
 import com.example.campusmate.util.DbUtils.getRequiredLong
 import com.example.campusmate.util.DbUtils.getRequiredString
 
-/** Repository for QR/NFC study partners, always accessed through ContentResolver. */
+/** Repository for study partners, always accessed through ContentResolver. */
 class StudyBuddyRepository(context: Context) {
     private val resolver = context.applicationContext.contentResolver
 

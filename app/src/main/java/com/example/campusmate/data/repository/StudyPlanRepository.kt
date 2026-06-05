@@ -145,6 +145,21 @@ class StudyPlanRepository(context: Context) {
         )
     }
 
+    fun deletePlansOverlapping(plans: List<StudyPlan>): Int {
+        var deleted = 0
+        for ((date, dayPlans) in plans.groupBy { it.planDate }) {
+            val newBlocks = dayPlans.mapNotNull { it.timeBlock() }
+            if (newBlocks.isEmpty()) continue
+            for (existing in getPlansByDate(date)) {
+                val existingBlock = existing.timeBlock() ?: continue
+                if (newBlocks.any { it.overlaps(existingBlock) } && deletePlan(existing.id)) {
+                    deleted += 1
+                }
+            }
+        }
+        return deleted
+    }
+
     fun hasPlanForDate(date: String): Boolean {
         resolver.query(
             CampusMateContract.StudyPlans.CONTENT_URI,
@@ -190,5 +205,22 @@ class StudyPlanRepository(context: Context) {
             }
         }
         return total
+    }
+
+    private fun StudyPlan.timeBlock(): Pair<Int, Int>? {
+        val start = parseTime(startTime) ?: return null
+        val end = parseTime(endTime) ?: return null
+        return (start to end).takeIf { it.second > it.first }
+    }
+
+    private fun Pair<Int, Int>.overlaps(other: Pair<Int, Int>): Boolean {
+        return first < other.second && second > other.first
+    }
+
+    private fun parseTime(value: String?): Int? {
+        val match = Regex("""^(\d{1,2}):(\d{2})$""").find(value?.trim().orEmpty()) ?: return null
+        val hour = match.groupValues[1].toIntOrNull()?.takeIf { it in 0..23 } ?: return null
+        val minute = match.groupValues[2].toIntOrNull()?.takeIf { it in 0..59 } ?: return null
+        return hour * 60 + minute
     }
 }
