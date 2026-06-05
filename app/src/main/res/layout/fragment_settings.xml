@@ -288,15 +288,18 @@
                     android:hint="@string/settings_llm_provider"
                     app:endIconMode="dropdown_menu">
 
-                    <AutoCompleteTextView
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
                         android:id="@+id/llmProviderInput"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
                         android:dropDownHeight="wrap_content"
                         android:dropDownVerticalOffset="4dp"
                         android:ellipsize="end"
+                        android:gravity="center_vertical"
                         android:inputType="none"
                         android:maxLines="1"
+                        android:paddingTop="0dp"
+                        android:paddingBottom="0dp"
                         android:dropDownWidth="match_parent"
                         android:singleLine="true" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -347,15 +350,18 @@
                     android:hint="@string/settings_llm_auth_header"
                     app:endIconMode="dropdown_menu">
 
-                    <AutoCompleteTextView
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
                         android:id="@+id/llmAuthHeaderInput"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
                         android:dropDownHeight="wrap_content"
                         android:dropDownVerticalOffset="4dp"
                         android:ellipsize="end"
+                        android:gravity="center_vertical"
                         android:inputType="none"
                         android:maxLines="1"
+                        android:paddingTop="0dp"
+                        android:paddingBottom="0dp"
                         android:dropDownWidth="match_parent"
                         android:singleLine="true" />
                 </com.google.android.material.textfield.TextInputLayout>
