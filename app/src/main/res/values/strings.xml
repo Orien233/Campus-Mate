@@ -112,6 +112,9 @@
     <string name="settings_dnd_access">勿扰模式授权</string>
     <string name="settings_dnd_status_enabled">勿扰模式授权已开启：专注页可引导用户使用系统勿扰能力</string>
     <string name="settings_dnd_status_disabled">勿扰模式授权未开启：不影响番茄专注主流程</string>
+    <string name="settings_notification_access">通知访问授权</string>
+    <string name="settings_notification_access_status_enabled">通知访问授权已开启：专注时可按规则标记通知过滤状态</string>
+    <string name="settings_notification_access_status_disabled">通知访问授权未开启：通知过滤开关不会影响普通专注计时</string>
     <string name="settings_system_entry_unavailable">当前设备未提供该系统设置入口</string>
     <string name="settings_demo_tools">演示工具</string>
     <string name="settings_demo_tools_body">用于 2-3 分钟答辩展示，会先清空本地数据，再生成课程、任务、提醒和学习热力图样例</string>

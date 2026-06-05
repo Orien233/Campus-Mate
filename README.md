@@ -74,7 +74,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 - Android 系统备份：Manifest 中 `android:allowBackup="false"`；`backup_rules.xml` 和 `data_extraction_rules.xml` 也排除数据库、SharedPreferences、文件和外部文件。
 - 演示数据：当前生成课程、任务、学习计划、学习记录、学习名片、二维码伙伴和导入日志；附件仍需用户通过 SAF 选择真实图片。
 - WebView 教务系统导入：默认入口为 `https://mis.bjtu.edu.cn/`，只提供用户手动登录并提取当前页面 HTML 的基础流程；不保存账号密码、Cookie，不绕过验证码；进入、重新打开和退出导入页时会尽力清理 Cookie、WebStorage、缓存、历史、表单和 HTTP Auth 数据；不同学校页面结构需要现场验证。
-- NotificationListenerService：服务已声明，但通知访问权限必须由用户在系统设置中授权；当前设置页未看到专门跳转通知访问授权页的按钮，需真机验证。
+- NotificationListenerService：服务已声明，但通知访问权限必须由用户在系统设置中授权；设置页提供权限状态和系统授权入口，过滤效果需真机验证。
 - 勿扰模式：需要用户授予通知策略访问权限；未授权时不应影响普通专注计时。
 - 天气：远程请求依赖网络；失败时只回退缓存。定位使用粗略位置反查城市，只保存城市名，不保存经纬度；权限授予/拒绝需真机验证。
 - 图片附件：当前只通过 Storage Access Framework 选择图片并持久化 Uri；不申请相册读取权限，不支持拍照、裁剪、压缩或内置大图预览。

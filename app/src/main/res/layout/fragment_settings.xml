@@ -280,24 +280,34 @@
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:text="@string/settings_llm_provider"
+                    android:textColor="@color/campus_text_secondary"
+                    android:textSize="13sp" />
+
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/llmProviderInputLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_s"
-                    android:hint="@string/settings_llm_provider"
-                    app:endIconMode="dropdown_menu">
+                    android:layout_marginTop="@dimen/space_xs"
+                    app:endIconMode="dropdown_menu"
+                    app:hintEnabled="false">
 
                     <com.google.android.material.textfield.MaterialAutoCompleteTextView
                         android:id="@+id/llmProviderInput"
                         android:layout_width="match_parent"
-                        android:layout_height="56dp"
+                        android:layout_height="wrap_content"
                         android:dropDownHeight="wrap_content"
-                        android:dropDownVerticalOffset="4dp"
+                        android:dropDownVerticalOffset="0dp"
                         android:ellipsize="end"
                         android:gravity="center_vertical"
+                        android:includeFontPadding="false"
                         android:inputType="none"
                         android:maxLines="1"
+                        android:minHeight="56dp"
                         android:paddingTop="0dp"
                         android:paddingBottom="0dp"
                         android:dropDownWidth="match_parent"
@@ -342,24 +352,34 @@
                         android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:text="@string/settings_llm_auth_header"
+                    android:textColor="@color/campus_text_secondary"
+                    android:textSize="13sp" />
+
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/llmAuthHeaderInputLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_s"
-                    android:hint="@string/settings_llm_auth_header"
-                    app:endIconMode="dropdown_menu">
+                    android:layout_marginTop="@dimen/space_xs"
+                    app:endIconMode="dropdown_menu"
+                    app:hintEnabled="false">
 
                     <com.google.android.material.textfield.MaterialAutoCompleteTextView
                         android:id="@+id/llmAuthHeaderInput"
                         android:layout_width="match_parent"
-                        android:layout_height="56dp"
+                        android:layout_height="wrap_content"
                         android:dropDownHeight="wrap_content"
-                        android:dropDownVerticalOffset="4dp"
+                        android:dropDownVerticalOffset="0dp"
                         android:ellipsize="end"
                         android:gravity="center_vertical"
+                        android:includeFontPadding="false"
                         android:inputType="none"
                         android:maxLines="1"
+                        android:minHeight="56dp"
                         android:paddingTop="0dp"
                         android:paddingBottom="0dp"
                         android:dropDownWidth="match_parent"
@@ -674,6 +694,23 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_s"
                     android:text="@string/settings_dnd_access"
+                    app:icon="@drawable/ic_focus" />
+
+                <TextView
+                    android:id="@+id/notificationAccessStatusText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:textColor="@color/campus_text_secondary"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/notificationAccessButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:text="@string/settings_notification_access"
                     app:icon="@drawable/ic_focus" />
 
                 <com.google.android.material.switchmaterial.SwitchMaterial

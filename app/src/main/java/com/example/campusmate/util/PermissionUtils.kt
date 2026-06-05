@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.app.AlarmManager
 import android.app.NotificationManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -42,6 +43,16 @@ object PermissionUtils {
         return manager?.isNotificationPolicyAccessGranted == true
     }
 
+    fun hasNotificationListenerAccess(context: Context): Boolean {
+        val enabledListeners = Settings.Secure.getString(
+            context.contentResolver,
+            "enabled_notification_listeners"
+        ) ?: return false
+        return enabledListeners.split(':').any { flattened ->
+            ComponentName.unflattenFromString(flattened)?.packageName == context.packageName
+        }
+    }
+
     fun canScheduleExactAlarms(context: Context): Boolean {
         val manager = context.getSystemService(AlarmManager::class.java)
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.S || manager?.canScheduleExactAlarms() == true
@@ -71,5 +82,9 @@ object PermissionUtils {
 
     fun notificationPolicyAccessSettingsIntent(): Intent {
         return Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+    }
+
+    fun notificationListenerSettingsIntent(): Intent {
+        return Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
     }
 }
