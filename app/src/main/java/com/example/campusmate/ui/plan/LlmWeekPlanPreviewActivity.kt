@@ -257,7 +257,8 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
                 when (llmResult) {
                     is LlmGenerateResult.Success -> {
                         val jsonContent = llmResult.text
-                        val (plans, dayWarnings) = planValidator.parseAndValidate(jsonContent, dayDate)
+                        val dayContext = planContextBuilder.buildForDate(dayDate)
+                        val (plans, dayWarnings) = planValidator.parseAndValidate(jsonContent, dayContext)
                         warningsList.addAll(dayWarnings.map { "${weekdayNames[day]}: $it" })
                         weekPlans[dayDate] = plans
                     }
