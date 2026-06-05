@@ -6,15 +6,21 @@
     android:orientation="vertical"
     android:background="@color/campus_background">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/llmPlanPreviewAppBar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/campus_surface"
-        app:navigationIcon="@drawable/ic_back"
-        app:navigationIconTint="@color/campus_text_primary"
-        app:title="@string/llm_plan_preview_title"
-        app:titleTextColor="@color/campus_text_primary" />
+        android:layout_height="wrap_content"
+        android:background="@color/campus_surface">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_back"
+            app:navigationIconTint="@color/campus_text_primary"
+            app:title="@string/llm_plan_preview_title"
+            app:titleTextColor="@color/campus_text_primary" />
+    </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
         android:layout_width="match_parent"

@@ -11,13 +11,19 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/buddyListToolbar"
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/buddyListAppBar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/campus_surface"
-            app:navigationIconTint="@color/campus_text_primary"
-            app:titleTextColor="@color/campus_text_primary" />
+            android:layout_height="wrap_content"
+            android:background="@color/campus_surface">
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/buddyListToolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:navigationIconTint="@color/campus_text_primary"
+                app:titleTextColor="@color/campus_text_primary" />
+        </com.google.android.material.appbar.AppBarLayout>
 
         <FrameLayout
             android:layout_width="match_parent"

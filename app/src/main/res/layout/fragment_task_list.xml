@@ -132,7 +132,6 @@
                 android:id="@+id/taskFilterGroup"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:checkedChip="@id/filterTodoTasksChip"
                 app:singleLine="true"
                 app:singleSelection="true">
 
