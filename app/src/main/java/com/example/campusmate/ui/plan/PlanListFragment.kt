@@ -234,64 +234,12 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
         startActivity(intent)
     }
 
-    private fun generateLlmWeekPlan() {
-        lifecycleScope.launch {
-            try {
-                val calendar = java.util.Calendar.getInstance()
-                calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                calendar.set(java.util.Calendar.MINUTE, 0)
-                calendar.set(java.util.Calendar.SECOND, 0)
-                calendar.set(java.util.Calendar.MILLISECOND, 0)
-
-                val weekday = DateTimeUtils.currentWeekday()
-                calendar.add(java.util.Calendar.DAY_OF_MONTH, -(weekday - 1))
-
-                var totalPlans = 0
-                var totalMinutes = 0
-
-                for (day in 0..6) {
-                    val dayDate = DateTimeUtils.formatDate(calendar.timeInMillis)
-                    planRepository.deletePlansByDate(dayDate)
-
-                    // Launch LLM preview for each day
-                    val hasExisting = false
-                    launchLlmPlanPreviewSync(dayDate, hasExisting)
-
-                    val plans = planRepository.getPlansByDate(dayDate)
-                    totalPlans += plans.size
-                    totalMinutes += plans.sumOf { it.plannedMinutes }
-
-                    calendar.add(java.util.Calendar.DAY_OF_MONTH, 1)
-                }
-
-                Snackbar.make(
-                    requireView(),
-                    getString(R.string.plan_generate_success, "已生成本周 $totalPlans 项计划，共 $totalMinutes 分钟"),
-                    Snackbar.LENGTH_LONG
-                ).show()
-
-                loadPlans()
-                setupWeekDaySelector()
-            } catch (e: Exception) {
-                Snackbar.make(requireView(), R.string.llm_plan_parse_error, Snackbar.LENGTH_LONG).show()
-            }
-        }
-    }
-
     private fun launchLlmPlanPreview(planDate: String, hasExisting: Boolean) {
         val intent = Intent(requireContext(), LlmPlanPreviewActivity::class.java).apply {
             putExtra(LlmPlanPreviewActivity.EXTRA_PLAN_DATE, planDate)
             putExtra(LlmPlanPreviewActivity.EXTRA_HAS_EXISTING_PLANS, hasExisting)
         }
         llmPlanPreviewLauncher.launch(intent)
-    }
-
-    private fun launchLlmPlanPreviewSync(planDate: String, hasExisting: Boolean) {
-        val intent = Intent(requireContext(), LlmPlanPreviewActivity::class.java).apply {
-            putExtra(LlmPlanPreviewActivity.EXTRA_PLAN_DATE, planDate)
-            putExtra(LlmPlanPreviewActivity.EXTRA_HAS_EXISTING_PLANS, hasExisting)
-        }
-        startActivity(intent)
     }
 
     private fun generateLocalTodayPlan(replaceExisting: Boolean = false) {

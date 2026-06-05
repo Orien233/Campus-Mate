@@ -357,7 +357,7 @@ SettingsFragment
   -> 系统授权
 ```
 
-- `SettingsFragment` 提供专注勿扰和通知过滤开关。
+- `SettingsFragment` 提供专注勿扰、通知过滤开关，以及勿扰授权和通知访问授权入口。
 - `SettingsRepository` 保存开关状态。
 - `FocusService` 开始专注时检查开关：勿扰开启则调用 `DndManager.enableDnd()`；通知过滤开启则设置 `NotificationFilterService.isFocusModeActive = true`。
 - `DndManager` 只能在用户已授予通知策略访问权限后切换勿扰，不绕过系统限制。
