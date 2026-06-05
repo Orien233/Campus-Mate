@@ -19,6 +19,7 @@ import com.example.campusmate.domain.plan.LlmPlanValidator
 import com.example.campusmate.domain.plan.PlanCourseConflictChecker
 import com.example.campusmate.domain.plan.StudyPlanGenerator
 import com.example.campusmate.domain.plan.StudyPlanContextBuilder
+import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.snackbar.Snackbar
@@ -241,9 +242,16 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
 
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         val warningsList = mutableListOf<String>()
+        val todayDate = DateTimeUtils.todayDate()
 
         for (day in 0..6) {
             val dayDate = dateFormat.format(calendar.time)
+            if (dayDate < todayDate) {
+                weekPlans[dayDate] = emptyList()
+                warningsList.add("${weekdayNames[day]}: 已跳过当前日期之前的计划")
+                calendar.add(Calendar.DAY_OF_MONTH, 1)
+                continue
+            }
 
             if (aiAvailable) {
                 val prompt = buildDayPrompt(dayDate)

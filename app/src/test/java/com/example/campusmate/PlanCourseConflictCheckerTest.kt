@@ -98,7 +98,10 @@ class PlanCourseConflictCheckerTest {
             recentStudyRecords = emptyList(),
             existingPlans = emptyList(),
             coursesById = mapOf(course.id to course),
-            courseTimeRanges = mapOf(course.id to "08:00-09:35")
+            courseTimeRanges = mapOf(course.id to "08:00-09:35"),
+            planEarliestTime = "08:00",
+            planLatestTime = "22:00",
+            generationStartTime = "08:00"
         )
     }
 }
