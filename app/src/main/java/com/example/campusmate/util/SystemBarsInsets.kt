@@ -39,18 +39,17 @@ object SystemBarsInsets {
             // at which point setContentView() will have been called.
             content.post {
                 val deferredRoot = content.getChildAt(0) ?: return@post
-                if (deferredRoot.getTag(R.id.tag_system_bars_insets_applied) == true) return@post
-                deferredRoot.setTag(R.id.tag_system_bars_insets_applied, true)
                 apply(deferredRoot)
             }
             return
         }
-        if (root.getTag(R.id.tag_system_bars_insets_applied) == true) return
-        root.setTag(R.id.tag_system_bars_insets_applied, true)
         apply(root)
     }
 
     private fun apply(root: View) {
+        if (root.getTag(R.id.tag_system_bars_insets_applied) == true) return
+        root.setTag(R.id.tag_system_bars_insets_applied, true)
+
         val topTarget = findTopInsetTarget(root)?.takeIf { it !== root }
         val bottomNavigation = findFirst(root, BottomNavigationView::class.java)
         val rootState = root.captureState()
