@@ -15,7 +15,7 @@ class LlmTaskParseService(
 ) {
     fun isAvailable(): Boolean {
         val config = llmSettingsRepository.getConfig()
-        return config.enabled && config.scheduleParseEnabled && llmSettingsRepository.hasApiKey()
+        return config.enabled && config.taskParseEnabled && llmSettingsRepository.hasApiKey()
     }
 
     fun buildPrompt(pageContent: String): LlmGenerateRequest {

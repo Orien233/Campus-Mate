@@ -4,7 +4,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -15,6 +17,7 @@ import com.example.campusmate.data.repository.SettingsRepository
 import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.domain.reminder.AlarmReminderScheduler
 import com.example.campusmate.domain.reminder.TaskReminderPolicy
+import com.example.campusmate.domain.task.TaskDraft
 import com.example.campusmate.ui.common.CollapsibleSection
 import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.button.MaterialButton
@@ -40,6 +43,25 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
     private lateinit var overdueCountContainer: LinearLayout
     private var currentFilter: TaskFilter = TaskFilter.ALL
 
+    private val taskWebParseLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode != android.app.Activity.RESULT_OK) return@registerForActivityResult
+        val data = result.data ?: return@registerForActivityResult
+        @Suppress("DEPRECATION")
+        val drafts = data.getSerializableExtra(TaskWebViewParseActivity.EXTRA_TASK_DRAFTS) as? ArrayList<TaskDraft>
+            ?: return@registerForActivityResult
+        if (drafts.isEmpty()) return@registerForActivityResult
+        startActivity(
+            Intent(requireContext(), TaskImportPreviewActivity::class.java)
+                .putExtra(TaskImportPreviewActivity.EXTRA_TASK_DRAFTS, drafts)
+                .putStringArrayListExtra(
+                    TaskImportPreviewActivity.EXTRA_WARNINGS,
+                    data.getStringArrayListExtra(TaskWebViewParseActivity.EXTRA_WARNINGS) ?: arrayListOf()
+                )
+        )
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         taskRepository = TaskRepository(requireContext())
@@ -63,17 +85,10 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
 
-        view.findViewById<FloatingActionButton>(R.id.addTaskFab).setOnClickListener { openEdit() }
+        view.findViewById<FloatingActionButton>(R.id.addTaskFab).setOnClickListener { anchor ->
+            showAddTaskMenu(anchor)
+        }
         view.findViewById<MaterialButton>(R.id.taskEmptyActionButton).setOnClickListener { openEdit() }
-        view.findViewById<MaterialButton>(R.id.addHomeworkButton).setOnClickListener {
-            openEdit(taskType = StudyTask.TYPE_HOMEWORK)
-        }
-        view.findViewById<MaterialButton>(R.id.addExamButton).setOnClickListener {
-            openEdit(taskType = StudyTask.TYPE_EXAM)
-        }
-        view.findViewById<MaterialButton>(R.id.addReviewButton).setOnClickListener {
-            openEdit(taskType = StudyTask.TYPE_REVIEW)
-        }
         view.findViewById<ChipGroup>(R.id.taskFilterGroup).setOnCheckedStateChangeListener { _, checkedIds ->
             currentFilter = filterForChipId(checkedIds.firstOrNull() ?: R.id.filterAllTasksChip)
             loadTasks()
@@ -83,12 +98,6 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
             headerId = R.id.taskFilterHeader,
             contentId = R.id.taskFilterContent,
             indicatorId = R.id.taskFilterIndicator
-        )
-        CollapsibleSection.bind(
-            root = view,
-            headerId = R.id.taskActionsHeader,
-            contentId = R.id.taskActionsContent,
-            indicatorId = R.id.taskActionsIndicator
         )
     }
 
@@ -177,6 +186,28 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         taskId?.let { intent.putExtra(TaskEditActivity.EXTRA_TASK_ID, it) }
         taskType?.let { intent.putExtra(TaskEditActivity.EXTRA_TASK_TYPE, it) }
         startActivity(intent)
+    }
+
+    private fun showAddTaskMenu(anchor: View) {
+        PopupMenu(requireContext(), anchor).apply {
+            menu.add(R.string.task_action_add_homework)
+            menu.add(R.string.task_action_add_exam)
+            menu.add(R.string.task_action_add_review)
+            menu.add(R.string.task_import_from_web)
+            setOnMenuItemClickListener { item ->
+                when (item.title.toString()) {
+                    getString(R.string.task_action_add_homework) -> openEdit(taskType = StudyTask.TYPE_HOMEWORK)
+                    getString(R.string.task_action_add_exam) -> openEdit(taskType = StudyTask.TYPE_EXAM)
+                    getString(R.string.task_action_add_review) -> openEdit(taskType = StudyTask.TYPE_REVIEW)
+                    getString(R.string.task_import_from_web) -> {
+                        taskWebParseLauncher.launch(Intent(requireContext(), TaskWebViewParseActivity::class.java))
+                    }
+                    else -> openEdit()
+                }
+                true
+            }
+            show()
+        }
     }
 
     private fun confirmDelete(task: StudyTask) {

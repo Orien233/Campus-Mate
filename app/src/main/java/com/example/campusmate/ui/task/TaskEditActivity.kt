@@ -42,6 +42,7 @@ class TaskEditActivity : AppCompatActivity() {
     private lateinit var prioritySpinner: Spinner
     private lateinit var dueTimeText: TextView
     private lateinit var remindTimeText: TextView
+    private lateinit var aiPrefillStatusText: TextView
 
     private var editingTaskId: Long = 0L
     private var editingTask: StudyTask? = null
@@ -109,6 +110,7 @@ class TaskEditActivity : AppCompatActivity() {
         prioritySpinner = findViewById(R.id.taskPrioritySpinner)
         dueTimeText = findViewById(R.id.taskDueTimeText)
         remindTimeText = findViewById(R.id.taskRemindTimeText)
+        aiPrefillStatusText = findViewById(R.id.taskAiPrefillStatusText)
     }
 
     private fun setupToolbar() {
@@ -183,10 +185,28 @@ class TaskEditActivity : AppCompatActivity() {
         selectedDueAt = draft.dueAt
         selectedRemindAt = draft.remindAt
         updateDateLabels()
+        showAiPrefillStatus(draft)
 
         val message = warningSummary.takeIf { it.isNotBlank() }
             ?: getString(R.string.task_ai_parse_prefilled)
         Snackbar.make(rootView, message, Snackbar.LENGTH_LONG).show()
+    }
+
+    private fun showAiPrefillStatus(draft: TaskDraft) {
+        val fields = buildList {
+            add(getString(R.string.task_ai_prefill_field_title))
+            if (!draft.description.isNullOrBlank()) add(getString(R.string.task_ai_prefill_field_description))
+            if (!draft.courseName.isNullOrBlank()) add(getString(R.string.task_ai_prefill_field_course))
+            add(getString(R.string.task_ai_prefill_field_type))
+            add(getString(R.string.task_ai_prefill_field_priority))
+            if (draft.dueAt != null) add(getString(R.string.task_ai_prefill_field_due))
+            if (draft.remindAt != null) add(getString(R.string.task_ai_prefill_field_reminder))
+        }
+        aiPrefillStatusText.text = getString(
+            R.string.task_ai_prefill_status_format,
+            fields.joinToString("、")
+        )
+        aiPrefillStatusText.visibility = View.VISIBLE
     }
 
     private fun selectCourseByDraftName(courseName: String?) {

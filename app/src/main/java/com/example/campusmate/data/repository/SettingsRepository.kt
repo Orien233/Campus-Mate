@@ -28,8 +28,22 @@ class SettingsRepository(context: Context) {
     fun getWeatherCity(): String = preferences.getString(KEY_WEATHER_CITY, DEFAULT_WEATHER_CITY) ?: DEFAULT_WEATHER_CITY
 
     fun setWeatherCity(value: String) {
+        setWeatherCity(value, WEATHER_CITY_SOURCE_MANUAL)
+    }
+
+    fun setWeatherCityFromLocation(value: String) {
+        setWeatherCity(value, WEATHER_CITY_SOURCE_LOCATION)
+    }
+
+    fun getWeatherCitySource(): String {
+        return preferences.getString(KEY_WEATHER_CITY_SOURCE, WEATHER_CITY_SOURCE_MANUAL)
+            ?: WEATHER_CITY_SOURCE_MANUAL
+    }
+
+    private fun setWeatherCity(value: String, source: String) {
         preferences.edit()
             .putString(KEY_WEATHER_CITY, value.trim().ifBlank { DEFAULT_WEATHER_CITY })
+            .putString(KEY_WEATHER_CITY_SOURCE, source)
             .putLong(KEY_WEATHER_CITY_UPDATED_AT, DateTimeUtils.nowMillis())
             .apply()
     }
@@ -99,6 +113,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_REMINDER_ENABLED = "reminder_enabled"
         private const val KEY_IMMERSIVE_MODE_ENABLED = "immersive_mode_enabled"
         private const val KEY_WEATHER_CITY = "weather_city"
+        private const val KEY_WEATHER_CITY_SOURCE = "weather_city_source"
         private const val KEY_WEATHER_CITY_UPDATED_AT = "weather_city_updated_at"
         private const val KEY_WEATHER_LOCATION_GUIDE_SHOWN = "weather_location_guide_shown"
         private const val KEY_FOCUS_DND_ENABLED = "focus_dnd_enabled"
@@ -106,6 +121,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_SECTION_TIME_SLOTS_JSON = "section_time_slots_json"
         private const val DEFAULT_DAILY_GOAL_MINUTES = 60
         private const val DEFAULT_WEATHER_CITY = "\u5317\u4eac"
+        const val WEATHER_CITY_SOURCE_MANUAL = "manual"
+        const val WEATHER_CITY_SOURCE_LOCATION = "location"
     }
 }
 

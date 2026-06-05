@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.campusmate.R
@@ -41,20 +42,11 @@ class CourseListFragment : Fragment(R.layout.fragment_course_list) {
         timetableContainer = view.findViewById(R.id.courseTimetableContainer)
         recyclerView = view.findViewById(R.id.courseRecyclerView)
 
-        view.findViewById<FloatingActionButton>(R.id.addCourseFab).setOnClickListener {
-            openEdit()
+        view.findViewById<FloatingActionButton>(R.id.addCourseFab).setOnClickListener { anchor ->
+            showAddCourseMenu(anchor)
         }
         view.findViewById<MaterialButton>(R.id.courseEmptyActionButton).setOnClickListener {
             openEdit()
-        }
-        view.findViewById<MaterialButton>(R.id.manualAddCourseButton).setOnClickListener {
-            openEdit()
-        }
-        view.findViewById<MaterialButton>(R.id.importCourseButton).setOnClickListener {
-            startActivity(Intent(requireContext(), ImportScheduleActivity::class.java))
-        }
-        view.findViewById<MaterialButton>(R.id.semesterSettingsButton).setOnClickListener {
-            Snackbar.make(requireView(), R.string.placeholder_next_stage, Snackbar.LENGTH_SHORT).show()
         }
 
         view.findViewById<ChipGroup>(R.id.weekdayFilterGroup).setOnCheckedStateChangeListener { _, checkedIds ->
@@ -66,12 +58,6 @@ class CourseListFragment : Fragment(R.layout.fragment_course_list) {
             headerId = R.id.courseFilterHeader,
             contentId = R.id.courseFilterContent,
             indicatorId = R.id.courseFilterIndicator
-        )
-        CollapsibleSection.bind(
-            root = view,
-            headerId = R.id.courseActionsHeader,
-            contentId = R.id.courseActionsContent,
-            indicatorId = R.id.courseActionsIndicator
         )
     }
 
@@ -219,6 +205,27 @@ class CourseListFragment : Fragment(R.layout.fragment_course_list) {
         val intent = Intent(requireContext(), CourseEditActivity::class.java)
         courseId?.let { intent.putExtra(CourseEditActivity.EXTRA_COURSE_ID, it) }
         startActivity(intent)
+    }
+
+    private fun showAddCourseMenu(anchor: View) {
+        PopupMenu(requireContext(), anchor).apply {
+            menu.add(R.string.course_add)
+            menu.add(R.string.dashboard_quick_import_schedule)
+            menu.add(R.string.course_semester_settings)
+            setOnMenuItemClickListener { item ->
+                when (item.title.toString()) {
+                    getString(R.string.course_add) -> openEdit()
+                    getString(R.string.dashboard_quick_import_schedule) -> {
+                        startActivity(Intent(requireContext(), ImportScheduleActivity::class.java))
+                    }
+                    getString(R.string.course_semester_settings) -> {
+                        Snackbar.make(requireView(), R.string.placeholder_next_stage, Snackbar.LENGTH_SHORT).show()
+                    }
+                }
+                true
+            }
+            show()
+        }
     }
 
     private fun confirmDelete(course: Course) {

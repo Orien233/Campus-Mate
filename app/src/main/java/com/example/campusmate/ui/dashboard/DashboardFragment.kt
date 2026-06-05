@@ -71,6 +71,9 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         view.findViewById<MaterialButton>(R.id.refreshWeatherButton).setOnClickListener {
             requestLocationAndLoadWeather(forceRefresh = true, userTriggered = true)
         }
+        view.findViewById<MaterialButton>(R.id.refreshCurrentWeatherButton).setOnClickListener {
+            loadWeather(forceRefresh = true)
+        }
         view.findViewById<MaterialButton>(R.id.generatePlanButton).setOnClickListener {
             (activity as? MainActivity)?.navigateTo(R.id.nav_plan)
         }
@@ -126,7 +129,11 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             setTextColor(requireContext().getColor(colorForDelta(weekTrendDelta)))
         }
         currentView.findViewById<TextView>(R.id.tvNextCourseValue).text =
-            todayCourses.firstOrNull()?.let { getString(R.string.dashboard_next_course_format, it.name, it.startSection, it.endSection) }
+            todayCourses.firstOrNull()?.let { course ->
+                course.classroom?.takeIf { it.isNotBlank() }?.let { classroom ->
+                    getString(R.string.dashboard_next_course_with_room_format, course.name, course.startSection, course.endSection, classroom)
+                } ?: getString(R.string.dashboard_next_course_format, course.name, course.startSection, course.endSection)
+            }
                 ?: getString(R.string.dashboard_no_next_course)
         if (!maybeShowWeatherLocationGuide()) {
             loadWeather(forceRefresh = false)
@@ -163,6 +170,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         currentView.findViewById<TextView>(R.id.weatherCityText).text = city
         currentView.findViewById<TextView>(R.id.weatherTemperatureText).text = getString(R.string.dashboard_weather_empty)
         currentView.findViewById<TextView>(R.id.weatherConditionText).text = ""
+        currentView.findViewById<TextView>(R.id.weatherCitySourceText).text = ""
         currentView.findViewById<TextView>(R.id.weatherHumidityText).text = ""
         currentView.findViewById<TextView>(R.id.weatherWindText).text = ""
         currentView.findViewById<TextView>(R.id.weatherUpdatedText).text = ""
@@ -173,7 +181,12 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             targetView.post {
                 if (weatherLoadToken == token && view != null) {
                     if (weather != null) {
-                        bindWeather(weather)
+                        val sourceLabel = if (weather.city != city) {
+                            getString(R.string.dashboard_weather_city_source_cache)
+                        } else {
+                            weatherCitySourceLabel()
+                        }
+                        bindWeather(weather, sourceLabel)
                     } else {
                         bindWeatherUnavailable(city)
                     }
@@ -225,6 +238,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         currentView.findViewById<TextView>(R.id.weatherCityText).text = getString(R.string.dashboard_weather_locating)
         currentView.findViewById<TextView>(R.id.weatherTemperatureText).text = getString(R.string.dashboard_weather_empty)
         currentView.findViewById<TextView>(R.id.weatherConditionText).text = ""
+        currentView.findViewById<TextView>(R.id.weatherCitySourceText).text = ""
         currentView.findViewById<TextView>(R.id.weatherHumidityText).text = ""
         currentView.findViewById<TextView>(R.id.weatherWindText).text = ""
         currentView.findViewById<TextView>(R.id.weatherUpdatedText).text = ""
@@ -234,7 +248,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             val resolvedCity = WeatherLocationResolver(appContext).resolveCity()
             val targetCity = resolvedCity ?: settingsRepository.getWeatherCity()
             if (!resolvedCity.isNullOrBlank()) {
-                settingsRepository.setWeatherCity(resolvedCity)
+                settingsRepository.setWeatherCityFromLocation(resolvedCity)
             }
             val weather = weatherRepository.getWeather(targetCity, forceRefresh)
             val targetView = view ?: return@Thread
@@ -244,7 +258,12 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                     Snackbar.make(targetView, R.string.dashboard_weather_location_failed, Snackbar.LENGTH_LONG).show()
                 }
                 if (weather != null) {
-                    bindWeather(weather)
+                    val sourceLabel = when {
+                        weather.city != targetCity -> getString(R.string.dashboard_weather_city_source_cache)
+                        !resolvedCity.isNullOrBlank() -> getString(R.string.dashboard_weather_city_source_location)
+                        else -> weatherCitySourceLabel()
+                    }
+                    bindWeather(weather, sourceLabel)
                 } else {
                     bindWeatherUnavailable(targetCity)
                 }
@@ -252,11 +271,13 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         }.start()
     }
 
-    private fun bindWeather(weather: WeatherResult) {
+    private fun bindWeather(weather: WeatherResult, citySourceLabel: String) {
         val currentView = view ?: return
         currentView.findViewById<TextView>(R.id.weatherCityText).text = weather.city
         currentView.findViewById<TextView>(R.id.weatherTemperatureText).text = weather.temperature
         currentView.findViewById<TextView>(R.id.weatherConditionText).text = weather.weatherText
+        currentView.findViewById<TextView>(R.id.weatherCitySourceText).text =
+            getString(R.string.dashboard_weather_city_source_format, citySourceLabel)
         currentView.findViewById<TextView>(R.id.weatherHumidityText).text =
             getString(R.string.dashboard_weather_humidity, weather.humidity)
         currentView.findViewById<TextView>(R.id.weatherWindText).text =
@@ -273,8 +294,17 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         currentView.findViewById<TextView>(R.id.weatherCityText).text = city
         currentView.findViewById<TextView>(R.id.weatherTemperatureText).text = getString(R.string.dashboard_weather_unavailable)
         currentView.findViewById<TextView>(R.id.weatherConditionText).text = getString(R.string.dashboard_weather_unavailable_body)
+        currentView.findViewById<TextView>(R.id.weatherCitySourceText).text =
+            getString(R.string.dashboard_weather_city_source_format, weatherCitySourceLabel())
         currentView.findViewById<TextView>(R.id.weatherHumidityText).text = ""
         currentView.findViewById<TextView>(R.id.weatherWindText).text = ""
         currentView.findViewById<TextView>(R.id.weatherUpdatedText).text = ""
+    }
+
+    private fun weatherCitySourceLabel(): String {
+        return when (settingsRepository.getWeatherCitySource()) {
+            SettingsRepository.WEATHER_CITY_SOURCE_LOCATION -> getString(R.string.dashboard_weather_city_source_location)
+            else -> getString(R.string.dashboard_weather_city_source_manual)
+        }
     }
 }

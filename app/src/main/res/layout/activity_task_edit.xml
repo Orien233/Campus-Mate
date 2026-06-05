@@ -64,6 +64,24 @@
                 app:icon="@drawable/ic_import" />
 
             <TextView
+                android:id="@+id/taskAiPrefillHintText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/task_ai_prefill_hint"
+                android:textColor="@color/campus_text_secondary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/taskAiPrefillStatusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:textColor="@color/campus_primary"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_m"

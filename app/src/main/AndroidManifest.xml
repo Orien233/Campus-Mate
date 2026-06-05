@@ -126,6 +126,10 @@
             android:exported="false"
             android:theme="@style/Theme.CampusMate" />
         <activity
+            android:name=".ui.task.TaskImportPreviewActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CampusMate" />
+        <activity
             android:name=".ui.task.TaskEditActivity"
             android:exported="false"
             android:theme="@style/Theme.CampusMate" />

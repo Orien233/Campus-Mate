@@ -255,7 +255,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                     return@post
                 }
                 weatherCityInput.setText(city)
-                settingsRepository.setWeatherCity(city)
+                settingsRepository.setWeatherCityFromLocation(city)
                 refreshWeatherLocationStatus()
                 showMessage(getString(R.string.settings_weather_location_saved, city))
             }
