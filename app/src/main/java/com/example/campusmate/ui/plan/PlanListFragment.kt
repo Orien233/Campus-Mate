@@ -2,7 +2,6 @@ package com.example.campusmate.ui.plan
 
 import android.content.Intent
 import android.os.Bundle
-import android.text.InputType
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -24,13 +23,6 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import androidx.lifecycle.lifecycleScope
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -65,6 +57,14 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
         }
     }
 
+    private val planEditLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            loadPlans()
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         planRepository = StudyPlanRepository(requireContext())
@@ -88,7 +88,7 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
         recyclerView.adapter = adapter
 
         view.findViewById<MaterialButton>(R.id.planEmptyActionButton).setOnClickListener {
-            showAddPlanDialog()
+            openPlanEdit()
         }
 
         view.findViewById<FloatingActionButton>(R.id.addPlanFab).setOnClickListener {
@@ -309,7 +309,7 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
             menu.add(0, MENU_GENERATE_WEEK, 2, R.string.plan_generate_week)
             setOnMenuItemClickListener { item ->
                 when (item.itemId) {
-                    MENU_ADD_MANUAL -> showAddPlanDialog()
+                    MENU_ADD_MANUAL -> openPlanEdit()
                     MENU_GENERATE_TODAY -> handleGenerateToday()
                     MENU_GENERATE_WEEK -> handleGenerateWeek()
                 }
@@ -319,59 +319,11 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
         }
     }
 
-    private fun showAddPlanDialog() {
-        val context = requireContext()
-        val sidePadding = resources.getDimensionPixelSize(R.dimen.space_m)
-        val container = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(sidePadding, 0, sidePadding, 0)
+    private fun openPlanEdit() {
+        val intent = Intent(requireContext(), PlanEditActivity::class.java).apply {
+            putExtra(PlanEditActivity.EXTRA_PLAN_DATE, selectedDate)
         }
-        val titleInput = TextInputEditText(context).apply {
-            setText(R.string.plan_manual_default_title)
-            selectAll()
-        }
-        val titleLayout = TextInputLayout(context).apply {
-            hint = getString(R.string.plan_title)
-            addView(titleInput)
-        }
-        val minutesInput = TextInputEditText(context).apply {
-            inputType = InputType.TYPE_CLASS_NUMBER
-            setText(DEFAULT_MANUAL_PLAN_MINUTES.toString())
-        }
-        val minutesLayout = TextInputLayout(context).apply {
-            hint = getString(R.string.plan_planned_minutes)
-            addView(minutesInput)
-        }
-        container.addView(titleLayout)
-        container.addView(minutesLayout)
-
-        MaterialAlertDialogBuilder(context)
-            .setTitle(R.string.plan_add_title)
-            .setView(container)
-            .setNegativeButton(R.string.action_cancel, null)
-            .setPositiveButton(R.string.action_save) { _, _ ->
-                val title = titleInput.text?.toString()?.trim().orEmpty()
-                val minutes = minutesInput.text?.toString()?.toIntOrNull() ?: 0
-                if (title.isBlank() || minutes <= 0) {
-                    Snackbar.make(requireView(), R.string.plan_add_invalid, Snackbar.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-                val planId = planRepository.addPlan(
-                    StudyPlan(
-                        title = title,
-                        planDate = selectedDate,
-                        plannedMinutes = minutes,
-                        sourceType = StudyPlan.SOURCE_MANUAL
-                    )
-                )
-                if (planId > 0L) {
-                    Snackbar.make(requireView(), R.string.plan_add_success, Snackbar.LENGTH_SHORT).show()
-                    loadPlans()
-                } else {
-                    Snackbar.make(requireView(), R.string.task_save_failed, Snackbar.LENGTH_SHORT).show()
-                }
-            }
-            .show()
+        planEditLauncher.launch(intent)
     }
 
     private fun togglePlanComplete(plan: StudyPlan) {
@@ -411,7 +363,6 @@ class PlanListFragment : Fragment(R.layout.fragment_plan_list) {
     }
 
     companion object {
-        private const val DEFAULT_MANUAL_PLAN_MINUTES = 60
         private const val MENU_ADD_MANUAL = 1
         private const val MENU_GENERATE_TODAY = 2
         private const val MENU_GENERATE_WEEK = 3

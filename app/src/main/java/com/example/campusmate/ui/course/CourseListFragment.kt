@@ -10,11 +10,9 @@ import androidx.fragment.app.Fragment
 import com.example.campusmate.R
 import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.repository.CourseRepository
-import com.example.campusmate.ui.common.CollapsibleSection
 import com.example.campusmate.ui.import_.ImportScheduleActivity
 import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
@@ -29,7 +27,6 @@ class CourseListFragment : Fragment(R.layout.fragment_course_list) {
     private lateinit var totalCountText: TextView
     private lateinit var todayCountText: TextView
     private lateinit var visibleCountText: TextView
-    private var selectedWeekday: Int = WEEKDAY_ALL
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -49,16 +46,6 @@ class CourseListFragment : Fragment(R.layout.fragment_course_list) {
             openEdit()
         }
 
-        view.findViewById<ChipGroup>(R.id.weekdayFilterGroup).setOnCheckedStateChangeListener { _, checkedIds ->
-            selectedWeekday = checkedIds.firstOrNull()?.let { weekdayForChipId(it) } ?: WEEKDAY_ALL
-            loadCourses()
-        }
-        CollapsibleSection.bind(
-            root = view,
-            headerId = R.id.courseFilterHeader,
-            contentId = R.id.courseFilterContent,
-            indicatorId = R.id.courseFilterIndicator
-        )
     }
 
     override fun onResume() {
@@ -68,16 +55,11 @@ class CourseListFragment : Fragment(R.layout.fragment_course_list) {
 
     private fun loadCourses() {
         val allCourses = repository.getAllCourses()
-        val courses = if (selectedWeekday == WEEKDAY_ALL) {
-            allCourses
-        } else {
-            allCourses.filter { it.weekday == selectedWeekday }
-        }
         totalCountText.text = allCourses.size.toString()
         todayCountText.text = allCourses.count { it.weekday == DateTimeUtils.currentWeekday() }.toString()
-        visibleCountText.text = courses.size.toString()
-        renderTimetable(courses)
-        val isEmpty = courses.isEmpty()
+        visibleCountText.text = allCourses.size.toString()
+        renderTimetable(allCourses)
+        val isEmpty = allCourses.isEmpty()
         emptyStateView.visibility = if (isEmpty) View.VISIBLE else View.GONE
         timetableScrollView.visibility = if (isEmpty) View.GONE else View.VISIBLE
         recyclerView.visibility = View.GONE
@@ -244,21 +226,7 @@ class CourseListFragment : Fragment(R.layout.fragment_course_list) {
             .show()
     }
 
-    private fun weekdayForChipId(chipId: Int): Int {
-        return when (chipId) {
-            R.id.filterMondayChip -> 1
-            R.id.filterTuesdayChip -> 2
-            R.id.filterWednesdayChip -> 3
-            R.id.filterThursdayChip -> 4
-            R.id.filterFridayChip -> 5
-            R.id.filterSaturdayChip -> 6
-            R.id.filterSundayChip -> 7
-            else -> WEEKDAY_ALL
-        }
-    }
-
     companion object {
-        private const val WEEKDAY_ALL = 0
         private const val TIME_CELL_WIDTH_DP = 92
         private const val COURSE_CELL_WIDTH_DP = 96
         private const val HEADER_CELL_HEIGHT_DP = 40
