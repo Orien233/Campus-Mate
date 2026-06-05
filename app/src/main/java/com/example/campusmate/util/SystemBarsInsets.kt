@@ -46,6 +46,27 @@ object SystemBarsInsets {
         val bottomNavigationState = bottomNavigation?.captureState()
         var realInsetsApplied = false
 
+        // Set a dedicated listener on the topTarget (AppBarLayout/Toolbar) so that
+        // its status-bar padding is re-applied whenever insets are dispatched to it.
+        // This is necessary because setSupportActionBar() installs its own
+        // WindowInsets listener on AppBarLayout via AppCompat, which may reset
+        // the padding that the root-level listener applies.
+        topTarget?.let { target ->
+            val state = topTargetState!!
+            ViewCompat.setOnApplyWindowInsetsListener(target) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                val displayCutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
+                val topInset = max(max(systemBars.top, displayCutout.top), topProtectionHeight(v.resources))
+                v.setPadding(state.left, state.top + topInset, state.right, state.bottom)
+                val params = v.layoutParams
+                if (params != null && state.height > 0) {
+                    params.height = state.height + topInset
+                    v.layoutParams = params
+                }
+                insets
+            }
+        }
+
         ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val displayCutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
