@@ -121,170 +121,57 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_m">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/space_m">
-
-                <LinearLayout
-                    android:id="@+id/taskFilterHeader"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/task_filter_section_title"
-                        android:textColor="@color/campus_text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/taskFilterIndicator"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/campus_primary"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <HorizontalScrollView
-                    android:id="@+id/taskFilterContent"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:overScrollMode="never"
-                    android:scrollbars="none">
-
-                    <com.google.android.material.chip.ChipGroup
-                        android:id="@+id/taskFilterGroup"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        app:checkedChip="@id/filterAllTasksChip"
-                        app:singleLine="true"
-                        app:singleSelection="true">
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/filterAllTasksChip"
-                            style="@style/Widget.MaterialComponents.Chip.Filter"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/task_filter_all" />
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/filterTodoTasksChip"
-                            style="@style/Widget.MaterialComponents.Chip.Filter"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/task_filter_todo" />
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/filterDoneTasksChip"
-                            style="@style/Widget.MaterialComponents.Chip.Filter"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/task_filter_done" />
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/filterUpcomingTasksChip"
-                            style="@style/Widget.MaterialComponents.Chip.Filter"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/task_filter_upcoming" />
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/filterOverdueTasksChip"
-                            style="@style/Widget.MaterialComponents.Chip.Filter"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/task_filter_overdue" />
-                    </com.google.android.material.chip.ChipGroup>
-                </HorizontalScrollView>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_m"
-            android:visibility="gone">
+            android:overScrollMode="never"
+            android:scrollbars="none">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/taskFilterGroup"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/space_m">
+                app:checkedChip="@id/filterTodoTasksChip"
+                app:singleLine="true"
+                app:singleSelection="true">
 
-                <LinearLayout
-                    android:id="@+id/taskActionsHeader"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/task_actions_section_title"
-                        android:textColor="@color/campus_text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/taskActionsIndicator"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/campus_primary"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <GridLayout
-                    android:id="@+id/taskActionsContent"
-                    android:layout_width="match_parent"
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/filterAllTasksChip"
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:columnCount="3"
-                    android:useDefaultMargins="true">
+                    android:text="@string/task_filter_all" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/addHomeworkButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:text="@string/task_action_add_homework"
-                        android:textSize="13sp"
-                        app:icon="@drawable/ic_add" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/filterTodoTasksChip"
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/task_filter_todo" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/addExamButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:text="@string/task_action_add_exam"
-                        android:textSize="13sp"
-                        app:icon="@drawable/ic_add" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/filterDoneTasksChip"
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/task_filter_done" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/addReviewButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:text="@string/task_action_add_review"
-                        android:textSize="13sp"
-                        app:icon="@drawable/ic_add" />
-                </GridLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/filterUpcomingTasksChip"
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/task_filter_upcoming" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/filterOverdueTasksChip"
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/task_filter_overdue" />
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/taskRecyclerView"

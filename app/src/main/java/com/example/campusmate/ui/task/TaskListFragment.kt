@@ -18,7 +18,6 @@ import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.domain.reminder.AlarmReminderScheduler
 import com.example.campusmate.domain.reminder.TaskReminderPolicy
 import com.example.campusmate.domain.task.TaskDraft
-import com.example.campusmate.ui.common.CollapsibleSection
 import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.ChipGroup
@@ -41,7 +40,7 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
     private lateinit var todoCountContainer: LinearLayout
     private lateinit var upcomingCountContainer: LinearLayout
     private lateinit var overdueCountContainer: LinearLayout
-    private var currentFilter: TaskFilter = TaskFilter.ALL
+    private var currentFilter: TaskFilter = TaskFilter.TODO
 
     private val taskWebParseLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -90,15 +89,9 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         }
         view.findViewById<MaterialButton>(R.id.taskEmptyActionButton).setOnClickListener { openEdit() }
         view.findViewById<ChipGroup>(R.id.taskFilterGroup).setOnCheckedStateChangeListener { _, checkedIds ->
-            currentFilter = filterForChipId(checkedIds.firstOrNull() ?: R.id.filterAllTasksChip)
+            currentFilter = filterForChipId(checkedIds.firstOrNull() ?: R.id.filterTodoTasksChip)
             loadTasks()
         }
-        CollapsibleSection.bind(
-            root = view,
-            headerId = R.id.taskFilterHeader,
-            contentId = R.id.taskFilterContent,
-            indicatorId = R.id.taskFilterIndicator
-        )
     }
 
     override fun onResume() {
