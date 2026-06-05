@@ -3,7 +3,6 @@ package com.example.campusmate.ui.task
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
@@ -37,9 +36,7 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
     private lateinit var todoCountText: TextView
     private lateinit var upcomingCountText: TextView
     private lateinit var overdueCountText: TextView
-    private lateinit var todoCountContainer: LinearLayout
-    private lateinit var upcomingCountContainer: LinearLayout
-    private lateinit var overdueCountContainer: LinearLayout
+    private lateinit var filterGroup: ChipGroup
     private var currentFilter: TaskFilter = TaskFilter.TODO
 
     private val taskWebParseLauncher = registerForActivityResult(
@@ -71,9 +68,6 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         todoCountText = view.findViewById(R.id.taskTodoCountText)
         upcomingCountText = view.findViewById(R.id.taskUpcomingCountText)
         overdueCountText = view.findViewById(R.id.taskOverdueCountText)
-        todoCountContainer = view.findViewById(R.id.taskTodoCountContainer)
-        upcomingCountContainer = view.findViewById(R.id.taskUpcomingCountContainer)
-        overdueCountContainer = view.findViewById(R.id.taskOverdueCountContainer)
         recyclerView = view.findViewById(R.id.taskRecyclerView)
         adapter = TaskAdapter(
             onTaskClick = { openDetail(it.id) },
@@ -88,9 +82,15 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
             showAddTaskMenu(anchor)
         }
         view.findViewById<MaterialButton>(R.id.taskEmptyActionButton).setOnClickListener { openEdit() }
-        view.findViewById<ChipGroup>(R.id.taskFilterGroup).setOnCheckedStateChangeListener { _, checkedIds ->
+        filterGroup = view.findViewById(R.id.taskFilterGroup)
+        filterGroup.setOnCheckedStateChangeListener { _, checkedIds ->
             currentFilter = filterForChipId(checkedIds.firstOrNull() ?: R.id.filterTodoTasksChip)
             loadTasks()
+        }
+        // Set default checked chip after layout, then scroll to start
+        filterGroup.post {
+            filterGroup.check(R.id.filterTodoTasksChip)
+            (filterGroup.parent as? android.widget.HorizontalScrollView)?.scrollTo(0, 0)
         }
     }
 
@@ -113,9 +113,6 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         todoCountText.text = todoCount.toString()
         upcomingCountText.text = upcomingCount.toString()
         overdueCountText.text = overdueCount.toString()
-        highlightCountContainer(todoCountContainer, todoCount)
-        highlightCountContainer(upcomingCountContainer, upcomingCount)
-        highlightCountContainer(overdueCountContainer, overdueCount)
 
         val tasks = allTasks.filter { task ->
             when (currentFilter) {
@@ -238,11 +235,4 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         OVERDUE
     }
 
-    private fun highlightCountContainer(container: LinearLayout, count: Int) {
-        if (count > 0) {
-            container.setBackgroundResource(R.drawable.bg_count_highlight)
-        } else {
-            container.background = null
-        }
-    }
 }

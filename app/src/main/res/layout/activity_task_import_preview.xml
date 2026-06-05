@@ -7,13 +7,19 @@
     android:background="@color/campus_background"
     android:orientation="vertical">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/taskImportPreviewToolbar"
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/taskImportPreviewAppBar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/campus_surface"
-        app:navigationIconTint="@color/campus_text_primary"
-        app:titleTextColor="@color/campus_text_primary" />
+        android:layout_height="wrap_content"
+        android:background="@color/campus_surface">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/taskImportPreviewToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIconTint="@color/campus_text_primary"
+            app:titleTextColor="@color/campus_text_primary" />
+    </com.google.android.material.appbar.AppBarLayout>
 
     <TextView
         android:id="@+id/taskImportPreviewSummaryText"
