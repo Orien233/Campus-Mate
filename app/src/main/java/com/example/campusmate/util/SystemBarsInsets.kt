@@ -32,7 +32,19 @@ object SystemBarsInsets {
         }
 
         val content = activity.findViewById<ViewGroup>(android.R.id.content) ?: return
-        val root = content.getChildAt(0) ?: return
+        val root = content.getChildAt(0)
+        if (root == null) {
+            // setContentView() has not been called yet (onActivityCreated fires before it).
+            // Defer insets setup until after the current handler message completes,
+            // at which point setContentView() will have been called.
+            content.post {
+                val deferredRoot = content.getChildAt(0) ?: return@post
+                if (deferredRoot.getTag(R.id.tag_system_bars_insets_applied) == true) return@post
+                deferredRoot.setTag(R.id.tag_system_bars_insets_applied, true)
+                apply(deferredRoot)
+            }
+            return
+        }
         if (root.getTag(R.id.tag_system_bars_insets_applied) == true) return
         root.setTag(R.id.tag_system_bars_insets_applied, true)
         apply(root)
@@ -45,6 +57,27 @@ object SystemBarsInsets {
         val topTargetState = topTarget?.captureState()
         val bottomNavigationState = bottomNavigation?.captureState()
         var realInsetsApplied = false
+
+        // Set a dedicated listener on the topTarget (AppBarLayout/Toolbar) so that
+        // its status-bar padding is re-applied whenever insets are dispatched to it.
+        // This is necessary because setSupportActionBar() installs its own
+        // WindowInsets listener on AppBarLayout via AppCompat, which may reset
+        // the padding that the root-level listener applies.
+        topTarget?.let { target ->
+            val state = topTargetState!!
+            ViewCompat.setOnApplyWindowInsetsListener(target) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                val displayCutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
+                val topInset = max(max(systemBars.top, displayCutout.top), topProtectionHeight(v.resources))
+                v.setPadding(state.left, state.top + topInset, state.right, state.bottom)
+                val params = v.layoutParams
+                if (params != null && state.height > 0) {
+                    params.height = state.height + topInset
+                    v.layoutParams = params
+                }
+                insets
+            }
+        }
 
         ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
