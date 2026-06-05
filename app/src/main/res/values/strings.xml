@@ -112,6 +112,9 @@
     <string name="settings_dnd_access">勿扰模式授权</string>
     <string name="settings_dnd_status_enabled">勿扰模式授权已开启：专注页可引导用户使用系统勿扰能力</string>
     <string name="settings_dnd_status_disabled">勿扰模式授权未开启：不影响番茄专注主流程</string>
+    <string name="settings_notification_access">通知访问授权</string>
+    <string name="settings_notification_access_status_enabled">通知访问授权已开启：专注时可按规则标记通知过滤状态</string>
+    <string name="settings_notification_access_status_disabled">通知访问授权未开启：通知过滤开关不会影响普通专注计时</string>
     <string name="settings_system_entry_unavailable">当前设备未提供该系统设置入口</string>
     <string name="settings_demo_tools">演示工具</string>
     <string name="settings_demo_tools_body">用于 2-3 分钟答辩展示，会先清空本地数据，再生成课程、任务、提醒和学习热力图样例</string>
@@ -309,13 +312,10 @@
     <string name="reminder_scheduled">提醒已设置</string>
 
     <string name="import_schedule_title">导入课表</string>
-    <string name="import_sample_title">内置示例课表</string>
-    <string name="import_sample_body">包含 6 门课程，其中 1 门故意冲突，便于答辩演示预览和冲突处理</string>
-    <string name="import_sample_action">导入示例 HTML</string>
     <string name="import_paste_hint">粘贴课表 HTML</string>
     <string name="import_paste_action">解析粘贴内容</string>
     <string name="import_webview_action">WebView 提取课表 HTML</string>
-    <string name="import_webview_not_ready">当前版本暂未开放完整网页导入，可使用内置示例或粘贴 HTML 导入。本阶段不保存账号密码，也不绕过验证码</string>
+    <string name="import_webview_not_ready">当前版本暂未开放完整网页导入，可使用粘贴 HTML 导入。本阶段不保存账号密码，也不绕过验证码</string>
     <string name="import_webview_title">WebView 课表导入</string>
     <string name="import_webview_url_hint">教务系统入口网址（登录后手动进入选课/课表页再提取）</string>
     <string name="import_webview_open">打开网页</string>
@@ -325,8 +325,8 @@
     <string name="import_section_time_applied">已应用课表节次时间</string>
     <string name="import_webview_url_empty">请先输入网址</string>
     <string name="import_webview_url_invalid">网址格式不正础</string>
-    <string name="import_webview_fallback">使用粘贴 HTML / 示例</string>
-    <string name="import_webview_fallback_hint">解析失败时可降级为粘贴 HTML 或内置示例导入</string>
+    <string name="import_webview_fallback">返回粘贴 HTML 导入</string>
+    <string name="import_webview_fallback_hint">解析失败时可返回粘贴 HTML 导入</string>
     <string name="import_parse_failed">课表解析失败</string>
     <string name="import_preview_title">导入预览</string>
     <string name="import_preview_summary">识别 %1$d 门课程，冲突 %2$d 门，默认勾选 %3$d 门</string>

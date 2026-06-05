@@ -1,6 +1,7 @@
 package com.example.campusmate
 
 import com.example.campusmate.data.model.StudyTask
+import com.example.campusmate.domain.plan.StudyPlanContext
 import com.example.campusmate.domain.plan.StudyPlanContextBuilder
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -14,6 +15,40 @@ class StudyPlanContextBuilderTest {
     fun weekdayForDate_usesRequestedDate() {
         assertEquals(4, StudyPlanContextBuilder.weekdayForDate("2026-06-04"))
         assertEquals(1, StudyPlanContextBuilder.weekdayForDate("2026-06-08"))
+    }
+
+    @Test
+    fun generationStartTimeForDate_blocksPastDatesAndCurrentPastTime() {
+        assertEquals(
+            "22:00",
+            StudyPlanContext.generationStartTimeForDate(
+                date = "2026-06-04",
+                today = "2026-06-05",
+                earliest = "08:00",
+                latest = "22:00",
+                nowText = "15:30"
+            )
+        )
+        assertEquals(
+            "15:30",
+            StudyPlanContext.generationStartTimeForDate(
+                date = "2026-06-05",
+                today = "2026-06-05",
+                earliest = "08:00",
+                latest = "22:00",
+                nowText = "15:30"
+            )
+        )
+        assertEquals(
+            "08:00",
+            StudyPlanContext.generationStartTimeForDate(
+                date = "2026-06-06",
+                today = "2026-06-05",
+                earliest = "08:00",
+                latest = "22:00",
+                nowText = "15:30"
+            )
+        )
     }
 
     @Test

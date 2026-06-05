@@ -54,6 +54,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var notificationStatusText: TextView
     private lateinit var exactAlarmStatusText: TextView
     private lateinit var dndStatusText: TextView
+    private lateinit var notificationAccessStatusText: TextView
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -127,6 +128,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         notificationStatusText = view.findViewById(R.id.notificationStatusText)
         exactAlarmStatusText = view.findViewById(R.id.exactAlarmStatusText)
         dndStatusText = view.findViewById(R.id.dndStatusText)
+        notificationAccessStatusText = view.findViewById(R.id.notificationAccessStatusText)
     }
 
     private fun bindCurrentSettings() {
@@ -194,6 +196,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         }
         view.findViewById<MaterialButton>(R.id.dndSettingsButton).setOnClickListener {
             openSystemSettings(PermissionUtils.notificationPolicyAccessSettingsIntent())
+        }
+        view.findViewById<MaterialButton>(R.id.notificationAccessButton).setOnClickListener {
+            openSystemSettings(PermissionUtils.notificationListenerSettingsIntent())
         }
         focusDndSwitch.setOnCheckedChangeListener { _, checked ->
             settingsRepository.setFocusDndEnabled(checked)
@@ -415,6 +420,14 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 R.string.settings_dnd_status_enabled
             } else {
                 R.string.settings_dnd_status_disabled
+            }
+        )
+
+        notificationAccessStatusText.text = getString(
+            if (PermissionUtils.hasNotificationListenerAccess(requireContext())) {
+                R.string.settings_notification_access_status_enabled
+            } else {
+                R.string.settings_notification_access_status_disabled
             }
         )
     }

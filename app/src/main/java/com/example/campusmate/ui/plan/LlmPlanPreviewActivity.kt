@@ -164,7 +164,8 @@ class LlmPlanPreviewActivity : AppCompatActivity() {
             return when (llmResult) {
                 is com.example.campusmate.domain.llm.LlmGenerateResult.Success -> {
                     val jsonContent = llmResult.text
-                    val (plans, validationWarnings) = planValidator.parseAndValidate(jsonContent, planDate)
+                    val planContext = StudyPlanContextBuilder(this).buildForDate(planDate)
+                    val (plans, validationWarnings) = planValidator.parseAndValidate(jsonContent, planContext)
                     warnings = validationWarnings
                     if (plans.isEmpty()) {
                         Result.failure(Exception(getString(R.string.llm_plan_parse_error)))

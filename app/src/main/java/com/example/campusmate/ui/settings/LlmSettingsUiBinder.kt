@@ -2,7 +2,6 @@ package com.example.campusmate.ui.settings
 
 import android.view.View
 import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.campusmate.R
@@ -16,6 +15,7 @@ import com.example.campusmate.domain.llm.LlmGenerateResult
 import com.example.campusmate.domain.llm.LlmProviderPresets
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.switchmaterial.SwitchMaterial
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import java.util.concurrent.ExecutorService
@@ -33,12 +33,12 @@ class LlmSettingsUiBinder(
     private lateinit var scheduleParseSwitch: SwitchMaterial
     private lateinit var taskParseSwitch: SwitchMaterial
     private lateinit var planGenerateSwitch: SwitchMaterial
-    private lateinit var providerInput: AutoCompleteTextView
+    private lateinit var providerInput: MaterialAutoCompleteTextView
     private lateinit var baseUrlInputLayout: TextInputLayout
     private lateinit var baseUrlInput: TextInputEditText
     private lateinit var modelInputLayout: TextInputLayout
     private lateinit var modelInput: TextInputEditText
-    private lateinit var authHeaderInput: AutoCompleteTextView
+    private lateinit var authHeaderInput: MaterialAutoCompleteTextView
     private lateinit var apiKeyInput: TextInputEditText
     private lateinit var apiKeyStatusText: TextView
     private lateinit var temperatureInputLayout: TextInputLayout

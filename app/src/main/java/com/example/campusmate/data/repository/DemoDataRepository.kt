@@ -32,7 +32,7 @@ class DemoDataRepository(context: Context) {
         val recordCount = createStudyRecords(courseIds, taskIds)
         importLogRepository.addImportLog(
             ImportLog(
-                sourceType = ImportLog.SOURCE_SAMPLE_HTML,
+                sourceType = ImportLog.SOURCE_PASTED_HTML,
                 importedCount = courseIds.size,
                 skippedCount = 0,
                 conflictCount = 1,

@@ -48,7 +48,7 @@ ${weatherPromptText()}
 
 ## 学习目标
 每日学习目标: $dailyGoalMinutes 分钟
-允许生成时间: $generationStartTime-$planLatestTime（设置范围 $planEarliestTime-$planLatestTime；如果是今天，不得早于当前时间）
+${generationWindowPromptText()}
 
 ## 近 7 天学习记录
 ${recordsPromptText()}
@@ -57,7 +57,7 @@ ${recordsPromptText()}
 ${existingPlansPromptText()}
 
 ## 硬性约束
-- 所有计划必须在允许生成时间内；今天的计划不得早于当前时间。
+- 所有计划必须在允许生成时间内；今天的计划不得早于当前时间，今天之前的日期返回空 plans。
 - 普通作业、复习、项目和考试准备计划的 startTime/endTime 不得与“课程占用时间”发生任何重叠。
 - “上课”“完成课程学习”“课程学习”等课程本身相关计划，应该安排在对应课程时间内，并在标题中保留课程名。
 - 如任务需要围绕某门课做课后复习或作业，请放在该课程开始前、结束后或两段课程之间的空档。
@@ -67,6 +67,14 @@ ${existingPlansPromptText()}
 
     fun courseNameForTask(task: StudyTask): String? {
         return task.courseId?.let(coursesById::get)?.name
+    }
+
+    private fun generationWindowPromptText(): String {
+        return if (generationStartTime >= planLatestTime) {
+            "允许生成时间: 无可用时间窗（设置范围 $planEarliestTime-$planLatestTime；今天之前或当前已超过最晚时间时不生成计划）"
+        } else {
+            "允许生成时间: $generationStartTime-$planLatestTime（设置范围 $planEarliestTime-$planLatestTime；如果是今天，不得早于当前时间）"
+        }
     }
 
     private fun coursesPromptText(): String {
@@ -179,6 +187,20 @@ ${existingPlansPromptText()}
                 else -> "未完成"
             }
         }
+
+        fun generationStartTimeForDate(
+            date: String,
+            today: String,
+            earliest: String,
+            latest: String,
+            nowText: String
+        ): String {
+            return when {
+                date < today -> latest
+                date > today -> earliest
+                else -> maxOf(earliest, nowText).coerceAtMost(latest)
+            }
+        }
     }
 }
 
@@ -239,7 +261,7 @@ class StudyPlanContextBuilder(context: Context) {
 
     private fun generationStartTime(date: String): String {
         val earliest = settingsRepository.getPlanEarliestTime()
-        if (date != DateTimeUtils.todayDate()) return earliest
+        val latest = settingsRepository.getPlanLatestTime()
         val now = java.util.Calendar.getInstance()
         val nowText = String.format(
             java.util.Locale.US,
@@ -247,7 +269,13 @@ class StudyPlanContextBuilder(context: Context) {
             now.get(java.util.Calendar.HOUR_OF_DAY),
             now.get(java.util.Calendar.MINUTE)
         )
-        return maxOf(earliest, nowText)
+        return StudyPlanContext.generationStartTimeForDate(
+            date = date,
+            today = DateTimeUtils.todayDate(),
+            earliest = earliest,
+            latest = latest,
+            nowText = nowText
+        )
     }
 
     companion object {

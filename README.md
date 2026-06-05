@@ -74,7 +74,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 - Android 系统备份：Manifest 中 `android:allowBackup="false"`；`backup_rules.xml` 和 `data_extraction_rules.xml` 也排除数据库、SharedPreferences、文件和外部文件。
 - 演示数据：当前生成课程、任务、学习计划、学习记录、学习名片、二维码伙伴和导入日志；附件仍需用户通过 SAF 选择真实图片。
 - WebView 教务系统导入：默认入口为 `https://mis.bjtu.edu.cn/`，只提供用户手动登录并提取当前页面 HTML 的基础流程；不保存账号密码、Cookie，不绕过验证码；进入、重新打开和退出导入页时会尽力清理 Cookie、WebStorage、缓存、历史、表单和 HTTP Auth 数据；不同学校页面结构需要现场验证。
-- NotificationListenerService：服务已声明，但通知访问权限必须由用户在系统设置中授权；当前设置页未看到专门跳转通知访问授权页的按钮，需真机验证。
+- NotificationListenerService：服务已声明，但通知访问权限必须由用户在系统设置中授权；设置页提供权限状态和系统授权入口，过滤效果需真机验证。
 - 勿扰模式：需要用户授予通知策略访问权限；未授权时不应影响普通专注计时。
 - 天气：远程请求依赖网络；失败时只回退缓存。定位使用粗略位置反查城市，只保存城市名，不保存经纬度；权限授予/拒绝需真机验证。
 - 图片附件：当前只通过 Storage Access Framework 选择图片并持久化 Uri；不申请相册读取权限，不支持拍照、裁剪、压缩或内置大图预览。
@@ -227,7 +227,6 @@ ImportScheduleActivity / WebViewImportActivity
   -> import_logs 表
 ```
 
-- 内置 sample：`ImportScheduleActivity` 读取 `app/src/main/assets/sample_schedule.html`。
 - 粘贴 HTML：用户粘贴 HTML 后交给 `JsoupScheduleParser`。
 - WebView 当前页：`WebViewImportActivity` 让用户手动打开网页，`WebViewScheduleExtractor` 只用 `evaluateJavascript` 提取当前页面 HTML。
 - BJTU 场景：WebView 默认预填 `https://mis.bjtu.edu.cn/`，避免直接打开教务子页面时因 SSO/session 缺失导致登录失败；用户登录后自行进入课表页再提取。
@@ -358,7 +357,7 @@ SettingsFragment
   -> 系统授权
 ```
 
-- `SettingsFragment` 提供专注勿扰和通知过滤开关。
+- `SettingsFragment` 提供专注勿扰、通知过滤开关，以及勿扰授权和通知访问授权入口。
 - `SettingsRepository` 保存开关状态。
 - `FocusService` 开始专注时检查开关：勿扰开启则调用 `DndManager.enableDnd()`；通知过滤开启则设置 `NotificationFilterService.isFocusModeActive = true`。
 - `DndManager` 只能在用户已授予通知策略访问权限后切换勿扰，不绕过系统限制。

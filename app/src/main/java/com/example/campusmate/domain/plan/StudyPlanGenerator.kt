@@ -94,8 +94,9 @@ class StudyPlanGenerator(private val context: Context) {
             val start = max(block.start, minStart)
             val end = min(block.end, maxEnd)
             if (end <= start) continue
+            val courseLearningTask = courseLearningTaskFor(course, planContext)
             plans += StudyPlan(
-                title = "上课: ${course.name}",
+                title = courseLearningTask?.title ?: "上课: ${course.name}",
                 planDate = planContext.date,
                 plannedMinutes = end - start,
                 startTime = formatTime(start),
@@ -176,6 +177,12 @@ class StudyPlanGenerator(private val context: Context) {
         return planContext.courses.any { it.id == courseId } &&
             title.contains(courseName, ignoreCase = true) &&
             COURSE_LEARNING_KEYWORDS.any { title.contains(it, ignoreCase = true) }
+    }
+
+    private fun courseLearningTaskFor(course: Course, planContext: StudyPlanContext): StudyTask? {
+        return planContext.tasks.firstOrNull { task ->
+            task.courseId == course.id && isCourseLearningTask(task, planContext)
+        }
     }
 
     private fun estimateTaskDuration(task: StudyTask): Int {

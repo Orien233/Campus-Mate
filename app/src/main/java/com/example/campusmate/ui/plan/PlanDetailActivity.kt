@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.campusmate.R
 import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.data.repository.StudyPlanRepository
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 
@@ -23,6 +24,7 @@ class PlanDetailActivity : AppCompatActivity() {
 
         planRepository = StudyPlanRepository(this)
         planId = intent.getLongExtra(EXTRA_PLAN_ID, 0L)
+        setupToolbar()
 
         if (planId == 0L) {
             finish()
@@ -31,6 +33,18 @@ class PlanDetailActivity : AppCompatActivity() {
 
         loadPlan()
         setupButtons()
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
+    }
+
+    private fun setupToolbar() {
+        val toolbar = findViewById<MaterialToolbar>(R.id.planDetailToolbar)
+        toolbar.title = getString(R.string.plan_detail_title)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
     private fun loadPlan() {
