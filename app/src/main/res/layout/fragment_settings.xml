@@ -130,11 +130,29 @@
                     android:textColor="@color/campus_text_primary"
                     android:textSize="16sp" />
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:text="@string/settings_llm_capabilities_title"
+                    android:textColor="@color/campus_text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/llmScheduleParseSwitch"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_xs"
                     android:text="@string/settings_llm_schedule_parse"
+                    android:textColor="@color/campus_text_primary"
+                    android:textSize="16sp" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/llmTaskParseSwitch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_llm_task_parse"
                     android:textColor="@color/campus_text_primary"
                     android:textSize="16sp" />
 
@@ -146,18 +164,28 @@
                     android:textColor="@color/campus_text_primary"
                     android:textSize="16sp" />
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:text="@string/settings_llm_provider_title"
+                    android:textColor="@color/campus_text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/llmProviderInputLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_m"
+                    android:layout_marginTop="@dimen/space_s"
                     android:hint="@string/settings_llm_provider"
                     app:endIconMode="dropdown_menu">
 
                     <AutoCompleteTextView
                         android:id="@+id/llmProviderInput"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="56dp"
+                        android:ellipsize="end"
                         android:inputType="none"
                         android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -211,7 +239,8 @@
                     <AutoCompleteTextView
                         android:id="@+id/llmAuthHeaderInput"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="56dp"
+                        android:ellipsize="end"
                         android:inputType="none"
                         android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>

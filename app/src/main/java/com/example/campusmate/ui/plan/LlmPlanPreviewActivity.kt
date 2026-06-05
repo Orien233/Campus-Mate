@@ -16,6 +16,7 @@ import com.example.campusmate.data.repository.StudyPlanRepository
 import com.example.campusmate.domain.llm.LlmClientFactory
 import com.example.campusmate.domain.plan.LlmPlanGenerateService
 import com.example.campusmate.domain.plan.LlmPlanValidator
+import com.example.campusmate.domain.plan.PlanCourseConflictChecker
 import com.example.campusmate.domain.plan.StudyPlanContextBuilder
 import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.button.MaterialButton
@@ -36,6 +37,7 @@ class LlmPlanPreviewActivity : AppCompatActivity() {
     private lateinit var actionContainer: LinearLayout
     private lateinit var previewSummaryText: TextView
     private lateinit var warningsText: TextView
+    private lateinit var courseConflictStatusText: TextView
     private lateinit var errorText: TextView
     private lateinit var planPreviewRecyclerView: RecyclerView
     private lateinit var cancelButton: MaterialButton
@@ -67,6 +69,7 @@ class LlmPlanPreviewActivity : AppCompatActivity() {
         actionContainer = findViewById(R.id.actionContainer)
         previewSummaryText = findViewById(R.id.previewSummaryText)
         warningsText = findViewById(R.id.warningsText)
+        courseConflictStatusText = findViewById(R.id.courseConflictStatusText)
         errorText = findViewById(R.id.errorText)
         planPreviewRecyclerView = findViewById(R.id.planPreviewRecyclerView)
         cancelButton = findViewById(R.id.cancelButton)
@@ -203,10 +206,11 @@ $contextText
 
 注意事项：
 1. 计划时长建议在 15-180 分钟之间
-2. 避免与课程时间严重重叠
-3. 合理安排休息时间
-4. 优先安排高优先级和即将截止的任务
-5. 只返回 JSON，不要其他内容
+2. 普通作业、复习、项目和考试准备计划必须避开课程时间
+3. “上课”“完成课程学习”“课程学习”等课程本身相关计划应放在对应课程时间内，并在标题中保留课程名
+4. 合理安排休息时间
+5. 优先安排高优先级和即将截止的任务
+6. 只返回 JSON，不要其他内容
         """.trimIndent()
     }
 
@@ -261,6 +265,32 @@ $contextText
         } else {
             warningsText.visibility = View.GONE
         }
+        bindCourseConflictStatus()
+    }
+
+    private fun bindCourseConflictStatus() {
+        val context = StudyPlanContextBuilder(this).buildForDate(planDate)
+        val conflicts = PlanCourseConflictChecker.findConflicts(generatedPlans, context)
+        if (conflicts.isEmpty()) {
+            courseConflictStatusText.text = getString(R.string.llm_plan_course_check_passed)
+            courseConflictStatusText.setTextColor(getColor(R.color.success))
+            return
+        }
+        courseConflictStatusText.text = buildString {
+            append(getString(R.string.llm_plan_course_check_warning))
+            append("\n")
+            append(
+                conflicts.take(3).joinToString("\n") { conflict ->
+                    getString(
+                        R.string.llm_plan_course_conflict_format,
+                        conflict.planTitle,
+                        conflict.courseName,
+                        conflict.courseTimeRange
+                    )
+                }
+            )
+        }
+        courseConflictStatusText.setTextColor(getColor(R.color.warning))
     }
 
     private fun savePlans(append: Boolean) {

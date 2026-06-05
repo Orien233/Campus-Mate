@@ -33,6 +33,7 @@ class LlmSettingsRepository(context: Context) : LlmScheduleParseSettingsSource {
         return LlmProviderConfig(
             enabled = preferences.getBoolean(KEY_ENABLED, default.enabled),
             scheduleParseEnabled = preferences.getBoolean(KEY_SCHEDULE_PARSE_ENABLED, default.scheduleParseEnabled),
+            taskParseEnabled = preferences.getBoolean(KEY_TASK_PARSE_ENABLED, default.taskParseEnabled),
             planGenerateEnabled = preferences.getBoolean(KEY_PLAN_GENERATE_ENABLED, default.planGenerateEnabled),
             scheduleParseMode = preferences.getEnum(KEY_SCHEDULE_PARSE_MODE, default.scheduleParseMode),
             providerPresetId = preferences.getString(KEY_PROVIDER_PRESET_ID, default.providerPresetId)
@@ -52,6 +53,7 @@ class LlmSettingsRepository(context: Context) : LlmScheduleParseSettingsSource {
         preferences.edit()
             .putBoolean(KEY_ENABLED, config.enabled)
             .putBoolean(KEY_SCHEDULE_PARSE_ENABLED, config.scheduleParseEnabled)
+            .putBoolean(KEY_TASK_PARSE_ENABLED, config.taskParseEnabled)
             .putBoolean(KEY_PLAN_GENERATE_ENABLED, config.planGenerateEnabled)
             .putString(KEY_SCHEDULE_PARSE_MODE, config.scheduleParseMode.name)
             .putString(KEY_PROVIDER_PRESET_ID, config.providerPresetId)
@@ -99,6 +101,7 @@ class LlmSettingsRepository(context: Context) : LlmScheduleParseSettingsSource {
         private const val ENCRYPTED_PREFS_NAME = "campusmate_llm_secure_settings"
         private const val KEY_ENABLED = "enabled"
         private const val KEY_SCHEDULE_PARSE_ENABLED = "schedule_parse_enabled"
+        private const val KEY_TASK_PARSE_ENABLED = "task_parse_enabled"
         private const val KEY_PLAN_GENERATE_ENABLED = "plan_generate_enabled"
         private const val KEY_SCHEDULE_PARSE_MODE = "schedule_parse_mode"
         private const val KEY_PROVIDER_PRESET_ID = "provider_preset_id"

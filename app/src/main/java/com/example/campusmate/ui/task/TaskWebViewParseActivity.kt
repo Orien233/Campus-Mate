@@ -244,7 +244,9 @@ class TaskWebViewParseActivity : AppCompatActivity() {
                         RESULT_OK,
                         Intent()
                             .putExtra(EXTRA_TASK_DRAFT, draft)
+                            .putExtra(EXTRA_TASK_DRAFTS, ArrayList(result.drafts))
                             .putExtra(EXTRA_WARNING_SUMMARY, warningSummary)
+                            .putStringArrayListExtra(EXTRA_WARNINGS, ArrayList(result.warnings))
                     )
                     finish()
                 }
@@ -336,7 +338,9 @@ class TaskWebViewParseActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_TASK_DRAFT = "extra_task_draft"
+        const val EXTRA_TASK_DRAFTS = "extra_task_drafts"
         const val EXTRA_WARNING_SUMMARY = "extra_warning_summary"
+        const val EXTRA_WARNINGS = "extra_warnings"
         private const val PREFS_NAME = "campusmate_task_ai_parse"
         private const val KEY_AI_DISCLOSURE_SHOWN = "ai_disclosure_shown"
     }

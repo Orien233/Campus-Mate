@@ -175,6 +175,15 @@
                         android:alpha="0.8"
                         android:textSize="12sp"
                         android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/weekCourseSummaryText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_s"
+                        android:textColor="@android:color/white"
+                        android:alpha="0.9"
+                        android:textSize="12sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -247,6 +256,14 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="@dimen/space_m">
+
+                <TextView
+                    android:id="@+id/weekCourseConflictStatusText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/space_s"
+                    android:textColor="@color/campus_text_secondary"
+                    android:textSize="13sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"

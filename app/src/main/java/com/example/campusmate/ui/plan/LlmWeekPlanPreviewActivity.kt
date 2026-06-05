@@ -16,6 +16,7 @@ import com.example.campusmate.domain.llm.LlmClientFactory
 import com.example.campusmate.domain.llm.LlmGenerateResult
 import com.example.campusmate.domain.plan.LlmPlanGenerateService
 import com.example.campusmate.domain.plan.LlmPlanValidator
+import com.example.campusmate.domain.plan.PlanCourseConflictChecker
 import com.example.campusmate.domain.plan.StudyPlanContextBuilder
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
@@ -43,6 +44,8 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
     private lateinit var dayEmptyState: LinearLayout
     private lateinit var weekSummaryText: TextView
     private lateinit var weekWarningText: TextView
+    private lateinit var weekCourseSummaryText: TextView
+    private lateinit var weekCourseConflictStatusText: TextView
     private lateinit var errorText: TextView
     private lateinit var dayTabLayout: TabLayout
     private lateinit var weekPlanRecyclerView: RecyclerView
@@ -79,6 +82,8 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
         dayEmptyState = findViewById(R.id.dayEmptyState)
         weekSummaryText = findViewById(R.id.weekSummaryText)
         weekWarningText = findViewById(R.id.weekWarningText)
+        weekCourseSummaryText = findViewById(R.id.weekCourseSummaryText)
+        weekCourseConflictStatusText = findViewById(R.id.weekCourseConflictStatusText)
         errorText = findViewById(R.id.errorText)
         dayTabLayout = findViewById(R.id.dayTabLayout)
         weekPlanRecyclerView = findViewById(R.id.weekPlanRecyclerView)
@@ -416,7 +421,47 @@ $contextText
             weekWarningText.visibility = View.GONE
         }
 
+        bindWeekCourseSummary()
+        bindWeekCourseConflictStatus()
+
         showPlansForDay(selectedDayDate)
+    }
+
+    private fun bindWeekCourseSummary() {
+        val summaries = allWeekPlans.keys.sorted().flatMap { date ->
+            PlanCourseConflictChecker.courseBusySummary(planContextBuilder.buildForDate(date))
+        }
+        weekCourseSummaryText.text = if (summaries.isEmpty()) {
+            getString(R.string.llm_plan_course_summary_empty)
+        } else {
+            getString(R.string.llm_plan_course_summary_title) + "\n" + summaries.take(6).joinToString("\n")
+        }
+    }
+
+    private fun bindWeekCourseConflictStatus() {
+        val conflicts = allWeekPlans.flatMap { (date, plans) ->
+            PlanCourseConflictChecker.findConflicts(plans, planContextBuilder.buildForDate(date))
+        }
+        if (conflicts.isEmpty()) {
+            weekCourseConflictStatusText.text = getString(R.string.llm_plan_course_check_passed)
+            weekCourseConflictStatusText.setTextColor(getColor(R.color.success))
+            return
+        }
+        weekCourseConflictStatusText.text = buildString {
+            append(getString(R.string.llm_plan_course_check_warning))
+            append("\n")
+            append(
+                conflicts.take(4).joinToString("\n") { conflict ->
+                    getString(
+                        R.string.llm_plan_course_conflict_format,
+                        conflict.planTitle,
+                        conflict.courseName,
+                        conflict.courseTimeRange
+                    )
+                }
+            )
+        }
+        weekCourseConflictStatusText.setTextColor(getColor(R.color.warning))
     }
 
     private fun showPlansForDay(date: String) {

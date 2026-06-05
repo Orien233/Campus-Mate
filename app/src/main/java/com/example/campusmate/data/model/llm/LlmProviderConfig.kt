@@ -3,6 +3,7 @@ package com.example.campusmate.data.model.llm
 data class LlmProviderConfig(
     val enabled: Boolean = false,
     val scheduleParseEnabled: Boolean = true,
+    val taskParseEnabled: Boolean = true,
     val planGenerateEnabled: Boolean = true,
     val scheduleParseMode: LlmScheduleParseMode = LlmScheduleParseMode.LLM_FIRST_FALLBACK_LOCAL,
     val providerPresetId: String = "deepseek",

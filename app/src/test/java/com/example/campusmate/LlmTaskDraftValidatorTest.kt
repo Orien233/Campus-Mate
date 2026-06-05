@@ -65,4 +65,22 @@ class LlmTaskDraftValidatorTest {
         assertEquals(StudyTask.TYPE_REVIEW, result.drafts.first().type)
         assertTrue(result.warnings.any { it.contains("缺少标题") })
     }
+
+    @Test
+    fun parse_readsMultipleTaskDrafts() {
+        val result = LlmTaskDraftValidator { fixedNow }.parse(
+            """
+            {
+              "tasks": [
+                {"title": "完成实验报告", "type": "experiment", "priority": "high"},
+                {"title": "复习高等数学", "type": "review", "priority": "normal"}
+              ]
+            }
+            """.trimIndent()
+        )
+
+        assertEquals(2, result.drafts.size)
+        assertEquals("完成实验报告", result.drafts[0].title)
+        assertEquals("复习高等数学", result.drafts[1].title)
+    }
 }
