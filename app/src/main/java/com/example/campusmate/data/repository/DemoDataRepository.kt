@@ -3,8 +3,11 @@ package com.example.campusmate.data.repository
 import android.content.Context
 import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.model.ImportLog
+import com.example.campusmate.data.model.StudyBuddy
+import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.data.model.StudyRecord
 import com.example.campusmate.data.model.StudyTask
+import com.example.campusmate.data.model.UserProfile
 import com.example.campusmate.util.DateTimeUtils
 import java.util.Calendar
 
@@ -12,8 +15,11 @@ import java.util.Calendar
 class DemoDataRepository(context: Context) {
     private val courseRepository = CourseRepository(context)
     private val taskRepository = TaskRepository(context)
+    private val studyPlanRepository = StudyPlanRepository(context)
     private val studyRecordRepository = StudyRecordRepository(context)
     private val importLogRepository = ImportLogRepository(context)
+    private val userProfileRepository = UserProfileRepository(context)
+    private val studyBuddyRepository = StudyBuddyRepository(context)
 
     fun seedStageTwoDemoData(): DemoSeedResult = seedPresentationDemoData()
 
@@ -21,6 +27,8 @@ class DemoDataRepository(context: Context) {
         val todayWeekday = DateTimeUtils.currentWeekday()
         val courseIds = createCourses(todayWeekday)
         val taskIds = createTasks(courseIds)
+        createPlans()
+        createProfileAndBuddies()
         val recordCount = createStudyRecords(courseIds, taskIds)
         importLogRepository.addImportLog(
             ImportLog(
@@ -28,7 +36,7 @@ class DemoDataRepository(context: Context) {
                 importedCount = courseIds.size,
                 skippedCount = 0,
                 conflictCount = 1,
-                message = "演示数据：课程、任务、专注记录和热力图样例"
+                message = "演示数据：课程、任务、计划、专注记录、热力图和学习伙伴样例"
             )
         )
         return DemoSeedResult(
@@ -103,6 +111,14 @@ class DemoDataRepository(context: Context) {
         val tasks = listOf(
             StudyTask(
                 courseId = mathId,
+                title = "完成高等数学课程学习",
+                description = "用于演示课程学习类任务应安排在课程时间内。",
+                type = StudyTask.TYPE_REVIEW,
+                priority = StudyTask.PRIORITY_HIGH,
+                dueAt = millisFromToday(dayOffset = 0, hour = 12, minute = 0)
+            ),
+            StudyTask(
+                courseId = mathId,
                 title = "完成高数习题第 3 章",
                 description = "用于演示任务新增、10 秒提醒和专注入口。",
                 type = StudyTask.TYPE_HOMEWORK,
@@ -142,6 +158,73 @@ class DemoDataRepository(context: Context) {
             )
         )
         return tasks.map { taskRepository.addTask(it) }.filter { it > 0L }
+    }
+
+    private fun createPlans() {
+        val today = DateTimeUtils.todayDate()
+        val plans = listOf(
+            StudyPlan(
+                title = "上课: 高等数学",
+                planDate = today,
+                plannedMinutes = 95,
+                startTime = "08:00",
+                endTime = "09:35",
+                sourceType = StudyPlan.SOURCE_AUTO
+            ),
+            StudyPlan(
+                title = "完成高等数学课程学习",
+                planDate = today,
+                plannedMinutes = 60,
+                startTime = "08:20",
+                endTime = "09:20",
+                sourceType = StudyPlan.SOURCE_LLM
+            ),
+            StudyPlan(
+                title = "整理 CampusMate 答辩稿",
+                planDate = today,
+                plannedMinutes = 90,
+                startTime = "19:30",
+                endTime = "21:00",
+                sourceType = StudyPlan.SOURCE_AUTO
+            ),
+            StudyPlan(
+                title = "英语口语展示练习",
+                planDate = DateTimeUtils.datePlusDays(today, 1),
+                plannedMinutes = 45,
+                startTime = "20:00",
+                endTime = "20:45",
+                sourceType = StudyPlan.SOURCE_AUTO
+            )
+        )
+        studyPlanRepository.addPlans(plans)
+    }
+
+    private fun createProfileAndBuddies() {
+        userProfileRepository.saveProfile(
+            UserProfile(
+                nickname = "CampusMate 演示用户",
+                school = "北京交通大学",
+                major = "软件工程",
+                grade = "大三",
+                bio = "用于课程项目答辩的本地学习名片。",
+                github = "campusmate-demo",
+                email = "demo@example.edu",
+                showEmail = true
+            )
+        )
+        studyBuddyRepository.addBuddy(
+            StudyBuddy(
+                nickname = "结对同学 A",
+                school = "北京交通大学",
+                major = "计算机科学与技术",
+                grade = "大三",
+                bio = "通过二维码确认添加的学习伙伴。",
+                github = "campusmate-buddy-a",
+                email = "buddy-a@example.edu",
+                source = StudyBuddy.SOURCE_QR,
+                note = "答辩演示伙伴"
+            )
+        )
     }
 
     private fun createStudyRecords(courseIds: List<Long>, taskIds: List<Long>): Int {

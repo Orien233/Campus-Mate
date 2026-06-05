@@ -13,7 +13,7 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
-/** Edits the local profile used by QR and future NFC study-card sharing. */
+/** Edits the local profile used by QR study-card sharing. */
 class EditProfileActivity : AppCompatActivity() {
     private lateinit var repository: UserProfileRepository
     private lateinit var rootView: View

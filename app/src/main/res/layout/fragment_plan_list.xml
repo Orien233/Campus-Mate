@@ -60,93 +60,6 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_m">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/space_m">
-
-                <LinearLayout
-                    android:id="@+id/planGenerateHeader"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/plan_generate_section_title"
-                        android:textColor="@color/campus_text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/planGenerateIndicator"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/campus_primary"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/planGenerateContent"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/plan_generate_today_desc"
-                        android:textColor="@color/campus_text_secondary"
-                        android:textSize="14sp"
-                        android:layout_marginBottom="@dimen/space_s"/>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/generateTodayButton"
-                            style="@style/Widget.Material3.Button"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="@dimen/space_s"
-                            android:minHeight="56dp"
-                            android:text="@string/plan_generate_today"
-                            android:maxLines="2"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            app:icon="@drawable/ic_plan"
-                            app:iconGravity="textStart"
-                            app:iconPadding="8dp" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/generateWeekButton"
-                            style="@style/Widget.Material3.Button"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="56dp"
-                            android:text="@string/plan_generate_week"
-                            android:maxLines="2"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            app:icon="@drawable/ic_calendar"
-                            app:iconGravity="textStart"
-                            app:iconPadding="8dp" />
-                    </LinearLayout>
-                </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -211,8 +124,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_m"
-                android:text="@string/plan_generate_today"
-                app:icon="@drawable/ic_plan" />
+                android:text="@string/plan_add_title"
+                app:icon="@drawable/ic_add" />
         </LinearLayout>
     </LinearLayout>
 

@@ -10,7 +10,6 @@ object ProfileUiFormatter {
 
     fun sourceLabel(context: Context, source: Int): String {
         return when (source) {
-            StudyBuddy.SOURCE_NFC -> context.getString(R.string.buddy_source_nfc)
             StudyBuddy.SOURCE_MANUAL -> context.getString(R.string.buddy_source_manual)
             else -> context.getString(R.string.buddy_source_qr)
         }

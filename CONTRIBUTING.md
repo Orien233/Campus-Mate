@@ -9,7 +9,7 @@
 - 不把功能实现、格式化、依赖升级、重命名和文档重写混在一个 PR。
 - 不提交敏感文件、API Key、学校账号密码、教务系统 Cookie、`local.properties`、`build/`、`.gradle/`、`.kotlin/`、生成 APK 或临时日志。
 - Android 课程项目优先稳定可演示；没有明确需求时，不新增登录、云同步、后端服务或大型依赖。
-- 涉及 NFC、传感器、通知、前台服务、勿扰模式、相机扫码和 WebView 导入的改动，需要写清真机或现场验证情况。
+- 涉及传感器、通知、前台服务、勿扰模式、相机扫码和 WebView 导入的改动，需要写清真机或现场验证情况。
 
 ## 2. 分支命名
 
@@ -74,7 +74,7 @@ PR 描述至少包含：
 ## 已知限制 / 未验证项
 ```
 
-涉及数据库表或字段时，要说明 `CampusMateContract`、`CampusMateDbHelper`、`CampusMateProvider`、model、repository 和迁移逻辑是否同步。涉及权限、Activity、Service、Receiver、Provider、NFC、通知或文件访问能力时，要说明 `AndroidManifest.xml` 是否同步。
+涉及数据库表或字段时，要说明 `CampusMateContract`、`CampusMateDbHelper`、`CampusMateProvider`、model、repository 和迁移逻辑是否同步。涉及权限、Activity、Service、Receiver、Provider、通知或文件访问能力时，要说明 `AndroidManifest.xml` 是否同步。
 
 ## 5. 高冲突文件清单
 
@@ -116,9 +116,9 @@ PR 描述至少包含：
 
 主要文件范围：`TaskDetailActivity`、`TaskAttachmentRepository`、`TaskAttachmentAdapter`、`TaskAttachmentUiUtils`、`task_attachments` 表和相关布局。当前附件使用 SAF Uri，不做拍照、裁剪或头像资料。
 
-### 学习名片 / 二维码 / NFC
+### 学习名片 / 二维码
 
-主要文件范围：`ui/profile`、`ui/buddy`、`ui/nfc`、`domain/nfc`、`UserProfileRepository`、`StudyBuddyRepository`。二维码和 NFC 复用公开 JSON，保存学习伙伴前必须预览确认。
+主要文件范围：`ui/profile`、`ui/buddy`、`UserProfileRepository`、`StudyBuddyRepository`。二维码使用公开 JSON，保存学习伙伴前必须预览确认。NFC 名片交换入口已移除，不要重新引入。
 
 ### 天气
 
@@ -144,7 +144,6 @@ PR 描述至少包含：
 
 真机相关检查按改动范围选择：
 
-- NFC 写入/接收。
 - 翻转手机专注。
 - 通知权限授予/拒绝。
 - 前台服务通知与停止行为。

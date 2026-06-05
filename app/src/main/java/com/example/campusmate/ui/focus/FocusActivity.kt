@@ -92,6 +92,12 @@ class FocusActivity : AppCompatActivity(), FaceDownDetector.Listener {
         )
     }
 
+    override fun onResume() {
+        super.onResume()
+        applyImmersivePreference()
+    }
+
+
     override fun onStop() {
         unregisterReceiver(stateReceiver)
         detector?.stop()
@@ -295,7 +301,10 @@ class FocusActivity : AppCompatActivity(), FaceDownDetector.Listener {
     }
 
     private fun applyImmersivePreference() {
-        if (!SettingsRepository(this).isImmersiveModeEnabled()) return
+        if (!SettingsRepository(this).isImmersiveModeEnabled()) {
+            WindowInsetsControllerCompat(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
+            return
+        }
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE

@@ -12,7 +12,6 @@ import com.example.campusmate.data.repository.LlmSettingsRepository
 import com.example.campusmate.domain.import_.LlmScheduleParseService
 import com.example.campusmate.domain.import_.ScheduleParseException
 import com.example.campusmate.domain.import_.ScheduleParseResult
-import com.example.campusmate.ui.main.MainActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
@@ -22,7 +21,7 @@ import com.google.android.material.textfield.TextInputEditText
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-/** Entry screen for importing a schedule from sample or pasted HTML. */
+/** Entry screen for importing a schedule from pasted HTML or a user-controlled WebView. */
 class ImportScheduleActivity : AppCompatActivity() {
     private lateinit var rootView: View
     private lateinit var pastedHtmlInput: TextInputEditText
@@ -78,9 +77,6 @@ class ImportScheduleActivity : AppCompatActivity() {
     }
 
     private fun setupActions() {
-        findViewById<MaterialButton>(R.id.importSampleButton).setOnClickListener {
-            parseAndOpenPreview(readSampleHtml(), ImportLog.SOURCE_SAMPLE_HTML)
-        }
         findViewById<MaterialButton>(R.id.importPastedButton).setOnClickListener {
             parseAndOpenPreview(pastedHtmlInput.text?.toString().orEmpty(), ImportLog.SOURCE_PASTED_HTML)
         }
@@ -88,12 +84,6 @@ class ImportScheduleActivity : AppCompatActivity() {
             startActivity(
                 Intent(this, WebViewImportActivity::class.java)
                     .putExtra(WebViewImportActivity.EXTRA_PREFER_LLM, isLlmPreferred())
-            )
-        }
-        findViewById<MaterialButton>(R.id.importSettingsButton).setOnClickListener {
-            startActivity(
-                Intent(this, MainActivity::class.java)
-                    .putExtra(MainActivity.EXTRA_START_DESTINATION, R.id.nav_settings)
             )
         }
 
@@ -220,10 +210,6 @@ class ImportScheduleActivity : AppCompatActivity() {
 
     private fun isLlmPreferred(): Boolean {
         return modeToggleGroup.checkedButtonId != R.id.importLocalModeButton
-    }
-
-    private fun readSampleHtml(): String {
-        return assets.open("sample_schedule.html").bufferedReader(Charsets.UTF_8).use { it.readText() }
     }
 
     companion object {

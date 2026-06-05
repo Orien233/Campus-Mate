@@ -126,8 +126,8 @@ object SystemBarsInsets {
     }
 
     private fun findTopInsetTarget(root: View): View? {
-        return findFirst(root, MaterialToolbar::class.java)
-            ?: findFirst(root, AppBarLayout::class.java)
+        return findFirst(root, AppBarLayout::class.java)
+            ?: findFirst(root, MaterialToolbar::class.java)
     }
 
     private fun <T : View> findFirst(view: View, clazz: Class<T>): T? {

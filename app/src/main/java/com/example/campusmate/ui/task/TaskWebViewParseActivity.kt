@@ -23,7 +23,6 @@ import com.example.campusmate.data.repository.LlmSettingsRepository
 import com.example.campusmate.domain.task.LlmTaskParseService
 import com.example.campusmate.domain.task.TaskDraft
 import com.example.campusmate.domain.task.TaskParseException
-import com.example.campusmate.ui.main.MainActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -117,12 +116,6 @@ class TaskWebViewParseActivity : AppCompatActivity() {
         }
         findViewById<MaterialButton>(R.id.taskWebViewParseExtractButton).setOnClickListener {
             extractAndParseCurrentPage()
-        }
-        findViewById<MaterialButton>(R.id.taskWebViewParseSettingsButton).setOnClickListener {
-            startActivity(
-                Intent(this, MainActivity::class.java)
-                    .putExtra(MainActivity.EXTRA_START_DESTINATION, R.id.nav_settings)
-            )
         }
 
         urlInput.setOnEditorActionListener { _, actionId, event ->

@@ -4,7 +4,7 @@
 
 CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单机校园学习管理 App。项目围绕大学生的日常学习场景，提供课程管理、任务管理、任务提醒、课表导入、专注计时、学习记录、统计展示、学习计划和轻量资料交换能力。
 
-当前版本不做登录、云同步和后端服务；不提供模型服务，不内置 API Key；不上传用户隐私数据。当前阶段也不做头像、照片资料、聊天、动态、关注、点赞、评论、社交广场等强社交功能。学习名片只保留文本资料、二维码/NFC 公开 JSON 和本地学习伙伴列表。
+当前版本不做登录、云同步和后端服务；不提供模型服务，不内置 API Key；不上传用户隐私数据。当前阶段也不做头像、照片资料、聊天、动态、关注、点赞、评论、社交广场等强社交功能。学习名片只保留文本资料、二维码公开 JSON 和本地学习伙伴列表。
 
 核心展示闭环：
 
@@ -23,7 +23,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 
 - 课程阶段版本：`V1.1-stage-15-p0-3`
 - Gradle `versionName`：`1.0`
-- 当前阶段：学习计划 + AI 辅助解析 + 定位天气协同，已合并 WebView 课表导入、任务图片附件、NFC、天气、LLM API 设置和 LLM 学习计划预览确认能力。
+- 当前阶段：学习计划 + AI 辅助解析 + 定位天气协同，已合并 WebView 课表导入、任务图片附件、二维码学习名片、天气、LLM API 设置和 LLM 学习计划预览确认能力。
 - 主闭环状态：课程、任务、提醒、导入、专注、记录、统计、设置页已跑通。
 - 当前扩展功能状态：阶段 9-15 基础能力已进入代码；项目展示页、JSON 导出/备份和完整演示数据仍未完成。
 - 数据库版本：`CampusMateDbHelper.DATABASE_VERSION = 5`
@@ -43,27 +43,26 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 
 | 模块 | 状态 | 真实实现说明 |
 | --- | --- | --- |
-| 首页 Dashboard | 已完成 | 展示今日课程、待办任务、今日/本周学习时长、计划完成趋势、下一节课（含教室）、天气卡片、城市来源和快捷入口。 |
+| 首页 Dashboard | 已完成 | 展示今日课程、待办任务、今日/本周学习时长、计划完成趋势、下一节课（含教室）、天气卡片、城市来源和开始专注入口。 |
 | 课程管理 | 已完成 | 支持新增、编辑、详情、软删除、按星期筛选、周课表网格展示和时间冲突提示。 |
 | 任务管理 | 已完成 | 支持新增、编辑、详情、软删除、完成状态切换、类型、优先级、截止时间、提醒时间、AI 网页解析预填和多任务导入预览确认。 |
 | 任务提醒 | 已完成 | `AlarmManager` + `ReminderReceiver` + 通知渠道；开机后通过 `BootReminderReceiver` 恢复未来提醒。 |
-| 课表导入 | 已完成 | 支持内置 `sample_schedule.html`、粘贴 HTML、LLM 优先/本地回退解析、导入预览、冲突标记和确认写入。 |
+| 课表导入 | 已完成 | 支持粘贴 HTML、WebView 提取、LLM 优先/本地回退解析、导入预览、冲突标记和确认写入；界面不再提供示例 HTML 导入按钮。 |
 | WebView 课表导入基础页 | 基础完成 / 待验证 | `WebViewImportActivity` 默认进入 BJTU MIS 门户，可手动登录导航并提取当前 HTML；进入、打开和退出时会尽力清理 Cookie/登录态；真实教务系统页面结构仍需现场验证。 |
 | 专注计时 | 已完成 | `FocusActivity` 选择任务和时长，`FocusService` 前台计时，支持暂停、继续、完成、取消。 |
 | 翻转手机专注 | 已完成 / 待真机验证 | `FaceDownDetector` 基于加速度传感器判断屏幕朝下；传感器不可用时保留手动开始。 |
 | 前台服务 | 已完成 | `FocusService` 使用前台通知展示计时状态，并负责 FocusSession 和 StudyRecord 写入。 |
 | 学习记录 | 已完成 | 专注完成后写入 `focus_sessions` 和 `study_records`。 |
 | 热力图统计 | 已完成 | `StatisticsFragment` 展示今日/本周学习、连续学习、任务完成情况和最近学习热力图。 |
-| 设置页 | 已完成 | 包含学习目标、提醒开关、沉浸模式、天气城市/当前位置、权限入口、学习名片入口、演示数据、清空数据和 LLM 设置；AI 课表解析、任务解析、计划生成有独立能力开关。 |
+| 设置页 | 已完成 | 底部导航先进入 AI 设置、功能与权限设置、学习伙伴三个分区；功能页包含学习目标、计划生成时间范围、提醒、沉浸、天气、权限、演示数据和清空数据；AI 页保留独立能力开关。 |
 | 学习计划 | 已完成 | `PlanListFragment` 支持今日/本周规则生成、AI 今日/本周预览确认、手动添加，完成状态切换、删除和详情页；生成上下文会参考课程、任务、天气、学习记录、已有计划和每日目标；普通任务避开课程时间，课程学习类计划可安排在对应课程时间。 |
-| 任务图片附件 | 基础完成 | 任务详情页通过 SAF 选择图片，保存 Uri 到 `task_attachments`，可打开和删除；未接入拍照、裁剪或内置大图预览。 |
+| 任务图片附件 | 基础完成 | 新增/编辑任务页可先选择图片附件，保存任务后写入 `task_attachments`；详情页可继续添加、打开和删除；未接入拍照、裁剪或内置大图预览。 |
 | 学习名片 | 已完成 | 本地编辑文本资料，保存到 `user_profile`，不需要登录。 |
 | 二维码 | 已完成 | `StudyCardActivity` 生成公开 JSON 二维码；`ScanQrActivity` 扫码后先预览，再手动确认添加。 |
-| NFC | 基础完成 / 待真机验证 | 复用学习名片公开 JSON，支持 NDEF MIME payload 写入/接收、预览确认和设备不支持/未开启降级。 |
-| 学习伙伴 | 已完成 | 扫码或 NFC 确认后写入 `study_buddies`，支持列表、详情和删除。 |
+| 学习伙伴 | 已完成 | 扫码确认后写入 `study_buddies`，支持列表、详情和删除；NFC 名片交换入口已移除。 |
 | 天气 | 已完成 / 待真机验证 | 手动城市配置、粗略定位辅助、`wttr.in` 远程请求、30 分钟缓存和无网缓存降级；不再提供 Mock 数据，不保存经纬度。 |
 | 通知弱化 / 勿扰增强 | 实验功能 / 待真机验证 | `FocusService` 可按设置调用 `DndManager` 并启用 `NotificationFilterService` 标记；依赖用户系统授权。 |
-| 演示数据 | 基础完成 | `DemoDataRepository` 生成课程、任务、学习记录和导入日志样例；尚未完整覆盖学习伙伴、附件、计划。 |
+| 演示数据 | 基础完成 | `DemoDataRepository` 生成课程、任务、学习计划、学习记录、学习名片、二维码伙伴和导入日志样例；附件仍需用户通过 SAF 选择真实图片。 |
 | LLM 接口基础设施 | 已完成 | 已有设置页、加密 API Key 存储、OpenAI-Compatible/Gemini Client、连接测试、课表解析、任务网页解析预填/批量预览和学习计划生成；业务结果必须预览或回填确认。 |
 | 项目展示页 / 技术点展示页 | 待实现 | 当前代码中未发现独立项目展示页。 |
 | JSON 导出 / 备份 | 待实现 | 当前未实现本地 JSON 导出/导入流程。 |
@@ -73,9 +72,8 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 - 项目展示页 / 技术点展示页：未实现。
 - JSON 导出/备份：未实现；当前不会导出本地数据库或设置。
 - Android 系统备份：Manifest 中 `android:allowBackup="false"`；`backup_rules.xml` 和 `data_extraction_rules.xml` 也排除数据库、SharedPreferences、文件和外部文件。
-- 演示数据：当前生成课程、任务、学习记录和导入日志，不能完整覆盖学习伙伴、附件、计划和所有扩展模块。
+- 演示数据：当前生成课程、任务、学习计划、学习记录、学习名片、二维码伙伴和导入日志；附件仍需用户通过 SAF 选择真实图片。
 - WebView 教务系统导入：默认入口为 `https://mis.bjtu.edu.cn/`，只提供用户手动登录并提取当前页面 HTML 的基础流程；不保存账号密码、Cookie，不绕过验证码；进入、重新打开和退出导入页时会尽力清理 Cookie、WebStorage、缓存、历史、表单和 HTTP Auth 数据；不同学校页面结构需要现场验证。
-- NFC：需要支持 NFC 的真机和可写 NFC 标签或兼容 NDEF 发送源；当前 compile SDK 下不再依赖旧 Android Beam 手机对手机发送 API。
 - NotificationListenerService：服务已声明，但通知访问权限必须由用户在系统设置中授权；当前设置页未看到专门跳转通知访问授权页的按钮，需真机验证。
 - 勿扰模式：需要用户授予通知策略访问权限；未授权时不应影响普通专注计时。
 - 天气：远程请求依赖网络；失败时只回退缓存。定位使用粗略位置反查城市，只保存城市名，不保存经纬度；权限授予/拒绝需真机验证。
@@ -130,7 +128,6 @@ app/src/main/java/com/example/campusmate
 │   ├── focus
 │   ├── import_
 │   ├── llm
-│   ├── nfc
 │   ├── notification
 │   ├── plan
 │   ├── reminder
@@ -144,7 +141,6 @@ app/src/main/java/com/example/campusmate
 │   ├── focus
 │   ├── import_
 │   ├── main
-│   ├── nfc
 │   ├── plan
 │   ├── profile
 │   ├── settings
@@ -174,7 +170,7 @@ app/src/androidTest/java/com/example/campusmate
 
 - `app` 层：`Application`、`AppConfig`、`FeatureFlags`，保存应用级常量和功能开关占位。
 - `ui` 层：Activity、Fragment、Adapter，负责界面展示、用户输入、页面跳转、系统入口调用和权限请求入口；不直接操作 `SQLiteDatabase`。
-- `domain` 层：业务规则、HTML 解析、传感器、提醒调度、计划生成、NFC、天气、通知弱化、LLM 请求构造等逻辑。
+- `domain` 层：业务规则、HTML 解析、传感器、提醒调度、计划生成、天气、通知弱化、LLM 请求构造等逻辑。
 - `data/model` 层：课程、任务、专注、学习记录、计划、附件、名片、伙伴、LLM 配置等数据对象。
 - `data/repository` 层：封装 `ContentResolver`、SharedPreferences 或加密存储访问；UI 不直接访问 SQLite。
 - `data/provider` 层：`CampusMateProvider`，统一 ContentProvider 边界，Manifest 中 `android:exported="false"`。
@@ -305,21 +301,21 @@ TaskDetailActivity
   -> ACTION_VIEW 打开
 ```
 
-- 当前附件入口在 `TaskDetailActivity`，`TaskEditActivity` 只负责任务基础字段编辑。
+- `TaskEditActivity` 可先选择图片附件，保存任务成功后写入附件记录；`TaskDetailActivity` 负责完整附件展示、继续添加、打开和删除。
 - SAF 选择限制为 `image/*`，应用保存 Uri、MIME type、显示名和创建时间。
 - 代码会尽力调用 `takePersistableUriPermission`，但不复制图片原文件。
 - 打开附件使用外部 `ACTION_VIEW`，没有内置图片大图预览。
 - 当前不做头像、照片资料、拍照、裁剪或复杂文件管理。
 
-### G. 学习名片 / 二维码 / NFC 闭环
+### G. 学习名片 / 二维码 / 学习伙伴闭环
 
 ```text
 EditProfileActivity
   -> UserProfileRepository
   -> user_profile 表
   -> StudyCardActivity 生成公开 JSON
-  -> QR / NFC
-  -> ScanQrActivity / NfcReceiveActivity
+  -> QR
+  -> ScanQrActivity
   -> 预览确认
   -> StudyBuddyRepository
   -> study_buddies 表
@@ -329,9 +325,7 @@ EditProfileActivity
 - `UserProfileRepository.buildPublicProfileJson()`：生成公开 JSON；邮箱/手机号只有用户打开公开开关才进入 JSON。
 - `StudyCardActivity`：用 ZXing 生成二维码并显示公开 JSON。
 - `ScanQrActivity`：扫码后解析为 `StudyBuddy`，先展示预览，用户确认后保存。
-- `NfcShareActivity` / `NfcPayloadWriter`：用同一套公开 JSON 生成 NDEF MIME payload，可写入标签。
-- `NfcReceiveActivity` / `NfcPayloadParser`：接收 NFC payload 后先预览，再确认保存。
-- `StudyBuddyRepository`：写入 `study_buddies`；来源 `0=QR`、`1=NFC`、`2=手动预留`。
+- `StudyBuddyRepository`：写入 `study_buddies`；来源 `0=QR`、`1=历史保留值`、`2=手动预留`。
 - 当前不做头像、聊天、关注、动态或社交广场。
 
 ### H. 天气闭环
@@ -390,7 +384,7 @@ SettingsFragment
 - 清空范围：课程、任务、学习计划、任务附件、专注记录、学习统计、导入日志、学习名片、学习伙伴和天气缓存。
 - 清空和重新生成演示数据都会先取消已调度任务提醒。
 - 清空本地数据不可撤销。
-- 当前演示数据主要覆盖课程、任务、学习记录、热力图和导入日志，尚未完整覆盖所有扩展模块。
+- 当前演示数据覆盖课程、任务、学习计划、学习记录、热力图、学习名片、二维码伙伴和导入日志；图片附件仍需通过 SAF 选择真实文件。
 
 ### K. LLM 接口闭环
 
@@ -425,7 +419,7 @@ SettingsFragment
 | `study_records` | 学习记录和统计来源 | `task_id`、`course_id`、`focus_session_id`、`title`、`duration_sec`、`record_date`、`source`、`note` | `StudyRecordRepository` | 供 `StatisticsFragment` 和热力图聚合。 |
 | `import_logs` | 课表导入记录 | `source_type`、`imported_count`、`skipped_count`、`conflict_count`、`created_at`、`message` | `ImportLogRepository` | 记录导入行为，不直接外键关联课程。 |
 | `user_profile` | 本机学习名片 | `nickname`、`school`、`major`、`grade`、`bio`、`avatar_uri`、`github`、`email`、`phone`、`show_email`、`show_phone` | `UserProfileRepository` | 用于生成公开 JSON，不上传云端。 |
-| `study_buddies` | 二维码/NFC 确认添加的学习伙伴 | `nickname`、`school`、`major`、`grade`、`bio`、`github`、`email`、`phone`、`source`、`added_at`、`note` | `StudyBuddyRepository` | `source=0` 二维码，`source=1` NFC，`source=2` 手动预留。 |
+| `study_buddies` | 二维码确认添加的学习伙伴 | `nickname`、`school`、`major`、`grade`、`bio`、`github`、`email`、`phone`、`source`、`added_at`、`note` | `StudyBuddyRepository` | `source=0` 二维码，`source=1` 历史保留值，`source=2` 手动预留。 |
 | `weather_cache` | 天气缓存 | `city`、`weather_text`、`temperature`、`humidity`、`wind`、`source`、`raw_json`、`updated_at` | `WeatherRepository` | Dashboard 天气卡片读取；只缓存城市天气，不保存经纬度。 |
 | `study_plans` | 学习计划 | `title`、`plan_date`、`planned_minutes`、`actual_minutes`、`start_time`、`end_time`、`type`、`status`、`source_type` | `StudyPlanRepository` | 由本地规则生成器、AI 预览确认或手动添加写入，供计划列表和详情展示。 |
 | `task_attachments` | 任务图片附件 Uri | `task_id`、`uri`、`mime_type`、`title`、`created_at` | `TaskAttachmentRepository` | 按 `task_id` 关联任务详情页。 |
@@ -444,11 +438,10 @@ Manifest 当前声明：
 | `RECEIVE_BOOT_COMPLETED` | 开机恢复未来提醒 | `BootReminderReceiver` 处理。 |
 | `SCHEDULE_EXACT_ALARM` | 尽量准时触发任务提醒 | 不可用时 `AlarmReminderScheduler` 降级到 `setWindow`。 |
 | `CAMERA` | 二维码扫描 | 运行时授权；拒绝后扫码不可用，二维码生成仍可用。 |
-| `NFC` | NFC 名片写入和接收 | 无 NFC 或未开启时提示降级到二维码。 |
+| `ACCESS_NOTIFICATION_POLICY` | 专注时可按用户授权切换勿扰模式 | 需要用户在系统通知策略访问页授权；未授权不影响普通专注计时。 |
 | `INTERNET` | 远程天气、WebView 导入、LLM 连接测试和 AI 请求 | 无网络时天气可回退缓存；LLM 测试失败不影响本地功能。 |
 | `ACCESS_COARSE_LOCATION` | 根据粗略位置辅助判断天气城市 | 运行时授权；拒绝后继续使用手动城市和天气缓存。 |
 | `android.hardware.camera required=false` | 相机硬件声明 | 没有相机时扫码不可用。 |
-| `android.hardware.nfc required=false` | NFC 硬件声明 | 没有 NFC 时显示降级提示。 |
 
 Manifest 当前未声明相册读取权限。图片附件通过 SAF 选择图片，不需要 `READ_MEDIA_IMAGES` 或 `READ_EXTERNAL_STORAGE`。定位仅用于反查天气城市，代码不保存经纬度。
 
@@ -461,7 +454,7 @@ Android Studio：
 1. 打开仓库根目录。
 2. 等待 Gradle Sync 完成。
 3. 选择 `app` 配置运行到 Android 13+ 模拟器或真机。
-4. NFC、传感器、通知权限、相机扫码、勿扰和通知访问必须用真机做最终验证。
+4. 传感器、通知权限、相机扫码、勿扰和通知访问必须用真机做最终验证。
 
 Windows PowerShell：
 
@@ -488,7 +481,6 @@ app/build/outputs/apk/debug/app-debug.apk
 - `FocusService` 前台通知、完成写入和取消行为。
 - 勿扰授权和通知访问授权后的专注弱化效果。
 - 相机扫码和拒绝权限降级。
-- NFC 不支持、未开启、写入标签、接收 payload 和确认保存。
 - SAF 图片附件选择、持久 Uri、外部打开和删除。
 - WebView 打开真实教务系统页面并提取当前 HTML。
 - WebView 导入离开后再次进入必须重新登录，验证未持久化 Cookie/会话；BJTU 场景需从 MIS 门户登录后进入课表页再提取。

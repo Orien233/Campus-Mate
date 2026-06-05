@@ -40,6 +40,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var rootView: View
     private lateinit var dailyGoalInputLayout: TextInputLayout
     private lateinit var dailyGoalInput: TextInputEditText
+    private lateinit var planEarliestTimeInputLayout: TextInputLayout
+    private lateinit var planEarliestTimeInput: TextInputEditText
+    private lateinit var planLatestTimeInputLayout: TextInputLayout
+    private lateinit var planLatestTimeInput: TextInputEditText
     private lateinit var weatherCityInputLayout: TextInputLayout
     private lateinit var weatherCityInput: TextInputEditText
     private lateinit var reminderSwitch: SwitchMaterial
@@ -87,6 +91,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         bindCurrentSettings()
         setupActions(view)
         refreshPermissionStatus()
+        applySectionVisibility(view)
     }
 
     override fun onResume() {
@@ -108,6 +113,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         rootView = view.findViewById(R.id.settingsRoot)
         dailyGoalInputLayout = view.findViewById(R.id.dailyGoalInputLayout)
         dailyGoalInput = view.findViewById(R.id.dailyGoalInput)
+        planEarliestTimeInputLayout = view.findViewById(R.id.planEarliestTimeInputLayout)
+        planEarliestTimeInput = view.findViewById(R.id.planEarliestTimeInput)
+        planLatestTimeInputLayout = view.findViewById(R.id.planLatestTimeInputLayout)
+        planLatestTimeInput = view.findViewById(R.id.planLatestTimeInput)
         weatherCityInputLayout = view.findViewById(R.id.weatherCityInputLayout)
         weatherCityInput = view.findViewById(R.id.weatherCityInput)
         reminderSwitch = view.findViewById(R.id.reminderSwitch)
@@ -122,6 +131,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     private fun bindCurrentSettings() {
         dailyGoalInput.setText(settingsRepository.getDailyGoalMinutes().toString())
+        planEarliestTimeInput.setText(settingsRepository.getPlanEarliestTime())
+        planLatestTimeInput.setText(settingsRepository.getPlanLatestTime())
         weatherCityInput.setText(settingsRepository.getWeatherCity())
         reminderSwitch.isChecked = settingsRepository.isReminderEnabled()
         immersiveSwitch.isChecked = settingsRepository.isImmersiveModeEnabled()
@@ -131,8 +142,20 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun setupActions(view: View) {
+        view.findViewById<MaterialButton>(R.id.openAiSettingsButton).setOnClickListener {
+            startActivity(SettingsSectionActivity.intentFor(requireContext(), SECTION_AI))
+        }
+        view.findViewById<MaterialButton>(R.id.openFeatureSettingsButton).setOnClickListener {
+            startActivity(SettingsSectionActivity.intentFor(requireContext(), SECTION_FEATURES))
+        }
+        view.findViewById<MaterialButton>(R.id.openBuddySettingsButton).setOnClickListener {
+            startActivity(SettingsSectionActivity.intentFor(requireContext(), SECTION_BUDDY))
+        }
         view.findViewById<MaterialButton>(R.id.saveDailyGoalButton).setOnClickListener {
             saveDailyGoal()
+        }
+        view.findViewById<MaterialButton>(R.id.savePlanTimeWindowButton).setOnClickListener {
+            savePlanTimeWindow()
         }
         view.findViewById<MaterialButton>(R.id.saveWeatherCityButton).setOnClickListener {
             saveWeatherCity()
@@ -219,6 +242,32 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         dailyGoalInputLayout.error = null
         settingsRepository.setDailyGoalMinutes(value)
         showMessage(getString(R.string.settings_daily_goal_saved, value))
+    }
+
+    private fun savePlanTimeWindow() {
+        val earliest = planEarliestTimeInput.text?.toString()?.trim().orEmpty()
+        val latest = planLatestTimeInput.text?.toString()?.trim().orEmpty()
+        val earliestMinutes = parseTimeMinutes(earliest)
+        val latestMinutes = parseTimeMinutes(latest)
+        planEarliestTimeInputLayout.error = null
+        planLatestTimeInputLayout.error = null
+        if (earliestMinutes == null) {
+            planEarliestTimeInputLayout.error = getString(R.string.settings_plan_time_invalid)
+            return
+        }
+        if (latestMinutes == null) {
+            planLatestTimeInputLayout.error = getString(R.string.settings_plan_time_invalid)
+            return
+        }
+        if (earliestMinutes >= latestMinutes) {
+            planLatestTimeInputLayout.error = getString(R.string.settings_plan_time_range_invalid)
+            return
+        }
+        settingsRepository.setPlanEarliestTime(earliest)
+        settingsRepository.setPlanLatestTime(latest)
+        planEarliestTimeInput.setText(settingsRepository.getPlanEarliestTime())
+        planLatestTimeInput.setText(settingsRepository.getPlanLatestTime())
+        showMessage(getString(R.string.settings_plan_time_window_saved))
     }
 
     private fun saveWeatherCity() {
@@ -400,8 +449,53 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         Snackbar.make(rootView, message, Snackbar.LENGTH_LONG).show()
     }
 
+    private fun applySectionVisibility(view: View) {
+        val section = arguments?.getString(ARG_SECTION)
+        val homeCard = view.findViewById<View>(R.id.settingsHomeCard)
+        val featureCards = listOf(
+            R.id.settingsGoalCard,
+            R.id.settingsPreferencesCard,
+            R.id.settingsWeatherCard,
+            R.id.settingsPermissionsCard,
+            R.id.settingsDemoCard
+        ).map { view.findViewById<View>(it) }
+        val aiCards = listOf(R.id.settingsLlmCard).map { view.findViewById<View>(it) }
+        val buddyCards = listOf(R.id.settingsProfileCard).map { view.findViewById<View>(it) }
+        val allSectionCards = featureCards + aiCards + buddyCards
+
+        if (section == null) {
+            homeCard.visibility = View.VISIBLE
+            allSectionCards.forEach { it.visibility = View.GONE }
+            return
+        }
+
+        homeCard.visibility = View.GONE
+        featureCards.forEach { it.visibility = if (section == SECTION_FEATURES) View.VISIBLE else View.GONE }
+        aiCards.forEach { it.visibility = if (section == SECTION_AI) View.VISIBLE else View.GONE }
+        buddyCards.forEach { it.visibility = if (section == SECTION_BUDDY) View.VISIBLE else View.GONE }
+    }
+
+    private fun parseTimeMinutes(value: String): Int? {
+        val match = Regex("""^(\d{1,2}):(\d{2})$""").find(value) ?: return null
+        val hour = match.groupValues[1].toIntOrNull()?.takeIf { it in 0..23 } ?: return null
+        val minute = match.groupValues[2].toIntOrNull()?.takeIf { it in 0..59 } ?: return null
+        return hour * 60 + minute
+    }
+
     companion object {
+        const val SECTION_AI = "ai"
+        const val SECTION_FEATURES = "features"
+        const val SECTION_BUDDY = "buddy"
+        private const val ARG_SECTION = "arg_section"
         private const val MIN_DAILY_GOAL_MINUTES = 1
         private const val MAX_DAILY_GOAL_MINUTES = 1440
+
+        fun newSectionInstance(section: String): SettingsFragment {
+            return SettingsFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_SECTION, section)
+                }
+            }
+        }
     }
 }

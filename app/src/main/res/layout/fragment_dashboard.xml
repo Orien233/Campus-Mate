@@ -361,96 +361,25 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:padding="@dimen/space_m">
 
-                <LinearLayout
-                    android:id="@+id/quickActionsHeader"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/dashboard_quick_actions_title"
-                        android:textColor="@color/campus_text_primary"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/quickActionsExpandIndicator"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/campus_primary"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <GridLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:columnCount="3"
-                    android:useDefaultMargins="true">
+                    android:layout_weight="1"
+                    android:text="@string/dashboard_quick_start_focus"
+                    android:textColor="@color/campus_text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/startFocusButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:text="@string/dashboard_quick_start_focus"
-                        android:textSize="13sp"
-                        app:icon="@drawable/ic_focus" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/addTaskButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:text="@string/dashboard_quick_add_task"
-                        android:textSize="13sp"
-                        app:icon="@drawable/ic_task" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/importScheduleButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:text="@string/dashboard_quick_import_schedule"
-                        android:textSize="13sp"
-                        app:icon="@drawable/ic_import" />
-                </GridLayout>
-
-                <LinearLayout
-                    android:id="@+id/quickActionsExpandedContent"
-                    android:layout_width="match_parent"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/startFocusButton"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_s"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/generatePlanButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="@dimen/space_s"
-                        android:layout_weight="1"
-                        android:text="@string/dashboard_quick_generate_plan"
-                        app:icon="@drawable/ic_plan" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/viewStatisticsButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/space_s"
-                        android:layout_weight="1"
-                        android:text="@string/dashboard_quick_view_statistics"
-                        app:icon="@drawable/ic_statistics" />
-                </LinearLayout>
+                    android:text="@string/dashboard_quick_start_focus"
+                    app:icon="@drawable/ic_focus" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>

@@ -76,51 +76,6 @@
                             android:text="@string/import_local_mode" />
                     </com.google.android.material.button.MaterialButtonToggleGroup>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/importSettingsButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_m"
-                        android:text="@string/import_open_llm_settings"
-                        app:icon="@drawable/ic_settings" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_m">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/space_m">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/import_sample_title"
-                        android:textColor="@color/campus_text_primary"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_xs"
-                        android:text="@string/import_sample_body"
-                        android:textColor="@color/campus_text_secondary"
-                        android:textSize="14sp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/importSampleButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_m"
-                        android:text="@string/import_sample_action"
-                        app:icon="@drawable/ic_import" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
