@@ -227,7 +227,6 @@ ImportScheduleActivity / WebViewImportActivity
   -> import_logs 表
 ```
 
-- 内置 sample：`ImportScheduleActivity` 读取 `app/src/main/assets/sample_schedule.html`。
 - 粘贴 HTML：用户粘贴 HTML 后交给 `JsoupScheduleParser`。
 - WebView 当前页：`WebViewImportActivity` 让用户手动打开网页，`WebViewScheduleExtractor` 只用 `evaluateJavascript` 提取当前页面 HTML。
 - BJTU 场景：WebView 默认预填 `https://mis.bjtu.edu.cn/`，避免直接打开教务子页面时因 SSO/session 缺失导致登录失败；用户登录后自行进入课表页再提取。

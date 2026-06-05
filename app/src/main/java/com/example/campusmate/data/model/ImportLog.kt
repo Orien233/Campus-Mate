@@ -11,7 +11,7 @@ data class ImportLog(
     val message: String? = null
 ) {
     companion object {
-        const val SOURCE_SAMPLE_HTML = 0
+        const val SOURCE_LEGACY_LOCAL_HTML = 0
         const val SOURCE_PASTED_HTML = 1
         const val SOURCE_WEBVIEW = 2
     }

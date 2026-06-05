@@ -143,7 +143,7 @@ object CampusMateContract {
         const val COLUMN_CREATED_AT = "created_at"
         const val COLUMN_MESSAGE = "message"
 
-        const val SOURCE_SAMPLE_HTML = 0
+        const val SOURCE_LEGACY_LOCAL_HTML = 0
         const val SOURCE_PASTED_HTML = 1
         const val SOURCE_WEBVIEW = 2
 

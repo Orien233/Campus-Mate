@@ -5,7 +5,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-/** Jsoup-based parser for sample HTML and common table-shaped schedules. */
+/** Jsoup-based parser for fixture HTML and common table-shaped schedules. */
 class JsoupScheduleParser : ScheduleParser {
     override fun parse(html: String): List<CourseDraft> {
         if (html.isBlank()) {
@@ -15,7 +15,7 @@ class JsoupScheduleParser : ScheduleParser {
         val document = Jsoup.parse(html)
 
         val drafts = buildList {
-            // CampusMate bundled sample HTML uses explicit data-* attributes for stable parsing.
+            // CampusMate fixture HTML can use explicit data-* attributes for stable parsing.
             document.selectFirst("table[data-campusmate-schedule]")?.let { addAll(parseCampusMateSampleTable(it)) }
             findBjtuScheduleTable(document)?.let { addAll(parseBjtuScheduleTable(it)) }
             if (isEmpty()) {
