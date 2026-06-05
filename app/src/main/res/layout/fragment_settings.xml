@@ -297,7 +297,7 @@
                         android:ellipsize="end"
                         android:inputType="none"
                         android:maxLines="1"
-                        android:popupWidth="match_parent"
+                        android:dropDownWidth="match_parent"
                         android:singleLine="true" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -356,7 +356,7 @@
                         android:ellipsize="end"
                         android:inputType="none"
                         android:maxLines="1"
-                        android:popupWidth="match_parent"
+                        android:dropDownWidth="match_parent"
                         android:singleLine="true" />
                 </com.google.android.material.textfield.TextInputLayout>
 
