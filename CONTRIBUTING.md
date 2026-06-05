@@ -102,7 +102,7 @@ PR 描述至少包含：
 
 ### 课表导入
 
-主要文件范围：`domain/import_`、`ui/import_`、`app/src/main/assets/sample_schedule.html`、`CourseRepository`、`ImportLogRepository`。WebView 导入不能保存账号密码、Cookie，也不能绕过验证码。
+主要文件范围：`domain/import_`、`ui/import_`、`app/src/main/assets/sample_schedule.html`、`CourseRepository`、`ImportLogRepository`。LLM 解析、本地 Jsoup 解析和 WebView 提取都必须进入 `ImportPreviewActivity`，确认后才可写库；LLM 结果必须经过本地 validator 清洗，异常字段进入 warnings 或丢弃。WebView 导入不能保存账号密码、Cookie，也不能绕过验证码；修改 WebView 流程时要保留进入、打开和退出时的 Cookie/WebStorage/缓存清理，并避免阻塞 UI。BJTU 适配默认从 `https://mis.bjtu.edu.cn/` 门户进入，真实页面仍需现场验证。
 
 ### 专注 / 通知 / 传感器
 
@@ -153,6 +153,8 @@ PR 描述至少包含：
 - 相机扫码和拒绝相机权限。
 - SAF 图片附件选择、打开、删除。
 - WebView 导入真实教务系统页面。
+- WebView 导入退出后再次进入需重新登录，确认 Cookie/会话未持久化。
+- 课表导入 AI/本地切换：无 API Key 和 LLM 失败时均能回退本地解析，并进入预览确认。
 
 无法真机验证时，PR 里必须明确写“未验证”和原因。
 

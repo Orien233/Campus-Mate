@@ -47,8 +47,8 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 | 课程管理 | 已完成 | 支持新增、编辑、详情、软删除、按星期筛选、周课表网格展示和时间冲突提示。 |
 | 任务管理 | 已完成 | 支持新增、编辑、详情、软删除、完成状态切换、类型、优先级、截止时间、提醒时间和 AI 网页解析预填。 |
 | 任务提醒 | 已完成 | `AlarmManager` + `ReminderReceiver` + 通知渠道；开机后通过 `BootReminderReceiver` 恢复未来提醒。 |
-| 课表导入 | 已完成 | 支持内置 `sample_schedule.html`、粘贴 HTML、导入预览、冲突标记和确认写入。 |
-| WebView 课表导入基础页 | 基础完成 / 待验证 | `WebViewImportActivity` 可手动打开页面并提取当前 HTML；真实教务系统页面结构仍需现场验证。 |
+| 课表导入 | 已完成 | 支持内置 `sample_schedule.html`、粘贴 HTML、LLM 优先/本地回退解析、导入预览、冲突标记和确认写入。 |
+| WebView 课表导入基础页 | 基础完成 / 待验证 | `WebViewImportActivity` 默认进入 BJTU MIS 门户，可手动登录导航并提取当前 HTML；进入、打开和退出时会尽力清理 Cookie/登录态；真实教务系统页面结构仍需现场验证。 |
 | 专注计时 | 已完成 | `FocusActivity` 选择任务和时长，`FocusService` 前台计时，支持暂停、继续、完成、取消。 |
 | 翻转手机专注 | 已完成 / 待真机验证 | `FaceDownDetector` 基于加速度传感器判断屏幕朝下；传感器不可用时保留手动开始。 |
 | 前台服务 | 已完成 | `FocusService` 使用前台通知展示计时状态，并负责 FocusSession 和 StudyRecord 写入。 |
@@ -74,7 +74,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 - JSON 导出/备份：未实现；当前不会导出本地数据库或设置。
 - Android 系统备份：Manifest 中 `android:allowBackup="false"`；`backup_rules.xml` 和 `data_extraction_rules.xml` 也排除数据库、SharedPreferences、文件和外部文件。
 - 演示数据：当前生成课程、任务、学习记录和导入日志，不能完整覆盖学习伙伴、附件、计划和所有扩展模块。
-- WebView 教务系统导入：只提供用户手动登录并提取当前页面 HTML 的基础流程；不保存账号密码、Cookie，不绕过验证码；不同学校页面结构需要现场验证。
+- WebView 教务系统导入：默认入口为 `https://mis.bjtu.edu.cn/`，只提供用户手动登录并提取当前页面 HTML 的基础流程；不保存账号密码、Cookie，不绕过验证码；进入、重新打开和退出导入页时会尽力清理 Cookie、WebStorage、缓存、历史、表单和 HTTP Auth 数据；不同学校页面结构需要现场验证。
 - NFC：需要支持 NFC 的真机和可写 NFC 标签或兼容 NDEF 发送源；当前 compile SDK 下不再依赖旧 Android Beam 手机对手机发送 API。
 - NotificationListenerService：服务已声明，但通知访问权限必须由用户在系统设置中授权；当前设置页未看到专门跳转通知访问授权页的按钮，需真机验证。
 - 勿扰模式：需要用户授予通知策略访问权限；未授权时不应影响普通专注计时。
@@ -234,12 +234,17 @@ ImportScheduleActivity / WebViewImportActivity
 - 内置 sample：`ImportScheduleActivity` 读取 `app/src/main/assets/sample_schedule.html`。
 - 粘贴 HTML：用户粘贴 HTML 后交给 `JsoupScheduleParser`。
 - WebView 当前页：`WebViewImportActivity` 让用户手动打开网页，`WebViewScheduleExtractor` 只用 `evaluateJavascript` 提取当前页面 HTML。
+- BJTU 场景：WebView 默认预填 `https://mis.bjtu.edu.cn/`，避免直接打开教务子页面时因 SSO/session 缺失导致登录失败；用户登录后自行进入课表页再提取。
+- 隐私清理：进入 `WebViewImportActivity`、点击打开页面和退出 Activity 时都会尽力清理 Cookie、WebStorage、缓存、历史、表单、SSL 偏好和 HTTP Auth 数据；清理过程采用异步和超时兜底，不能阻塞 UI。
+- `WebViewScheduleExtractor`：会等待 DOM 中出现疑似课表表格后优先抓取表格 `outerHTML`，超时则抓取整页 `document.documentElement.outerHTML`。
 - `CourseDraft`：导入预览前的课程候选对象。
 - `ImportPreviewActivity`：做冲突标记、默认勾选和用户确认，不允许静默写入。
 - `CourseRepository`：确认后批量写入课程。
 - `ImportLogRepository` / `import_logs`：记录来源、导入数、跳过数、冲突数和消息。
 - WebView 流程不保存教务系统账号、密码、Cookie，不绕过验证码。
-- `LlmScheduleParseService` 已接入粘贴 HTML 和 WebView 导入流程；AI 可用时优先解析，失败时可回退本地规则，所有结果仍进入 `ImportPreviewActivity`。
+- `ScheduleParseResult`：统一承载课程草稿、warnings、解析方式、回退原因和节次时间。
+- `LlmScheduleParseService` 已接入粘贴 HTML 和 WebView 导入流程；AI 可用时优先解析，失败时可回退本地 Jsoup 规则，所有结果仍进入 `ImportPreviewActivity`。
+- `LlmCourseDraftValidator` 会将 LLM JSON 转为 `CourseDraft` 并做本地校验，课程名不能为空，星期必须在 1..7，开始/结束节次和周次必须合法，单双周类型必须合法；异常字段会丢弃或进入 warnings，不能直接信任模型输出。
 - LLM 与本地 fallback 已拓展地点、楼宇、教室、教师、周次和单双周解析；真实教务系统页面仍需现场验证。
 
 ### D. 专注计时闭环
@@ -486,6 +491,8 @@ app/build/outputs/apk/debug/app-debug.apk
 - NFC 不支持、未开启、写入标签、接收 payload 和确认保存。
 - SAF 图片附件选择、持久 Uri、外部打开和删除。
 - WebView 打开真实教务系统页面并提取当前 HTML。
+- WebView 导入离开后再次进入必须重新登录，验证未持久化 Cookie/会话；BJTU 场景需从 MIS 门户登录后进入课表页再提取。
+- 课表导入 AI/本地切换：无 API Key 时回退本地解析，LLM 失败时提示原因并可进入本地解析，最终都必须进入预览页。
 - Android 粗略定位权限授予/拒绝、天气城市反查、远程天气有网/无网缓存降级。
 
 本 README 只说明可运行命令和验证项；是否已通过以本次实际执行结果为准。
