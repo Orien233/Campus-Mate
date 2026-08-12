@@ -55,6 +55,15 @@ class TaskRepository(context: Context) {
             null,
             null
         )
+        if (rows > 0) {
+            // Keep task-owned attachments from becoming orphaned when a task is removed from
+            // any entry point (not only the detail screen).
+            resolver.delete(
+                CampusMateContract.TaskAttachments.CONTENT_URI,
+                "${CampusMateContract.TaskAttachments.COLUMN_TASK_ID}=?",
+                arrayOf(taskId.toString())
+            )
+        }
         return rows > 0
     }
 

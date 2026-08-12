@@ -59,6 +59,9 @@ class FocusService : Service(), FaceDownDetector.Listener {
         studyRecordRepository = StudyRecordRepository(this)
         settingsRepository = SettingsRepository(this)
         dndManager = DndManager(this)
+        recoverAbandonedSessions()
+        restorePersistedDndState()
+        NotificationFilterService.isFocusModeActive = false
         NotificationUtils.ensureFocusServiceChannel(this)
     }
 
@@ -70,7 +73,9 @@ class FocusService : Service(), FaceDownDetector.Listener {
             ACTION_FINISH -> finishSession()
             ACTION_CANCEL -> cancelSession()
         }
-        return START_STICKY
+        // A null intent means Android recreated a previously killed service. The persisted
+        // session/DND cleanup has already run in onCreate; do not keep a zombie service alive.
+        return if (intent?.action == null) START_NOT_STICKY else START_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -78,6 +83,11 @@ class FocusService : Service(), FaceDownDetector.Listener {
     override fun onDestroy() {
         handler.removeCallbacks(tickRunnable)
         faceDownDetector?.stop()
+        if (timerEngine != null && stateMachine.state != FocusState.FINISHED && stateMachine.state != FocusState.CANCELLED) {
+            cancelSession()
+        } else {
+            restoreDndState()
+        }
         super.onDestroy()
     }
 
@@ -136,9 +146,11 @@ class FocusService : Service(), FaceDownDetector.Listener {
         }
 
         // Enable DND if setting is enabled
-        if (settingsRepository.isFocusDndEnabled()) {
+        if (settingsRepository.isFocusDndEnabled() && dndManager.isDndPolicyAccessGranted()) {
             previousDndState = dndManager.getCurrentInterruptionFilter()
-            dndManager.enableDnd()
+            if (dndManager.enableDnd()) {
+                settingsRepository.saveFocusPreviousDndFilter(previousDndState)
+            }
         }
 
         // Enable notification filter if setting is enabled
@@ -222,10 +234,12 @@ class FocusService : Service(), FaceDownDetector.Listener {
     }
 
     private fun restoreDndState() {
-        if (settingsRepository.isFocusDndEnabled() && previousDndState != -1) {
+        val savedFilter = settingsRepository.getFocusPreviousDndFilter()
+        val filterToRestore = previousDndState.takeIf { it != -1 } ?: savedFilter
+        if (filterToRestore != -1) {
             try {
                 val notificationManager = getSystemService(NotificationManager::class.java)
-                when (previousDndState) {
+                when (filterToRestore) {
                     NotificationManager.INTERRUPTION_FILTER_NONE ->
                         notificationManager?.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
                     NotificationManager.INTERRUPTION_FILTER_PRIORITY ->
@@ -240,6 +254,25 @@ class FocusService : Service(), FaceDownDetector.Listener {
             }
         }
         NotificationFilterService.isFocusModeActive = false
+        settingsRepository.clearFocusPreviousDndFilter()
+        previousDndState = -1
+    }
+
+    private fun recoverAbandonedSessions() {
+        val now = DateTimeUtils.nowMillis()
+        focusRepository.getActiveSessions().forEach { session ->
+            focusRepository.updateFocusSession(
+                session.copy(
+                    endAt = now,
+                    status = FocusSession.STATUS_CANCELLED
+                )
+            )
+        }
+    }
+
+    private fun restorePersistedDndState() {
+        if (settingsRepository.getFocusPreviousDndFilter() == -1) return
+        restoreDndState()
     }
 
     private fun persistSessionStatus(status: Int) {

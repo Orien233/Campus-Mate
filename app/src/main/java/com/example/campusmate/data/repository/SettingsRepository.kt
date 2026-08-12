@@ -68,6 +68,19 @@ class SettingsRepository(context: Context) {
         preferences.edit().putBoolean(KEY_NOTIFICATION_FILTER_ENABLED, value).apply()
     }
 
+    /** Stores the interruption filter that was active before focus mode changed it. */
+    fun saveFocusPreviousDndFilter(filter: Int) {
+        preferences.edit().putInt(KEY_FOCUS_PREVIOUS_DND_FILTER, filter).apply()
+    }
+
+    fun getFocusPreviousDndFilter(): Int {
+        return preferences.getInt(KEY_FOCUS_PREVIOUS_DND_FILTER, NO_SAVED_DND_FILTER)
+    }
+
+    fun clearFocusPreviousDndFilter() {
+        preferences.edit().remove(KEY_FOCUS_PREVIOUS_DND_FILTER).apply()
+    }
+
     fun getPlanEarliestTime(): String = getPlanTime(KEY_PLAN_EARLIEST_TIME, DEFAULT_PLAN_EARLIEST_TIME)
 
     fun setPlanEarliestTime(value: String) {
@@ -141,6 +154,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_WEATHER_LOCATION_GUIDE_SHOWN = "weather_location_guide_shown"
         private const val KEY_FOCUS_DND_ENABLED = "focus_dnd_enabled"
         private const val KEY_NOTIFICATION_FILTER_ENABLED = "notification_filter_enabled"
+        private const val KEY_FOCUS_PREVIOUS_DND_FILTER = "focus_previous_dnd_filter"
         private const val KEY_PLAN_EARLIEST_TIME = "plan_earliest_time"
         private const val KEY_PLAN_LATEST_TIME = "plan_latest_time"
         private const val KEY_SECTION_TIME_SLOTS_JSON = "section_time_slots_json"
@@ -150,6 +164,7 @@ class SettingsRepository(context: Context) {
         private const val DEFAULT_PLAN_LATEST_TIME = "22:00"
         const val WEATHER_CITY_SOURCE_MANUAL = "manual"
         const val WEATHER_CITY_SOURCE_LOCATION = "location"
+        const val NO_SAVED_DND_FILTER = -1
     }
 }
 

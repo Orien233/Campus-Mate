@@ -12,6 +12,7 @@ import com.example.campusmate.data.model.llm.LlmProviderType
 import com.example.campusmate.data.repository.LlmSettingsRepository
 import com.example.campusmate.domain.llm.LlmClientFactory
 import com.example.campusmate.domain.llm.LlmGenerateResult
+import com.example.campusmate.domain.llm.LlmHttpUtils
 import com.example.campusmate.domain.llm.LlmProviderPresets
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -236,11 +237,18 @@ class LlmSettingsUiBinder(
             preset.providerType
         }
 
-        if ((requireEndpoint || providerType == LlmProviderType.CUSTOM_OPENAI_COMPATIBLE) && baseUrl.isBlank()) {
+        val endpointRequired = requireEndpoint || providerType == LlmProviderType.CUSTOM_OPENAI_COMPATIBLE
+        if (endpointRequired && baseUrl.isBlank()) {
             baseUrlInputLayout.error = fragment.getString(R.string.settings_llm_base_url_required)
             return null
         }
-        if ((requireEndpoint || providerType == LlmProviderType.CUSTOM_OPENAI_COMPATIBLE) && model.isBlank()) {
+        if (endpointRequired) {
+            LlmHttpUtils.validateHttpsEndpoint(baseUrl)?.let { error ->
+                baseUrlInputLayout.error = error
+                return null
+            }
+        }
+        if (endpointRequired && model.isBlank()) {
             modelInputLayout.error = fragment.getString(R.string.settings_llm_model_required)
             return null
         }

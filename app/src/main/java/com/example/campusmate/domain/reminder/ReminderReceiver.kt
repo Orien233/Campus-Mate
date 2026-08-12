@@ -13,6 +13,7 @@ import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.ui.task.TaskDetailActivity
 import com.example.campusmate.util.NotificationUtils
 import com.example.campusmate.util.PermissionUtils
+import java.util.concurrent.Executors
 
 /** Receives task reminder alarms and shows notifications for active tasks only. */
 class ReminderReceiver : BroadcastReceiver() {
@@ -21,6 +22,17 @@ class ReminderReceiver : BroadcastReceiver() {
         val taskId = intent.getLongExtra(EXTRA_TASK_ID, 0L)
         if (taskId <= 0L) return
 
+        val pendingResult = goAsync()
+        executor.execute {
+            try {
+                showReminder(context.applicationContext, taskId)
+            } finally {
+                pendingResult.finish()
+            }
+        }
+    }
+
+    private fun showReminder(context: Context, taskId: Long) {
         val task = TaskRepository(context).getTaskById(taskId) ?: return
         if (task.status != StudyTask.STATUS_TODO || task.isDeleted) return
         if (!PermissionUtils.hasPostNotificationsPermission(context) || !NotificationUtils.areNotificationsEnabled(context)) return
@@ -62,5 +74,6 @@ class ReminderReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_TASK_REMINDER = "com.example.campusmate.action.TASK_REMINDER"
         const val EXTRA_TASK_ID = "extra_task_id"
+        private val executor = Executors.newSingleThreadExecutor()
     }
 }

@@ -10,6 +10,9 @@ class GeminiLlmClient : LlmClient {
         config: LlmProviderConfig,
         apiKey: String
     ): LlmGenerateResult {
+        LlmHttpUtils.validateHttpsEndpoint(config.baseUrl)?.let { message ->
+            return LlmGenerateResult.Failure(message = message, detail = null, recoverable = false)
+        }
         return try {
             val httpRequest = GeminiRequestBuilder.build(request, config)
             val connection = (URL(httpRequest.url).openConnection() as HttpURLConnection).apply {
