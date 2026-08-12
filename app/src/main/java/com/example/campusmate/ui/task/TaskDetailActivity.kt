@@ -163,18 +163,17 @@ class TaskDetailActivity : AppCompatActivity() {
             // Some providers do not support persistable permissions; best effort only.
         }
 
-        val mimeType = contentResolver.getType(uri)
-        val title = TaskAttachmentUiUtils.queryDisplayName(this, uri)
-        val id = attachmentRepository.addAttachment(
-            taskId = taskId,
-            uri = uri.toString(),
-            mimeType = mimeType,
-            title = title
-        )
-        if (id > 0L) {
-            loadAttachments()
-        } else {
-            Snackbar.make(rootView, R.string.task_attachment_add_failed, Snackbar.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val id = withContext(Dispatchers.IO) {
+                attachmentRepository.addAttachment(
+                    taskId = taskId,
+                    uri = uri.toString(),
+                    mimeType = contentResolver.getType(uri),
+                    title = TaskAttachmentUiUtils.queryDisplayName(this@TaskDetailActivity, uri)
+                )
+            }
+            if (id > 0L) loadAttachments()
+            else Snackbar.make(rootView, R.string.task_attachment_add_failed, Snackbar.LENGTH_SHORT).show()
         }
     }
 
@@ -197,10 +196,12 @@ class TaskDetailActivity : AppCompatActivity() {
             .setMessage(getString(R.string.task_attachment_delete_message, item.title ?: item.uri))
             .setNegativeButton(R.string.action_cancel, null)
             .setPositiveButton(R.string.action_delete) { _, _ ->
-                if (attachmentRepository.deleteAttachment(item.id)) {
-                    loadAttachments()
-                } else {
-                    Snackbar.make(rootView, R.string.task_attachment_delete_failed, Snackbar.LENGTH_SHORT).show()
+                lifecycleScope.launch {
+                    if (withContext(Dispatchers.IO) { attachmentRepository.deleteAttachment(item.id) }) {
+                        loadAttachments()
+                    } else {
+                        Snackbar.make(rootView, R.string.task_attachment_delete_failed, Snackbar.LENGTH_SHORT).show()
+                    }
                 }
             }
             .show()
@@ -211,16 +212,17 @@ class TaskDetailActivity : AppCompatActivity() {
         if (TaskReminderPolicy.shouldCancelWhenCompleted(task.status, updatedStatus)) {
             reminderScheduler.cancelTaskReminder(task.id)
         }
-        val success = if (updatedStatus == StudyTask.STATUS_TODO) {
-            taskRepository.markTodo(task.id)
-        } else {
-            taskRepository.markDone(task.id)
-        }
-        if (success) {
-            scheduleReminderIfReopened(task, updatedStatus)
-            loadTask()
-        } else {
-            Snackbar.make(rootView, R.string.task_status_update_failed, Snackbar.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val success = withContext(Dispatchers.IO) {
+                if (updatedStatus == StudyTask.STATUS_TODO) taskRepository.markTodo(task.id)
+                else taskRepository.markDone(task.id)
+            }
+            if (success) {
+                scheduleReminderIfReopened(task, updatedStatus)
+                loadTask()
+            } else {
+                Snackbar.make(rootView, R.string.task_status_update_failed, Snackbar.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -245,12 +247,13 @@ class TaskDetailActivity : AppCompatActivity() {
             .setNegativeButton(R.string.action_cancel, null)
             .setPositiveButton(R.string.action_delete) { _, _ ->
                 reminderScheduler.cancelTaskReminder(task.id)
-                if (taskRepository.deleteTask(task.id)) {
-                    attachmentRepository.deleteAttachmentsByTask(task.id)
-                    setResult(RESULT_OK)
-                    finish()
-                } else {
-                    Snackbar.make(rootView, R.string.task_delete_failed, Snackbar.LENGTH_SHORT).show()
+                lifecycleScope.launch {
+                    if (withContext(Dispatchers.IO) { taskRepository.deleteTask(task.id) }) {
+                        setResult(RESULT_OK)
+                        finish()
+                    } else {
+                        Snackbar.make(rootView, R.string.task_delete_failed, Snackbar.LENGTH_SHORT).show()
+                    }
                 }
             }
             .show()
