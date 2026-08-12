@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.campusmate.R
 import com.example.campusmate.data.model.StudyTask
 import com.example.campusmate.data.repository.SettingsRepository
@@ -27,6 +28,9 @@ import com.example.campusmate.util.PermissionUtils
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Focus entry screen for task selection, face-down start, and service state display. */
 class FocusActivity : AppCompatActivity(), FaceDownDetector.Listener {
@@ -95,6 +99,7 @@ class FocusActivity : AppCompatActivity(), FaceDownDetector.Listener {
     override fun onResume() {
         super.onResume()
         applyImmersivePreference()
+        loadTasks()
     }
 
 
@@ -147,9 +152,11 @@ class FocusActivity : AppCompatActivity(), FaceDownDetector.Listener {
     }
 
     private fun setupSpinners() {
-        tasks = taskRepository.getAllTasks().filter { it.status == StudyTask.STATUS_TODO }
-        val taskLabels = listOf(getString(R.string.focus_free_task)) + tasks.map { it.title }
-        taskSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, taskLabels)
+        taskSpinner.adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_dropdown_item,
+            listOf(getString(R.string.focus_free_task))
+        )
         durationSpinner.adapter = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_dropdown_item,
@@ -164,6 +171,18 @@ class FocusActivity : AppCompatActivity(), FaceDownDetector.Listener {
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+        }
+    }
+
+    private fun loadTasks() {
+        lifecycleScope.launch {
+            val loadedTasks = withContext(Dispatchers.IO) {
+                taskRepository.getAllTasks().filter { it.status == StudyTask.STATUS_TODO }
+            }
+            if (isFinishing || isDestroyed || serviceRunning) return@launch
+            tasks = loadedTasks
+            val taskLabels = listOf(getString(R.string.focus_free_task)) + loadedTasks.map { it.title }
+            taskSpinner.adapter = ArrayAdapter(this@FocusActivity, android.R.layout.simple_spinner_dropdown_item, taskLabels)
         }
     }
 
