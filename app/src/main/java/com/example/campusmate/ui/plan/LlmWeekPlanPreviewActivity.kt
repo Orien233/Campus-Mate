@@ -2,6 +2,7 @@ package com.example.campusmate.ui.plan
 
 import android.os.Bundle
 import android.view.View
+import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -17,19 +18,19 @@ import com.example.campusmate.domain.llm.LlmGenerateResult
 import com.example.campusmate.domain.plan.LlmPlanGenerateService
 import com.example.campusmate.domain.plan.LlmPlanValidator
 import com.example.campusmate.domain.plan.PlanCourseConflictChecker
-import com.example.campusmate.domain.plan.StudyPlanGenerator
 import com.example.campusmate.domain.plan.StudyPlanContextBuilder
+import com.example.campusmate.domain.plan.StudyPlanGenerator
+import com.example.campusmate.ui.course.CourseUiFormatter
 import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.chip.Chip
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
+import java.util.LinkedHashMap
 import java.util.Locale
 
 class LlmWeekPlanPreviewActivity : AppCompatActivity() {
@@ -50,23 +51,21 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
     private lateinit var weekCourseSummaryText: TextView
     private lateinit var weekCourseConflictStatusText: TextView
     private lateinit var errorText: TextView
-    private lateinit var dayTabLayout: TabLayout
+    private lateinit var daySelectorContainer: LinearLayout
     private lateinit var weekPlanRecyclerView: RecyclerView
     private lateinit var cancelButton: MaterialButton
     private lateinit var confirmAllButton: MaterialButton
     private lateinit var retryButton: MaterialButton
     private lateinit var fallbackLocalButton: MaterialButton
-    private lateinit var localGenerationTip: com.google.android.material.card.MaterialCardView
+    private lateinit var localGenerationTip: MaterialCardView
     private lateinit var closeTipButton: android.widget.ImageView
 
     private lateinit var adapter: WeekPlanAdapter
 
-    private var allWeekPlans: Map<String, List<StudyPlan>> = emptyMap()
-    private var selectedDayDate: String = ""
+    private var allWeekPlans: LinkedHashMap<String, MutableList<WeekPlanItem>> = linkedMapOf()
+    private var selectedDayDate: String = DateTimeUtils.todayDate()
     private var warnings: List<String> = emptyList()
     private var usedLocalGeneration: Boolean = false
-
-    private val weekdayNames = arrayOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,7 +73,7 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
 
         initViews()
         initDependencies()
-        setupTabs()
+        setupDaySelector()
         generateWeekPlan()
     }
 
@@ -88,7 +87,7 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
         weekCourseSummaryText = findViewById(R.id.weekCourseSummaryText)
         weekCourseConflictStatusText = findViewById(R.id.weekCourseConflictStatusText)
         errorText = findViewById(R.id.errorText)
-        dayTabLayout = findViewById(R.id.dayTabLayout)
+        daySelectorContainer = findViewById(R.id.daySelectorContainer)
         weekPlanRecyclerView = findViewById(R.id.weekPlanRecyclerView)
         cancelButton = findViewById(R.id.cancelButton)
         confirmAllButton = findViewById(R.id.confirmAllButton)
@@ -97,26 +96,18 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
         localGenerationTip = findViewById(R.id.localGenerationTip)
         closeTipButton = findViewById(R.id.closeTipButton)
 
+        adapter = WeekPlanAdapter { updateConfirmButtonState() }
+        weekPlanRecyclerView.layoutManager = LinearLayoutManager(this)
+        weekPlanRecyclerView.adapter = adapter
+
         findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbar)
             .setNavigationOnClickListener { finish() }
 
         cancelButton.setOnClickListener { finish() }
-
-        confirmAllButton.setOnClickListener {
-            saveAllPlans()
-        }
-
-        retryButton.setOnClickListener {
-            generateWeekPlan()
-        }
-
-        fallbackLocalButton.setOnClickListener {
-            useLocalFallback()
-        }
-
-        closeTipButton.setOnClickListener {
-            localGenerationTip.visibility = View.GONE
-        }
+        confirmAllButton.setOnClickListener { saveAllPlans() }
+        retryButton.setOnClickListener { generateWeekPlan() }
+        fallbackLocalButton.setOnClickListener { useLocalFallback() }
+        closeTipButton.setOnClickListener { localGenerationTip.visibility = View.GONE }
     }
 
     private fun initDependencies() {
@@ -128,84 +119,52 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
         localPlanGenerator = StudyPlanGenerator(this)
     }
 
-    private fun setupTabs() {
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-
-        val weekday = getCurrentWeekday()
-        calendar.add(Calendar.DAY_OF_MONTH, -(weekday - 1))
-
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        val dayNumberFormat = SimpleDateFormat("d", Locale.US)
-
-        for (i in 0..6) {
-            val dayDate = dateFormat.format(calendar.time)
-            val dayOfWeek = weekdayNames[i]
-            val dayNumber = dayNumberFormat.format(calendar.time)
-            val monthDayFormat = SimpleDateFormat("M月d日", Locale.CHINA)
-            val monthDay = monthDayFormat.format(calendar.time)
-
-            val tab = dayTabLayout.newTab()
-            tab.text = "$dayOfWeek\n$monthDay"
-            tab.tag = dayDate
-            dayTabLayout.addTab(tab)
-
-            calendar.add(Calendar.DAY_OF_MONTH, 1)
+    private fun setupDaySelector() {
+        val dates = selectableDates()
+        if (selectedDayDate !in dates) {
+            selectedDayDate = dates.first()
         }
-
-        dayTabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab?) {
-                tab?.let { selectedTab ->
-                    // Update visual state for all tabs
-                    for (i in 0 until dayTabLayout.tabCount) {
-                        dayTabLayout.getTabAt(i)?.view?.isSelected = (i == selectedTab.position)
-                    }
-                    selectedTab.tag?.let { date ->
-                        selectedDayDate = date as String
-                        showPlansForDay(date)
-                    }
-                }
+        daySelectorContainer.removeAllViews()
+        dates.forEach { date ->
+            val pill = layoutInflater.inflate(R.layout.item_selection_pill, daySelectorContainer, false) as TextView
+            pill.text = formatDayLabel(date)
+            pill.tag = date
+            pill.isSelected = date == selectedDayDate
+            pill.setOnClickListener {
+                if (selectedDayDate == date) return@setOnClickListener
+                selectedDayDate = date
+                updateDaySelection()
+                showPlansForDay(date)
             }
-
-            override fun onTabUnselected(tab: TabLayout.Tab?) {
-                tab?.view?.isSelected = false
-            }
-
-            override fun onTabReselected(tab: TabLayout.Tab?) {
-                tab?.view?.isSelected = true
-            }
-        })
-
-        // Select today by default
-        val todayDate = dateFormat.format(Date())
-        for (i in 0 until dayTabLayout.tabCount) {
-            val tab = dayTabLayout.getTabAt(i)
-            if (tab?.tag == todayDate) {
-                tab.select()
-                selectedDayDate = todayDate
-                // Set visual state for selected tab
-                tab.view?.isSelected = true
-                break
-            }
-        }
-        if (selectedDayDate.isEmpty() && dayTabLayout.tabCount > 0) {
-            val firstTab = dayTabLayout.getTabAt(0)
-            firstTab?.select()
-            selectedDayDate = firstTab?.tag as? String ?: ""
-            firstTab?.view?.isSelected = true
+            daySelectorContainer.addView(pill)
         }
     }
 
-    private fun getCurrentWeekday(): Int {
-        val calendar = Calendar.getInstance()
-        val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-        return when (dayOfWeek) {
-            Calendar.SUNDAY -> 7
-            else -> dayOfWeek - 1
+    private fun updateDaySelection() {
+        for (index in 0 until daySelectorContainer.childCount) {
+            val child = daySelectorContainer.getChildAt(index)
+            child.isSelected = child.tag == selectedDayDate
         }
+    }
+
+    private fun selectableDates(): List<String> {
+        val today = DateTimeUtils.todayDate()
+        return buildList {
+            add(today)
+            for (offset in 1..7) {
+                add(DateTimeUtils.datePlusDays(today, offset))
+            }
+        }
+    }
+
+    private fun formatDayLabel(date: String): String {
+        if (date == DateTimeUtils.todayDate()) {
+            return getString(R.string.plan_date_today)
+        }
+        val millis = DateTimeUtils.parseDateMillis(date) ?: return date
+        val monthDay = SimpleDateFormat("M/d", Locale.CHINA).format(Date(millis))
+        val weekday = CourseUiFormatter.weekdayLabel(this, DateTimeUtils.weekdayForDate(date))
+        return getString(R.string.plan_date_label_format, monthDay, weekday)
     }
 
     private fun generateWeekPlan() {
@@ -214,13 +173,14 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
             try {
                 val aiAvailable = llmPlanGenerateService.isAvailable() && llmSettingsRepository.hasApiKey()
                 val plans = withContext(Dispatchers.IO) {
-                    generateWeekPlansWithLlm(aiAvailable)
+                    generatePlans(aiAvailable)
                 }
                 if (plans.isEmpty()) {
                     showError(getString(R.string.llm_plan_parse_error))
                 } else {
-                    allWeekPlans = plans
-                    usedLocalGeneration = !aiAvailable
+                    allWeekPlans = plans.mapValuesTo(linkedMapOf()) { (_, dayPlans) ->
+                        dayPlans.map { WeekPlanItem(it, true) }.toMutableList()
+                    }
                     showContent()
                 }
             } catch (e: Exception) {
@@ -229,62 +189,40 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun generateWeekPlansWithLlm(aiAvailable: Boolean): Map<String, List<StudyPlan>> {
-        val weekPlans = mutableMapOf<String, List<StudyPlan>>()
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-
-        val weekday = getCurrentWeekday()
-        calendar.add(Calendar.DAY_OF_MONTH, -(weekday - 1))
-
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    private suspend fun generatePlans(aiAvailable: Boolean): LinkedHashMap<String, List<StudyPlan>> {
+        val generated = linkedMapOf<String, List<StudyPlan>>()
         val warningsList = mutableListOf<String>()
-        val todayDate = DateTimeUtils.todayDate()
+        var usedAnyLocalGeneration = !aiAvailable
 
-        for (day in 0..6) {
-            val dayDate = dateFormat.format(calendar.time)
-            if (dayDate < todayDate) {
-                weekPlans[dayDate] = emptyList()
-                warningsList.add("${weekdayNames[day]}: 已跳过当前日期之前的计划")
-                calendar.add(Calendar.DAY_OF_MONTH, 1)
-                continue
-            }
-
+        selectableDates().forEach { dayDate ->
             if (aiAvailable) {
                 val prompt = buildDayPrompt(dayDate)
                 val request = llmPlanGenerateService.buildPrompt(prompt)
                 val config = llmSettingsRepository.getConfig()
-                val apiKey = llmSettingsRepository.getApiKey() ?: return emptyMap()
-
+                val apiKey = llmSettingsRepository.getApiKey() ?: return linkedMapOf()
                 val client = LlmClientFactory.create(config)
                 val llmResult = client.generate(request, config, apiKey)
 
                 when (llmResult) {
                     is LlmGenerateResult.Success -> {
-                        val jsonContent = llmResult.text
                         val dayContext = planContextBuilder.buildForDate(dayDate)
-                        val (plans, dayWarnings) = planValidator.parseAndValidate(jsonContent, dayContext)
-                        warningsList.addAll(dayWarnings.map { "${weekdayNames[day]}: $it" })
-                        weekPlans[dayDate] = plans
+                        val (plans, dayWarnings) = planValidator.parseAndValidate(llmResult.text, dayContext)
+                        warningsList.addAll(dayWarnings.map { "${formatDayLabel(dayDate)}: $it" })
+                        generated[dayDate] = plans
                     }
                     is LlmGenerateResult.Failure -> {
-                        val localPlans = generateLocalDayPlans(dayDate)
-                        weekPlans[dayDate] = localPlans
+                        usedAnyLocalGeneration = true
+                        generated[dayDate] = generateLocalDayPlans(dayDate)
                     }
                 }
             } else {
-                val localPlans = generateLocalDayPlans(dayDate)
-                weekPlans[dayDate] = localPlans
+                generated[dayDate] = generateLocalDayPlans(dayDate)
             }
-
-            calendar.add(Calendar.DAY_OF_MONTH, 1)
         }
 
         warnings = warningsList
-        return weekPlans
+        usedLocalGeneration = usedAnyLocalGeneration
+        return generated
     }
 
     private fun generateLocalDayPlans(date: String): List<StudyPlan> {
@@ -321,8 +259,8 @@ $contextText
             message.contains("429") -> getString(R.string.llm_plan_rate_limit)
             message.contains("timeout", ignoreCase = true) -> getString(R.string.llm_plan_timeout)
             message.contains("network", ignoreCase = true) ||
-            message.contains("connection", ignoreCase = true) ||
-            message.contains("failed to connect") -> getString(R.string.llm_plan_network_error)
+                message.contains("connection", ignoreCase = true) ||
+                message.contains("failed to connect") -> getString(R.string.llm_plan_network_error)
             message.contains("5") && message.contains("HTTP") -> getString(R.string.llm_plan_server_error)
             else -> getString(R.string.llm_plan_parse_error) + ": " + message
         }
@@ -345,35 +283,43 @@ $contextText
         loadingContainer.visibility = View.GONE
         errorContainer.visibility = View.GONE
         contentContainer.visibility = View.VISIBLE
+        localGenerationTip.visibility = if (usedLocalGeneration) View.VISIBLE else View.GONE
 
-        // Show tip banner if local generation was used
-        if (usedLocalGeneration) {
-            localGenerationTip.visibility = View.VISIBLE
-        } else {
-            localGenerationTip.visibility = View.GONE
-        }
-
-        val totalPlans = allWeekPlans.values.sumOf { it.size }
-        val totalMinutes = allWeekPlans.values.flatten().sumOf { it.plannedMinutes }
+        val allPlans = allWeekPlans.values.flatten().map { it.plan }
+        val totalPlans = allPlans.size
+        val totalMinutes = allPlans.sumOf { it.plannedMinutes }
         weekSummaryText.text = getString(R.string.plan_week_summary, totalPlans, totalMinutes)
 
         if (warnings.isNotEmpty()) {
             weekWarningText.visibility = View.VISIBLE
-            weekWarningText.text = warnings.joinToString("; ")
+            weekWarningText.text = warnings.joinToString("\n")
         } else {
             weekWarningText.visibility = View.GONE
         }
 
-        bindWeekCourseSummary()
-        bindWeekCourseConflictStatus()
-
-        showPlansForDay(selectedDayDate)
+        lifecycleScope.launch {
+            val courseChecks = withContext(Dispatchers.IO) {
+                val summaries = allPlans.groupBy { it.planDate }.flatMap { (date, _) ->
+                    PlanCourseConflictChecker.courseBusySummary(planContextBuilder.buildForDate(date))
+                }
+                val conflicts = allPlans.flatMap { plan ->
+                    PlanCourseConflictChecker.findConflicts(
+                        listOf(plan),
+                        planContextBuilder.buildForDate(plan.planDate)
+                    )
+                }
+                summaries to conflicts
+            }
+            if (isFinishing || isDestroyed) return@launch
+            bindWeekCourseSummary(courseChecks.first)
+            bindWeekCourseConflictStatus(courseChecks.second)
+            setupDaySelector()
+            showPlansForDay(selectedDayDate)
+            updateConfirmButtonState()
+        }
     }
 
-    private fun bindWeekCourseSummary() {
-        val summaries = allWeekPlans.keys.sorted().flatMap { date ->
-            PlanCourseConflictChecker.courseBusySummary(planContextBuilder.buildForDate(date))
-        }
+    private fun bindWeekCourseSummary(summaries: List<String>) {
         weekCourseSummaryText.text = if (summaries.isEmpty()) {
             getString(R.string.llm_plan_course_summary_empty)
         } else {
@@ -381,10 +327,7 @@ $contextText
         }
     }
 
-    private fun bindWeekCourseConflictStatus() {
-        val conflicts = allWeekPlans.flatMap { (date, plans) ->
-            PlanCourseConflictChecker.findConflicts(plans, planContextBuilder.buildForDate(date))
-        }
+    private fun bindWeekCourseConflictStatus(conflicts: List<com.example.campusmate.domain.plan.PlanCourseConflict>) {
         if (conflicts.isEmpty()) {
             weekCourseConflictStatusText.text = getString(R.string.llm_plan_course_check_passed)
             weekCourseConflictStatusText.setTextColor(getColor(R.color.success))
@@ -408,50 +351,48 @@ $contextText
     }
 
     private fun showPlansForDay(date: String) {
-        val plans = allWeekPlans[date] ?: emptyList()
-
+        val plans = allWeekPlans[date].orEmpty()
         if (plans.isEmpty()) {
             weekPlanRecyclerView.visibility = View.GONE
             dayEmptyState.visibility = View.VISIBLE
-        } else {
-            weekPlanRecyclerView.visibility = View.VISIBLE
-            dayEmptyState.visibility = View.GONE
-
-            if (!::adapter.isInitialized) {
-                adapter = WeekPlanAdapter { plan, isChecked ->
-                    // Handle individual plan toggle if needed
-                }
-                weekPlanRecyclerView.layoutManager = LinearLayoutManager(this)
-                weekPlanRecyclerView.adapter = adapter
-            }
-
-            adapter.submitList(plans.toMutableList().map { WeekPlanItem(it, true) })
+            return
         }
+        weekPlanRecyclerView.visibility = View.VISIBLE
+        dayEmptyState.visibility = View.GONE
+        adapter.submitList(plans)
+    }
+
+    private fun updateConfirmButtonState() {
+        confirmAllButton.isEnabled = allWeekPlans.values.flatten().any { it.isSelected }
     }
 
     private fun saveAllPlans() {
+        val selectedPlans = allWeekPlans.values
+            .flatten()
+            .filter { it.isSelected }
+            .map { it.plan }
+        if (selectedPlans.isEmpty()) {
+            Snackbar.make(findViewById(android.R.id.content), R.string.plan_none_selected, Snackbar.LENGTH_SHORT).show()
+            return
+        }
+
         lifecycleScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    val allPlans = allWeekPlans.values.flatten()
-                    planRepository.deletePlansOverlapping(allPlans)
-                    for (plan in allPlans) {
+                    planRepository.deletePlansOverlapping(selectedPlans)
+                    selectedPlans.forEach { plan ->
                         planRepository.addPlan(plan.copy(id = 0L))
                     }
                 }
                 Snackbar.make(
                     findViewById(android.R.id.content),
-                    getString(R.string.plan_week_save_success, allWeekPlans.values.sumOf { it.size }),
+                    getString(R.string.plan_week_save_success, selectedPlans.size),
                     Snackbar.LENGTH_SHORT
                 ).show()
                 setResult(RESULT_OK)
                 finish()
             } catch (e: Exception) {
-                Snackbar.make(
-                    findViewById(android.R.id.content),
-                    getString(R.string.task_save_failed),
-                    Snackbar.LENGTH_SHORT
-                ).show()
+                Snackbar.make(findViewById(android.R.id.content), R.string.plan_save_failed, Snackbar.LENGTH_SHORT).show()
             }
         }
     }
@@ -459,26 +400,13 @@ $contextText
     private fun useLocalFallback() {
         lifecycleScope.launch {
             try {
-                withContext(Dispatchers.IO) {
-                    val calendar = Calendar.getInstance()
-                    calendar.set(Calendar.HOUR_OF_DAY, 0)
-                    calendar.set(Calendar.MINUTE, 0)
-                    calendar.set(Calendar.SECOND, 0)
-                    calendar.set(Calendar.MILLISECOND, 0)
-
-                    val weekday = getCurrentWeekday()
-                    calendar.add(Calendar.DAY_OF_MONTH, -(weekday - 1))
-
-                    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-                    val localPlans = mutableMapOf<String, List<StudyPlan>>()
-
-                    for (day in 0..6) {
-                        val dayDate = dateFormat.format(calendar.time)
-                        localPlans[dayDate] = generateLocalDayPlans(dayDate)
-                        calendar.add(Calendar.DAY_OF_MONTH, 1)
-                    }
-
-                    allWeekPlans = localPlans
+                val localPlans = withContext(Dispatchers.IO) {
+                    selectableDates().associateWith { generateLocalDayPlans(it) }
+                }
+                warnings = emptyList()
+                usedLocalGeneration = true
+                allWeekPlans = localPlans.mapValuesTo(linkedMapOf()) { (_, dayPlans) ->
+                    dayPlans.map { WeekPlanItem(it, true) }.toMutableList()
                 }
                 showContent()
                 Snackbar.make(
@@ -504,18 +432,16 @@ data class WeekPlanItem(
 )
 
 class WeekPlanAdapter(
-    private val onItemCheckedChange: (StudyPlan, Boolean) -> Unit
-) : androidx.recyclerview.widget.ListAdapter<WeekPlanItem, WeekPlanAdapter.ViewHolder>(
-    object : androidx.recyclerview.widget.DiffUtil.ItemCallback<WeekPlanItem>() {
-        override fun areItemsTheSame(oldItem: WeekPlanItem, newItem: WeekPlanItem): Boolean {
-            return oldItem.plan.title == newItem.plan.title && oldItem.plan.planDate == newItem.plan.planDate
-        }
+    private val onSelectionChanged: () -> Unit
+) : RecyclerView.Adapter<WeekPlanAdapter.ViewHolder>() {
+    private val items = mutableListOf<WeekPlanItem>()
 
-        override fun areContentsTheSame(oldItem: WeekPlanItem, newItem: WeekPlanItem): Boolean {
-            return oldItem == newItem
-        }
+    fun submitList(newItems: List<WeekPlanItem>) {
+        items.clear()
+        items.addAll(newItems)
+        notifyDataSetChanged()
     }
-) {
+
     override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): ViewHolder {
         val view = android.view.LayoutInflater.from(parent.context)
             .inflate(R.layout.item_week_plan, parent, false)
@@ -523,56 +449,60 @@ class WeekPlanAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        holder.bind(items[position])
     }
 
-    inner class ViewHolder(itemView: android.view.View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {
-        private val planCard: com.google.android.material.card.MaterialCardView = itemView.findViewById(R.id.planCard)
-        private val planCheckbox: android.widget.CheckBox = itemView.findViewById(R.id.planCheckbox)
+    override fun getItemCount(): Int = items.size
+
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val planCard: MaterialCardView = itemView.findViewById(R.id.planCard)
+        private val planCheckbox: CheckBox = itemView.findViewById(R.id.planCheckbox)
         private val planTitle: TextView = itemView.findViewById(R.id.planTitle)
-        private val planSourceChip: Chip = itemView.findViewById(R.id.planSourceChip)
+        private val planSourceText: TextView = itemView.findViewById(R.id.planSourceText)
         private val planTime: TextView = itemView.findViewById(R.id.planTime)
         private val planDuration: TextView = itemView.findViewById(R.id.planDuration)
 
         fun bind(item: WeekPlanItem) {
             val plan = item.plan
+            planCheckbox.setOnCheckedChangeListener(null)
+            planCheckbox.isChecked = item.isSelected
 
             planTitle.text = plan.title
-
-            val timeStr = if (plan.startTime != null && plan.endTime != null) {
+            planTime.text = if (plan.startTime != null && plan.endTime != null) {
                 "${plan.startTime} - ${plan.endTime}"
             } else {
                 itemView.context.getString(R.string.plan_no_specific_time)
             }
-            planTime.text = timeStr
-
             planDuration.text = itemView.context.getString(R.string.plan_item_duration_format, plan.plannedMinutes)
-
-            val sourceName = when (plan.sourceType) {
+            planSourceText.text = when (plan.sourceType) {
                 StudyPlan.SOURCE_LLM -> itemView.context.getString(R.string.plan_source_llm)
+                StudyPlan.SOURCE_MANUAL -> itemView.context.getString(R.string.plan_source_manual)
                 else -> itemView.context.getString(R.string.plan_source_auto)
             }
-            planSourceChip.text = sourceName
 
-            planCheckbox.isChecked = item.isSelected
+            applySelectedState(item.isSelected)
             planCheckbox.setOnCheckedChangeListener { _, isChecked ->
-                onItemCheckedChange(plan, isChecked)
+                val position = bindingAdapterPosition
+                if (position == RecyclerView.NO_POSITION) return@setOnCheckedChangeListener
+                items[position].isSelected = isChecked
+                applySelectedState(isChecked)
+                onSelectionChanged()
             }
-
-            // Highlight selected state
-            if (item.isSelected) {
-                planCard.strokeColor = itemView.context.getColor(R.color.campus_primary)
-                planCard.strokeWidth = 2
-                planCard.cardElevation = 4f
-            } else {
-                planCard.strokeColor = itemView.context.getColor(R.color.campus_divider)
-                planCard.strokeWidth = 0
-                planCard.cardElevation = 2f
-            }
-
             itemView.setOnClickListener {
                 planCheckbox.isChecked = !planCheckbox.isChecked
             }
+        }
+
+        private fun applySelectedState(isSelected: Boolean) {
+            planCard.setCardBackgroundColor(
+                itemView.context.getColor(
+                    if (isSelected) R.color.campus_primary_light else R.color.campus_surface
+                )
+            )
+            planTitle.alpha = if (isSelected) 1.0f else 0.72f
+            planTime.alpha = if (isSelected) 1.0f else 0.72f
+            planDuration.alpha = if (isSelected) 1.0f else 0.72f
+            planSourceText.alpha = if (isSelected) 1.0f else 0.72f
         }
     }
 }
