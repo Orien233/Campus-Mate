@@ -162,10 +162,6 @@ class TaskWebViewParseActivity : AppCompatActivity() {
     }
 
     private fun extractAndParseCurrentPage() {
-        if (!taskParseService.isAvailable()) {
-            Snackbar.make(rootView, R.string.task_ai_parse_unavailable, Snackbar.LENGTH_LONG).show()
-            return
-        }
         Snackbar.make(rootView, R.string.task_ai_webview_extracting, Snackbar.LENGTH_SHORT).show()
         extractPageSnapshot { snapshot ->
             val safeSnapshot = snapshot?.let(::sanitizePageSnapshot)
@@ -173,8 +169,13 @@ class TaskWebViewParseActivity : AppCompatActivity() {
                 Snackbar.make(rootView, R.string.task_ai_webview_extract_failed, Snackbar.LENGTH_LONG).show()
                 return@extractPageSnapshot
             }
-            maybeShowAiDisclosure {
-                parseWithLlm(safeSnapshot)
+            if (taskParseService.isAvailable()) {
+                maybeShowAiDisclosure {
+                    parseWithLlm(safeSnapshot)
+                }
+            } else {
+                Snackbar.make(rootView, R.string.task_ai_parse_local_fallback, Snackbar.LENGTH_LONG).show()
+                parseWithLocal(safeSnapshot)
             }
         }
     }
@@ -260,6 +261,46 @@ class TaskWebViewParseActivity : AppCompatActivity() {
                 runOnUiThread {
                     if (isFinishing || isDestroyed) return@runOnUiThread
                     Toast.makeText(this, R.string.task_ai_parse_prefill_ready, Toast.LENGTH_SHORT).show()
+                    setResult(
+                        RESULT_OK,
+                        Intent()
+                            .putExtra(EXTRA_TASK_DRAFT, draft)
+                            .putExtra(EXTRA_TASK_DRAFTS, ArrayList(result.drafts))
+                            .putExtra(EXTRA_WARNING_SUMMARY, warningSummary)
+                            .putStringArrayListExtra(EXTRA_WARNINGS, ArrayList(result.warnings))
+                    )
+                    finish()
+                }
+            } catch (error: TaskParseException) {
+                promptLocalFallback(snapshot, error.message ?: getString(R.string.task_ai_parse_failed))
+            } catch (error: IllegalArgumentException) {
+                promptLocalFallback(snapshot, error.message ?: getString(R.string.task_ai_parse_failed))
+            }
+        }
+    }
+
+    private fun promptLocalFallback(snapshot: String, errorMessage: String) {
+        runOnUiThread {
+            if (isFinishing || isDestroyed) return@runOnUiThread
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.task_ai_fallback_title)
+                .setMessage(getString(R.string.task_ai_fallback_message, errorMessage))
+                .setNegativeButton(R.string.action_cancel, null)
+                .setPositiveButton(R.string.task_ai_fallback_use_local) { _, _ -> parseWithLocal(snapshot) }
+                .show()
+        }
+    }
+
+    private fun parseWithLocal(snapshot: String) {
+        if (isFinishing || isDestroyed) return
+        executor.execute {
+            try {
+                val result = taskParseService.parseLocal(snapshot)
+                val draft = result.drafts.first()
+                val warningSummary = buildWarningSummary(result.drafts.size, result.warnings)
+                runOnUiThread {
+                    if (isFinishing || isDestroyed) return@runOnUiThread
+                    Toast.makeText(this, R.string.task_local_parse_prefill_ready, Toast.LENGTH_SHORT).show()
                     setResult(
                         RESULT_OK,
                         Intent()
