@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.campusmate.R
@@ -23,6 +24,9 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Read-only task detail screen with edit, complete, and delete actions. */
 class TaskDetailActivity : AppCompatActivity() {
@@ -87,20 +91,28 @@ class TaskDetailActivity : AppCompatActivity() {
     }
 
     private fun loadTask() {
-        val task = taskRepository.getTaskById(taskId)
-        if (task == null) {
-            Snackbar.make(rootView, R.string.task_not_found, Snackbar.LENGTH_SHORT).show()
-            finish()
-            return
+        lifecycleScope.launch {
+            val snapshot = withContext(Dispatchers.IO) {
+                val task = taskRepository.getTaskById(taskId)
+                task to task?.courseId?.let { courseRepository.getCourseById(it)?.name }
+            }
+            if (isFinishing || isDestroyed) return@launch
+            val task = snapshot.first
+            val courseName = snapshot.second
+            if (task == null) {
+                Snackbar.make(rootView, R.string.task_not_found, Snackbar.LENGTH_SHORT).show()
+                finish()
+                return@launch
+            }
+            currentTask = task
+            bindTask(task, courseName)
         }
-        currentTask = task
-        bindTask(task)
     }
 
-    private fun bindTask(task: StudyTask) {
-        val courseName = task.courseId?.let { courseRepository.getCourseById(it)?.name } ?: getString(R.string.task_no_course)
+    private fun bindTask(task: StudyTask, courseName: String?) {
+        val resolvedCourseName = courseName ?: getString(R.string.task_no_course)
         findViewById<TextView>(R.id.taskDetailTitleText).text = task.title
-        findViewById<TextView>(R.id.taskDetailCourseText).text = courseName
+        findViewById<TextView>(R.id.taskDetailCourseText).text = resolvedCourseName
         findViewById<TextView>(R.id.taskDetailMetaText).text = getString(
             R.string.task_meta_format,
             TaskUiFormatter.typeLabel(this, task.type),
@@ -136,9 +148,12 @@ class TaskDetailActivity : AppCompatActivity() {
 
     private fun loadAttachments() {
         if (taskId <= 0L) return
-        val attachments = attachmentRepository.getAttachmentsByTask(taskId)
-        attachmentAdapter.submitList(attachments)
-        findViewById<View>(R.id.attachmentEmptyText).visibility = if (attachments.isEmpty()) View.VISIBLE else View.GONE
+        lifecycleScope.launch {
+            val attachments = withContext(Dispatchers.IO) { attachmentRepository.getAttachmentsByTask(taskId) }
+            if (isFinishing || isDestroyed) return@launch
+            attachmentAdapter.submitList(attachments)
+            findViewById<View>(R.id.attachmentEmptyText).visibility = if (attachments.isEmpty()) View.VISIBLE else View.GONE
+        }
     }
 
     private fun addPickedAttachment(uri: Uri) {
