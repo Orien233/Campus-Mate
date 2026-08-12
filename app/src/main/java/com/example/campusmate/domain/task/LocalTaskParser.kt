@@ -101,7 +101,7 @@ class LocalTaskParser(
     }
 
     private fun isNavigationText(text: String): Boolean {
-        return text.length <= 18 && NAVIGATION_PATTERN.matches(text.trim())
+        return text.length <= 30 && NAVIGATION_PATTERN.matches(text.trim())
     }
 
     private fun detectType(text: String): Int = when {
@@ -222,7 +222,7 @@ class LocalTaskParser(
         private const val HIGH_PRIORITY_WINDOW_MILLIS = 3 * 24 * 60 * 60 * 1000L
         private const val ONE_DAY_MILLIS = 24 * 60 * 60 * 1000L
         private val TASK_SIGNAL_PATTERN = Regex("""作业|实验|考试|测验|复习|预习|项目|大作业|课程设计|提交|截止|homework|assignment|experiment|\blab\b|\bexam\b|\bquiz\b|\breview\b|\bproject\b""", RegexOption.IGNORE_CASE)
-        private val NAVIGATION_PATTERN = Regex("""(?:作业|任务|课程|通知|首页|全部|已完成|待完成|我的作业)""")
+        private val NAVIGATION_PATTERN = Regex("""(?:首页|作业|任务|课程|通知|全部|已完成|待完成|我的作业)(?:[\s|/、>]+(?:首页|作业|任务|课程|通知|全部|已完成|待完成|我的作业))*""")
         private val TITLE_PATTERN = Regex("""(?:任务|作业|实验|考试|项目)(?:名称|标题|内容|题目)?\s*[:：]\s*([^\n；;]+)""")
         private val TITLE_PREFIX_PATTERN = Regex("""^(?:任务|作业|实验|考试|项目)(?:名称|标题|内容|题目)?\s*[:：]?\s*""")
         private val COURSE_PATTERN = Regex("""(?:课程|科目|课程名称|所属课程)\s*[:：]\s*([^\n；;,，]+?)(?=\s*(?:任务|作业|实验|考试|项目)(?:名称|标题|内容|题目)?\s*[:：]|[\n；;,，]|$)""")
