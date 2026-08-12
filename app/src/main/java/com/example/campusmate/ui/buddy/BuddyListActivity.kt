@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.campusmate.R
@@ -12,6 +13,9 @@ import com.example.campusmate.data.repository.StudyBuddyRepository
 import com.example.campusmate.ui.profile.ScanQrActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Lists confirmed study buddies and links to QR scanning. */
 class BuddyListActivity : AppCompatActivity() {
@@ -61,9 +65,11 @@ class BuddyListActivity : AppCompatActivity() {
     }
 
     private fun loadBuddies() {
-        val buddies = repository.getAllBuddies()
-        adapter.submitList(buddies)
-        emptyText.visibility = if (buddies.isEmpty()) View.VISIBLE else View.GONE
-        recyclerView.visibility = if (buddies.isEmpty()) View.GONE else View.VISIBLE
+        lifecycleScope.launch {
+            val buddies = withContext(Dispatchers.IO) { repository.getAllBuddies() }
+            adapter.submitList(buddies)
+            emptyText.visibility = if (buddies.isEmpty()) View.VISIBLE else View.GONE
+            recyclerView.visibility = if (buddies.isEmpty()) View.GONE else View.VISIBLE
+        }
     }
 }
