@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.example.campusmate.R
 import com.example.campusmate.data.model.StudyTask
 import com.example.campusmate.data.repository.DataMaintenanceRepository
@@ -28,6 +29,9 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Settings and demo-maintenance entry points backed by SharedPreferences and repositories. */
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
@@ -168,11 +172,17 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         reminderSwitch.setOnCheckedChangeListener { _, checked ->
             settingsRepository.setReminderEnabled(checked)
             if (checked) {
-                val scheduledCount = rescheduleFutureReminders()
-                showMessage(getString(R.string.settings_reminder_enabled_result, scheduledCount))
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val scheduledCount = withContext(Dispatchers.IO) { rescheduleFutureReminders() }
+                    if (!isAdded) return@launch
+                    showMessage(getString(R.string.settings_reminder_enabled_result, scheduledCount))
+                }
             } else {
-                cancelAllTaskReminders()
-                showMessage(getString(R.string.settings_reminder_disabled_result))
+                viewLifecycleOwner.lifecycleScope.launch {
+                    withContext(Dispatchers.IO) { cancelAllTaskReminders() }
+                    if (!isAdded) return@launch
+                    showMessage(getString(R.string.settings_reminder_disabled_result))
+                }
             }
             refreshPermissionStatus()
         }
@@ -338,20 +348,27 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun resetAndSeedDemoData() {
-        cancelAllTaskReminders()
-        dataMaintenanceRepository.clearAllData()
-        val result = DemoDataRepository(requireContext()).seedPresentationDemoData()
-        val scheduledCount = rescheduleFutureReminders()
-        refreshPermissionStatus()
-        showMessage(
-            getString(
-                R.string.settings_seed_demo_result,
-                result.courseCount,
-                result.taskCount,
-                result.recordCount,
-                scheduledCount
+        val appContext = requireContext().applicationContext
+        viewLifecycleOwner.lifecycleScope.launch {
+            val outcome = withContext(Dispatchers.IO) {
+                cancelAllTaskReminders()
+                dataMaintenanceRepository.clearAllData()
+                val result = DemoDataRepository(appContext).seedPresentationDemoData()
+                result to rescheduleFutureReminders()
+            }
+            if (!isAdded) return@launch
+            val (result, scheduledCount) = outcome
+            refreshPermissionStatus()
+            showMessage(
+                getString(
+                    R.string.settings_seed_demo_result,
+                    result.courseCount,
+                    result.taskCount,
+                    result.recordCount,
+                    scheduledCount
+                )
             )
-        )
+        }
     }
 
     private fun confirmClearData() {
@@ -366,9 +383,14 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun clearData() {
-        cancelAllTaskReminders()
-        val result = dataMaintenanceRepository.clearAllData()
-        showMessage(getString(R.string.settings_clear_data_result, result.totalCount))
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                cancelAllTaskReminders()
+                dataMaintenanceRepository.clearAllData()
+            }
+            if (!isAdded) return@launch
+            showMessage(getString(R.string.settings_clear_data_result, result.totalCount))
+        }
     }
 
     private fun rescheduleFutureReminders(): Int {
