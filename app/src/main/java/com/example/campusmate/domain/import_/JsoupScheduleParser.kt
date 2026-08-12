@@ -16,17 +16,20 @@ class JsoupScheduleParser : ScheduleParser {
 
         val drafts = buildList {
             // CampusMate fixture HTML can use explicit data-* attributes for stable parsing.
-            document.selectFirst("table[data-campusmate-schedule]")?.let { addAll(parseCampusMateSampleTable(it)) }
+            document.select("table[data-campusmate-schedule]").forEach { addAll(parseCampusMateSampleTable(it)) }
             findBjtuScheduleTable(document)?.let { addAll(parseBjtuScheduleTable(it)) }
-            if (isEmpty()) {
-                // Fallback for pages that present schedule time in list/table cells (e.g. div.ellipsis title).
-                addAll(parseBjtuEllipsisTitles(document))
-            }
-            if (isEmpty()) {
-                // Generic fallback: try matrix schedule parsing on the first table.
-                document.selectFirst("table")?.let { addAll(parseMatrixTable(it)) }
-            }
-        }.distinctBy { draftKey(it) }
+            // Some systems use a title attribute for the complete time/location string.
+            addAll(parseBjtuEllipsisTitles(document))
+            // Pages often have a non-schedule table before the real timetable. Score every
+            // candidate instead of only inspecting the first table.
+            document.select("table")
+                .filterNot { it.hasAttr("data-campusmate-schedule") }
+                .sortedByDescending(::scheduleTableScore)
+                .filter { scheduleTableScore(it) > 0 }
+                .forEach { addAll(parseMatrixTable(it)) }
+            // Mobile and newer academic-system pages frequently use cards/divs rather than a grid.
+            addAll(parseStructuredCourseBlocks(document))
+        }.distinctBy(::draftKey)
 
         if (drafts.isEmpty()) {
             throw ScheduleParseException("未识别到课程。请确认页面包含课表表格或课程时间信息。")
@@ -232,12 +235,13 @@ class JsoupScheduleParser : ScheduleParser {
     private fun parseMatrixTable(table: Element): List<CourseDraft> {
         val rows = table.select("tr")
         if (rows.size < 2) return emptyList()
-        val headerCells = rows.first()?.select("th,td").orEmpty()
+        val headerCells = expandCells(rows.first()?.let(::directCells).orEmpty())
         val weekdayByColumn = headerCells.map { parseWeekday(it.text()) }
+        if (weekdayByColumn.count { it != null } == 0) return emptyList()
 
         val drafts = mutableListOf<CourseDraft>()
         rows.drop(1).forEach { row ->
-            val cells = row.select("th,td")
+            val cells = expandCells(directCells(row))
             if (cells.size < 2) return@forEach
             val sectionRange = parseSectionRange(cells[0].text()) ?: return@forEach
             cells.drop(1).forEachIndexed { index, cell ->
@@ -248,6 +252,60 @@ class JsoupScheduleParser : ScheduleParser {
             }
         }
         return drafts
+    }
+
+    private fun expandCells(cells: List<Element>): List<Element> {
+        return cells.flatMap { cell ->
+            List(cell.attr("colspan").toIntOrNull()?.coerceIn(1, 7) ?: 1) { cell }
+        }
+    }
+
+    private fun directCells(row: Element): List<Element> = row.children().filter { element ->
+        element.tagName().equals("th", ignoreCase = true) || element.tagName().equals("td", ignoreCase = true)
+    }
+
+    private fun scheduleTableScore(table: Element): Int {
+        val rows = table.select("tr")
+        if (rows.size < 2) return 0
+        val text = table.text()
+        val weekdayCount = WEEKDAY_MARKER_PATTERN.findAll(text).count()
+        val sectionCount = SECTION_RANGE_PATTERN.findAll(text).count()
+        return weekdayCount * 3 + sectionCount * 2 + if (text.contains("课表")) 3 else 0
+    }
+
+    private fun parseStructuredCourseBlocks(document: Document): List<CourseDraft> {
+        val blocks = document.select(
+            "[data-weekday], [data-day], [data-course], [data-course-name], " +
+                "[class*=course], [class*=lesson], [class*=schedule]"
+        ).filter { it.closest("table[data-campusmate-schedule]") == null }
+        return blocks.mapNotNull { block ->
+            val text = block.wholeText().replace('\u00A0', ' ').trim()
+            if (text.length !in 3..800) return@mapNotNull null
+            val weekday = block.attr("data-weekday").toIntOrNull()
+                ?: block.attr("data-day").toIntOrNull()
+                ?: parseWeekday(text)
+                ?: return@mapNotNull null
+            val sectionRange = parseSectionRange(block.attr("data-section").ifBlank { text }) ?: return@mapNotNull null
+            val name = block.attr("data-course-name").trim().takeIf { it.isNotBlank() }
+                ?: block.attr("data-course").trim().takeIf { it.isNotBlank() }
+                ?: block.selectFirst(".course-name, .lesson-name, .course-title, .title, .name, h1, h2, h3, h4")
+                    ?.text()?.trim()?.takeIf { it.isNotBlank() }
+                ?: extractGenericCourseName(text.lines().map { it.trim() }.filter { it.isNotBlank() })
+            if (name.isBlank() || isGenericMetadataLine(name)) return@mapNotNull null
+            val weekRange = parseWeekRange(text)
+            CourseDraft(
+                name = stripCourseCodePrefix(name),
+                teacher = extractGenericTeacher(text),
+                classroom = extractGenericClassroom(text, text.lines()),
+                weekday = weekday,
+                startSection = sectionRange.first,
+                endSection = sectionRange.second,
+                startWeek = weekRange?.first ?: 1,
+                endWeek = weekRange?.second ?: 18,
+                weekType = parseWeekType(text),
+                sourceText = text
+            )
+        }
     }
 
     private fun parseGenericCourseText(text: String, weekday: Int, startSection: Int, endSection: Int): CourseDraft? {
@@ -324,13 +382,13 @@ class JsoupScheduleParser : ScheduleParser {
 
     private fun parseWeekday(text: String): Int? {
         return when {
-            text.contains("星期一") || text.contains("周一") || text.contains("Mon", ignoreCase = true) -> 1
-            text.contains("星期二") || text.contains("周二") || text.contains("Tue", ignoreCase = true) -> 2
-            text.contains("星期三") || text.contains("周三") || text.contains("Wed", ignoreCase = true) -> 3
-            text.contains("星期四") || text.contains("周四") || text.contains("Thu", ignoreCase = true) -> 4
-            text.contains("星期五") || text.contains("周五") || text.contains("Fri", ignoreCase = true) -> 5
-            text.contains("星期六") || text.contains("周六") || text.contains("Sat", ignoreCase = true) -> 6
-            text.contains("星期日") || text.contains("星期天") || text.contains("周日") || text.contains("Sun", ignoreCase = true) -> 7
+            text.contains("星期一") || text.contains("周一") || WEEKDAY_NUMBER_PATTERN.getValue(1).containsMatchIn(text) || text.contains("Mon", ignoreCase = true) -> 1
+            text.contains("星期二") || text.contains("周二") || WEEKDAY_NUMBER_PATTERN.getValue(2).containsMatchIn(text) || text.contains("Tue", ignoreCase = true) -> 2
+            text.contains("星期三") || text.contains("周三") || WEEKDAY_NUMBER_PATTERN.getValue(3).containsMatchIn(text) || text.contains("Wed", ignoreCase = true) -> 3
+            text.contains("星期四") || text.contains("周四") || WEEKDAY_NUMBER_PATTERN.getValue(4).containsMatchIn(text) || text.contains("Thu", ignoreCase = true) -> 4
+            text.contains("星期五") || text.contains("周五") || WEEKDAY_NUMBER_PATTERN.getValue(5).containsMatchIn(text) || text.contains("Fri", ignoreCase = true) -> 5
+            text.contains("星期六") || text.contains("周六") || WEEKDAY_NUMBER_PATTERN.getValue(6).containsMatchIn(text) || text.contains("Sat", ignoreCase = true) -> 6
+            text.contains("星期日") || text.contains("星期天") || text.contains("周日") || text.contains("周天") || WEEKDAY_NUMBER_PATTERN.getValue(7).containsMatchIn(text) || text.contains("Sun", ignoreCase = true) -> 7
             else -> null
         }
     }
@@ -373,10 +431,10 @@ class JsoupScheduleParser : ScheduleParser {
     }
 
     companion object {
-        private val SECTION_RANGE_PATTERN = Regex("""第?\s*(\d+)\s*节?(?:\s*[-~到]\s*(\d+)\s*节?)?""")
+        private val SECTION_RANGE_PATTERN = Regex("""第?\s*(\d+)\s*节?(?:\s*[-~—至到、,，]\s*(\d+)\s*节?)?""")
         private val SECTION_IN_TITLE_PATTERN = Regex("""第\s*(\d+)\s*节""")
-        private val WEEK_RANGE_PATTERN = Regex("""第\s*(\d{1,2})\s*-\s*(\d{1,2})\s*周""")
-        private val WEEK_RANGE_WITHOUT_PREFIX_PATTERN = Regex("""(?:周次\s*[:：]?\s*)?(\d{1,2})\s*[-~到]\s*(\d{1,2})\s*周""")
+        private val WEEK_RANGE_PATTERN = Regex("""第\s*(\d{1,2})\s*[-~—至到]\s*(\d{1,2})\s*周""")
+        private val WEEK_RANGE_WITHOUT_PREFIX_PATTERN = Regex("""(?:周次\s*[:：]?\s*)?(\d{1,2})\s*[-~—至到]\s*(\d{1,2})\s*周""")
         private val WEEK_SINGLE_PATTERN = Regex("""第\s*(\d{1,2})\s*周""")
         private val COURSE_CODE_PATTERN = Regex("""^[A-Za-z]{1,4}\d{3,4}[A-Za-z]?$""")
         private val ROOM_CODE_PATTERN = Regex("""^[A-Za-z]{0,6}\d{2,4}$""")
@@ -385,5 +443,9 @@ class JsoupScheduleParser : ScheduleParser {
             Regex("""(?:教师|老师|授课教师|任课教师|Teacher|Instructor)\s*[:：]?\s*([^\n;；,，]+)""", RegexOption.IGNORE_CASE)
         private val GENERIC_CLASSROOM_PATTERN =
             Regex("""(?:上课地点|地点|教室|校区|楼宇|教学楼|Venue|Location|Room)\s*[:：]?\s*([^\n;；]+)""", RegexOption.IGNORE_CASE)
+        private val WEEKDAY_MARKER_PATTERN = Regex("""(?:星期|周)\s*(?:[一二三四五六日天]|[1-7])|Mon|Tue|Wed|Thu|Fri|Sat|Sun""", RegexOption.IGNORE_CASE)
+        private val WEEKDAY_NUMBER_PATTERN = (1..7).associateWith { day ->
+            Regex("""(?:星期|周)\s*$day(?!\d)""")
+        }
     }
 }
