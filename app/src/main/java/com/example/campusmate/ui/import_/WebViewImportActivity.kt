@@ -14,6 +14,7 @@ import android.webkit.WebStorage
 import android.webkit.WebViewDatabase
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.WebSettings
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.example.campusmate.R
@@ -111,9 +112,15 @@ class WebViewImportActivity : AppCompatActivity() {
 
     private fun setupWebView() {
         extractor.prepare(webView)
+        webView.settings.allowFileAccess = false
+        webView.settings.allowContentAccess = false
+        webView.settings.allowFileAccessFromFileURLs = false
+        webView.settings.allowUniversalAccessFromFileURLs = false
+        webView.settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                return false
+                val scheme = request?.url?.scheme?.lowercase()
+                return scheme != "http" && scheme != "https"
             }
         }
     }
@@ -162,7 +169,7 @@ class WebViewImportActivity : AppCompatActivity() {
         val withScheme = if (input.startsWith("http://") || input.startsWith("https://")) input else "https://$input"
         return try {
             val uri = Uri.parse(withScheme)
-            if (uri.scheme.isNullOrBlank() || uri.host.isNullOrBlank()) null else withScheme
+            if (uri.scheme?.lowercase() !in setOf("http", "https") || uri.host.isNullOrBlank()) null else withScheme
         } catch (_: Exception) {
             null
         }

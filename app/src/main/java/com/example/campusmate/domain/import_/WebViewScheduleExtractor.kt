@@ -67,8 +67,20 @@ class WebViewScheduleExtractor {
     private fun extractBestHtmlOnce(webView: WebView, onResult: (String?) -> Unit) {
         val script = buildExtractBestHtmlScript()
         webView.evaluateJavascript(script) { value ->
-            onResult(decodeJsResult(value))
+            onResult(sanitizeHtml(decodeJsResult(value)))
         }
+    }
+
+    private fun sanitizeHtml(html: String?): String? {
+        val value = html?.trim().orEmpty()
+        if (value.isBlank()) return null
+        return value
+            .replace(
+                Regex("(?is)<(script|style|noscript|iframe)\\b[^>]*>.*?</\\1\\s*>"),
+                ""
+            )
+            .take(MAX_HTML_LENGTH)
+            .takeIf { it.isNotBlank() }
     }
 
     private fun decodeJsResult(value: String?): String? {
@@ -144,14 +156,25 @@ class WebViewScheduleExtractor {
                   var s = scoreTable(tables[i]);
                   if (s > bestScore) { bestScore = s; bestTable = tables[i]; }
                 }
-                if (bestTable && bestScore >= 4) {
-                  return bestTable.outerHTML;
+                function clean(node) {
+                  var clone = node.cloneNode(true);
+                  var remove = clone.querySelectorAll('script,style,noscript,iframe,input,textarea,select');
+                  for (var j=remove.length-1;j>=0;j--) remove[j].remove();
+                  return clone;
                 }
-                return document.documentElement.outerHTML;
+                if (bestTable && bestScore >= 4) {
+                  return clean(bestTable).outerHTML.slice(0, 64000);
+                }
+                var root = document.body || document.documentElement;
+                return root ? clean(root).outerHTML.slice(0, 64000) : "";
               } catch (e) {
-                return document.documentElement ? document.documentElement.outerHTML : "";
+                return "";
               }
             })();
         """.trimIndent()
+    }
+
+    companion object {
+        private const val MAX_HTML_LENGTH = 64_000
     }
 }

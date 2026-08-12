@@ -103,9 +103,15 @@ class TaskWebViewParseActivity : AppCompatActivity() {
         webView.settings.domStorageEnabled = true
         webView.settings.useWideViewPort = true
         webView.settings.loadWithOverviewMode = true
+        webView.settings.allowFileAccess = false
+        webView.settings.allowContentAccess = false
+        webView.settings.allowFileAccessFromFileURLs = false
+        webView.settings.allowUniversalAccessFromFileURLs = false
+        webView.settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                return false
+                val scheme = request?.url?.scheme?.lowercase()
+                return scheme != "http" && scheme != "https"
             }
         }
     }
@@ -149,7 +155,7 @@ class TaskWebViewParseActivity : AppCompatActivity() {
         val withScheme = if (input.startsWith("http://") || input.startsWith("https://")) input else "https://$input"
         return try {
             val uri = Uri.parse(withScheme)
-            if (uri.scheme.isNullOrBlank() || uri.host.isNullOrBlank()) null else withScheme
+            if (uri.scheme?.lowercase() !in setOf("http", "https") || uri.host.isNullOrBlank()) null else withScheme
         } catch (_: Exception) {
             null
         }
@@ -162,12 +168,13 @@ class TaskWebViewParseActivity : AppCompatActivity() {
         }
         Snackbar.make(rootView, R.string.task_ai_webview_extracting, Snackbar.LENGTH_SHORT).show()
         extractPageSnapshot { snapshot ->
-            if (snapshot.isNullOrBlank()) {
+            val safeSnapshot = snapshot?.let(::sanitizePageSnapshot)
+            if (safeSnapshot.isNullOrBlank()) {
                 Snackbar.make(rootView, R.string.task_ai_webview_extract_failed, Snackbar.LENGTH_LONG).show()
                 return@extractPageSnapshot
             }
             maybeShowAiDisclosure {
-                parseWithLlm(snapshot)
+                parseWithLlm(safeSnapshot)
             }
         }
     }
@@ -177,12 +184,16 @@ class TaskWebViewParseActivity : AppCompatActivity() {
             (function(){
               try {
                 var title = document.title || "";
-                var text = document.body ? (document.body.innerText || "") : "";
-                var html = document.documentElement ? (document.documentElement.outerHTML || "") : "";
+                var root = document.body ? document.body.cloneNode(true) : null;
+                if (!root) return "";
+                var remove = root.querySelectorAll('script,style,noscript,iframe,input,textarea,select');
+                for (var i=remove.length-1;i>=0;i--) remove[i].remove();
+                var text = root.innerText || "";
+                var html = root.innerHTML || "";
                 return JSON.stringify({
-                  title: title,
+                  title: title.slice(0, 200),
                   text: text.slice(0, 12000),
-                  html: html.slice(0, 12000)
+                  html: html.slice(0, 6000)
                 });
               } catch (e) {
                 return "";
@@ -192,6 +203,20 @@ class TaskWebViewParseActivity : AppCompatActivity() {
         webView.evaluateJavascript(script) { value ->
             onResult(decodeJsResult(value))
         }
+    }
+
+    private fun sanitizePageSnapshot(raw: String): String? {
+        val parsed = try {
+            JSONObject(raw)
+        } catch (_: Exception) {
+            return raw.take(MAX_PAGE_SNAPSHOT_LENGTH).takeIf { it.isNotBlank() }
+        }
+        return JSONObject()
+            .put("title", parsed.optString("title").take(200))
+            .put("text", parsed.optString("text").take(MAX_PAGE_TEXT_LENGTH))
+            .put("html", parsed.optString("html").take(MAX_PAGE_HTML_LENGTH))
+            .toString()
+            .take(MAX_PAGE_SNAPSHOT_LENGTH)
     }
 
     private fun decodeJsResult(value: String?): String? {
@@ -226,12 +251,14 @@ class TaskWebViewParseActivity : AppCompatActivity() {
     }
 
     private fun parseWithLlm(snapshot: String) {
+        if (isFinishing || isDestroyed) return
         executor.execute {
             try {
                 val result = taskParseService.parseWithLlm(snapshot)
                 val draft = result.drafts.first()
                 val warningSummary = buildWarningSummary(result.drafts.size, result.warnings)
                 runOnUiThread {
+                    if (isFinishing || isDestroyed) return@runOnUiThread
                     Toast.makeText(this, R.string.task_ai_parse_prefill_ready, Toast.LENGTH_SHORT).show()
                     setResult(
                         RESULT_OK,
@@ -336,5 +363,8 @@ class TaskWebViewParseActivity : AppCompatActivity() {
         const val EXTRA_WARNINGS = "extra_warnings"
         private const val PREFS_NAME = "campusmate_task_ai_parse"
         private const val KEY_AI_DISCLOSURE_SHOWN = "ai_disclosure_shown"
+        private const val MAX_PAGE_TEXT_LENGTH = 12_000
+        private const val MAX_PAGE_HTML_LENGTH = 6_000
+        private const val MAX_PAGE_SNAPSHOT_LENGTH = 20_000
     }
 }
