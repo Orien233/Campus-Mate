@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.campusmate.R
 import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.repository.CourseRepository
@@ -13,6 +14,9 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Read-only course detail screen with edit and soft-delete actions. */
 class CourseDetailActivity : AppCompatActivity() {
@@ -60,14 +64,16 @@ class CourseDetailActivity : AppCompatActivity() {
     }
 
     private fun loadCourse() {
-        val course = repository.getCourseById(courseId)
-        if (course == null) {
-            Snackbar.make(rootView, R.string.course_not_found, Snackbar.LENGTH_SHORT).show()
-            finish()
-            return
+        lifecycleScope.launch {
+            val course = withContext(Dispatchers.IO) { repository.getCourseById(courseId) }
+            if (course == null) {
+                Snackbar.make(rootView, R.string.course_not_found, Snackbar.LENGTH_SHORT).show()
+                finish()
+                return@launch
+            }
+            currentCourse = course
+            bindCourse(course)
         }
-        currentCourse = course
-        bindCourse(course)
     }
 
     private fun bindCourse(course: Course) {
@@ -89,11 +95,14 @@ class CourseDetailActivity : AppCompatActivity() {
             .setMessage(getString(R.string.course_delete_message, course.name))
             .setNegativeButton(R.string.action_cancel, null)
             .setPositiveButton(R.string.action_delete) { _, _ ->
-                if (repository.deleteCourse(course.id)) {
-                    setResult(RESULT_OK)
-                    finish()
-                } else {
-                    Snackbar.make(rootView, R.string.course_delete_failed, Snackbar.LENGTH_SHORT).show()
+                lifecycleScope.launch {
+                    val deleted = withContext(Dispatchers.IO) { repository.deleteCourse(course.id) }
+                    if (deleted) {
+                        setResult(RESULT_OK)
+                        finish()
+                    } else {
+                        Snackbar.make(rootView, R.string.course_delete_failed, Snackbar.LENGTH_SHORT).show()
+                    }
                 }
             }
             .show()

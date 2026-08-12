@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.campusmate.R
 import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.repository.CourseRepository
@@ -13,6 +14,9 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Screen for creating and editing courses with validation and conflict warnings. */
 class CourseEditActivity : AppCompatActivity() {
@@ -31,6 +35,7 @@ class CourseEditActivity : AppCompatActivity() {
     private lateinit var weekTypeSpinner: Spinner
     private lateinit var colorSpinner: Spinner
     private lateinit var noteInput: TextInputEditText
+    private lateinit var saveButton: MaterialButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,19 +46,24 @@ class CourseEditActivity : AppCompatActivity() {
         bindViews()
         setupToolbar()
         setupSpinners()
+        saveButton = findViewById(R.id.saveCourseButton)
 
         if (editingCourseId > 0L) {
-            editingCourse = repository.getCourseById(editingCourseId)
-            val course = editingCourse
-            if (course == null) {
-                showMessage(getString(R.string.course_not_found))
-                finish()
-                return
+            saveButton.isEnabled = false
+            lifecycleScope.launch {
+                val course = withContext(Dispatchers.IO) { repository.getCourseById(editingCourseId) }
+                if (course == null) {
+                    showMessage(getString(R.string.course_not_found))
+                    finish()
+                    return@launch
+                }
+                editingCourse = course
+                bindCourse(course)
+                saveButton.isEnabled = true
             }
-            bindCourse(course)
         }
 
-        findViewById<MaterialButton>(R.id.saveCourseButton).setOnClickListener {
+        saveButton.setOnClickListener {
             saveWithConflictCheck()
         }
     }
@@ -122,17 +132,22 @@ class CourseEditActivity : AppCompatActivity() {
 
     private fun saveWithConflictCheck() {
         val course = collectCourseOrShowError() ?: return
-        if (repository.hasTimeConflict(course)) {
-            MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.course_conflict_title)
-                .setMessage(R.string.course_conflict_message)
-                .setNegativeButton(R.string.course_conflict_back, null)
-                .setPositiveButton(R.string.course_conflict_save_anyway) { _, _ ->
-                    persistCourse(course)
-                }
-                .show()
-        } else {
-            persistCourse(course)
+        saveButton.isEnabled = false
+        lifecycleScope.launch {
+            val hasConflict = withContext(Dispatchers.IO) { repository.hasTimeConflict(course) }
+            if (hasConflict) {
+                MaterialAlertDialogBuilder(this@CourseEditActivity)
+                    .setTitle(R.string.course_conflict_title)
+                    .setMessage(R.string.course_conflict_message)
+                    .setNegativeButton(R.string.course_conflict_back) { _, _ -> saveButton.isEnabled = true }
+                    .setPositiveButton(R.string.course_conflict_save_anyway) { _, _ ->
+                        persistCourse(course)
+                    }
+                    .setOnCancelListener { saveButton.isEnabled = true }
+                    .show()
+            } else {
+                persistCourse(course)
+            }
         }
     }
 
@@ -181,20 +196,23 @@ class CourseEditActivity : AppCompatActivity() {
     }
 
     private fun persistCourse(course: Course) {
-        try {
-            val success = if (course.id > 0L) {
-                repository.updateCourse(course)
-            } else {
-                repository.addCourse(course) > 0L
+        lifecycleScope.launch {
+            try {
+                val success = withContext(Dispatchers.IO) {
+                    if (course.id > 0L) repository.updateCourse(course)
+                    else repository.addCourse(course) > 0L
+                }
+                if (success) {
+                    setResult(RESULT_OK)
+                    finish()
+                } else {
+                    saveButton.isEnabled = true
+                    showMessage(getString(R.string.course_save_failed))
+                }
+            } catch (error: IllegalArgumentException) {
+                saveButton.isEnabled = true
+                showMessage(error.message ?: getString(R.string.course_save_failed))
             }
-            if (success) {
-                setResult(RESULT_OK)
-                finish()
-            } else {
-                showMessage(getString(R.string.course_save_failed))
-            }
-        } catch (error: IllegalArgumentException) {
-            showMessage(error.message ?: getString(R.string.course_save_failed))
         }
     }
 
