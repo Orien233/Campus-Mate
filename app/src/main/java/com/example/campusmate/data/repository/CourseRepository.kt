@@ -60,6 +60,19 @@ class CourseRepository(context: Context) {
             null,
             null
         )
+        if (rows > 0) {
+            // Keep active tasks valid after a course is soft-deleted. Historical focus/study
+            // records intentionally retain their course id for statistics.
+            resolver.update(
+                CampusMateContract.StudyTasks.CONTENT_URI,
+                ContentValues().apply {
+                    putNull(CampusMateContract.StudyTasks.COLUMN_COURSE_ID)
+                    put(CampusMateContract.StudyTasks.COLUMN_UPDATED_AT, DateTimeUtils.nowMillis())
+                },
+                "${CampusMateContract.StudyTasks.COLUMN_COURSE_ID}=? AND ${CampusMateContract.StudyTasks.COLUMN_IS_DELETED}=?",
+                arrayOf(courseId.toString(), "0")
+            )
+        }
         return rows > 0
     }
 

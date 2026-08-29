@@ -7,6 +7,7 @@ import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.example.campusmate.R
 import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.repository.CourseRepository
@@ -16,6 +17,9 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Shows the user's course list and weekday filter. */
 class CourseListFragment : Fragment(R.layout.fragment_course_list) {
@@ -54,7 +58,14 @@ class CourseListFragment : Fragment(R.layout.fragment_course_list) {
     }
 
     private fun loadCourses() {
-        val allCourses = repository.getAllCourses()
+        viewLifecycleOwner.lifecycleScope.launch {
+            val allCourses = withContext(Dispatchers.IO) { repository.getAllCourses() }
+            if (!isAdded) return@launch
+            bindCourses(allCourses)
+        }
+    }
+
+    private fun bindCourses(allCourses: List<Course>) {
         totalCountText.text = allCourses.size.toString()
         todayCountText.text = allCourses.count { it.weekday == DateTimeUtils.currentWeekday() }.toString()
         visibleCountText.text = allCourses.size.toString()
@@ -216,11 +227,15 @@ class CourseListFragment : Fragment(R.layout.fragment_course_list) {
             .setMessage(getString(R.string.course_delete_message, course.name))
             .setNegativeButton(R.string.action_cancel, null)
             .setPositiveButton(R.string.action_delete) { _, _ ->
-                if (repository.deleteCourse(course.id)) {
-                    Snackbar.make(requireView(), R.string.course_delete_success, Snackbar.LENGTH_SHORT).show()
-                    loadCourses()
-                } else {
-                    Snackbar.make(requireView(), R.string.course_delete_failed, Snackbar.LENGTH_SHORT).show()
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val deleted = withContext(Dispatchers.IO) { repository.deleteCourse(course.id) }
+                    if (!isAdded) return@launch
+                    if (deleted) {
+                        Snackbar.make(requireView(), R.string.course_delete_success, Snackbar.LENGTH_SHORT).show()
+                        loadCourses()
+                    } else {
+                        Snackbar.make(requireView(), R.string.course_delete_failed, Snackbar.LENGTH_SHORT).show()
+                    }
                 }
             }
             .show()

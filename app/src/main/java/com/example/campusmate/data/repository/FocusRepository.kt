@@ -59,6 +59,41 @@ class FocusRepository(context: Context) {
         return sessions.firstOrNull()
     }
 
+    fun getActiveSessions(): List<FocusSession> {
+        val sessions = mutableListOf<FocusSession>()
+        resolver.query(
+            CampusMateContract.FocusSessions.CONTENT_URI,
+            null,
+            "${CampusMateContract.FocusSessions.COLUMN_STATUS} IN (?, ?)",
+            arrayOf(
+                FocusSession.STATUS_RUNNING.toString(),
+                FocusSession.STATUS_PAUSED.toString()
+            ),
+            "${CampusMateContract.FocusSessions.COLUMN_CREATED_AT} ASC"
+        )?.use { cursor ->
+            while (cursor.moveToNext()) {
+                sessions += cursor.toFocusSession()
+            }
+        }
+        return sessions
+    }
+
+    private fun android.database.Cursor.toFocusSession(): FocusSession {
+        return FocusSession(
+            id = getRequiredLong(BaseColumns._ID),
+            taskId = getNullableLong(CampusMateContract.FocusSessions.COLUMN_TASK_ID),
+            courseId = getNullableLong(CampusMateContract.FocusSessions.COLUMN_COURSE_ID),
+            plannedDurationSec = getRequiredInt(CampusMateContract.FocusSessions.COLUMN_PLANNED_DURATION_SEC),
+            actualDurationSec = getRequiredInt(CampusMateContract.FocusSessions.COLUMN_ACTUAL_DURATION_SEC),
+            startAt = getNullableLong(CampusMateContract.FocusSessions.COLUMN_START_AT),
+            endAt = getNullableLong(CampusMateContract.FocusSessions.COLUMN_END_AT),
+            status = getRequiredInt(CampusMateContract.FocusSessions.COLUMN_STATUS),
+            pauseCount = getRequiredInt(CampusMateContract.FocusSessions.COLUMN_PAUSE_COUNT),
+            interruptCount = getRequiredInt(CampusMateContract.FocusSessions.COLUMN_INTERRUPT_COUNT),
+            createdAt = getRequiredLong(CampusMateContract.FocusSessions.COLUMN_CREATED_AT)
+        )
+    }
+
     private fun FocusSession.toContentValues(createdAt: Long? = null): ContentValues {
         return ContentValues().apply {
             if (taskId == null) putNull(CampusMateContract.FocusSessions.COLUMN_TASK_ID) else put(CampusMateContract.FocusSessions.COLUMN_TASK_ID, taskId)

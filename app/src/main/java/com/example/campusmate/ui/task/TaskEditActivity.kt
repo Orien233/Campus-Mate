@@ -6,12 +6,11 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.campusmate.R
 import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.model.StudyTask
@@ -25,9 +24,13 @@ import com.example.campusmate.util.DateTimeUtils
 import com.example.campusmate.util.PermissionUtils
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import java.util.Calendar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Screen for creating and editing tasks, including optional reminder scheduling. */
 class TaskEditActivity : AppCompatActivity() {
@@ -40,18 +43,22 @@ class TaskEditActivity : AppCompatActivity() {
     private lateinit var rootView: View
     private lateinit var titleInput: TextInputEditText
     private lateinit var descriptionInput: TextInputEditText
-    private lateinit var courseSpinner: Spinner
-    private lateinit var typeSpinner: Spinner
-    private lateinit var prioritySpinner: Spinner
+    private lateinit var courseValueText: TextView
+    private lateinit var typeValueText: TextView
+    private lateinit var priorityValueText: TextView
     private lateinit var dueTimeText: TextView
     private lateinit var remindTimeText: TextView
     private lateinit var aiPrefillStatusText: TextView
     private lateinit var attachmentStatusText: TextView
+    private lateinit var saveButton: MaterialButton
 
     private var editingTaskId: Long = 0L
     private var editingTask: StudyTask? = null
     private var initialTaskType: Int = StudyTask.TYPE_HOMEWORK
     private var courses: List<Course> = emptyList()
+    private var selectedCourseId: Long? = null
+    private var selectedType: Int = StudyTask.TYPE_HOMEWORK
+    private var selectedPriority: Int = StudyTask.PRIORITY_NORMAL
     private var selectedDueAt: Long? = null
     private var selectedRemindAt: Long? = null
     private val pendingAttachments = mutableListOf<PendingAttachment>()
@@ -85,26 +92,34 @@ class TaskEditActivity : AppCompatActivity() {
         reminderScheduler = AlarmReminderScheduler(this)
         editingTaskId = intent.getLongExtra(EXTRA_TASK_ID, 0L)
         initialTaskType = intent.getIntExtra(EXTRA_TASK_TYPE, StudyTask.TYPE_HOMEWORK)
+        selectedType = initialTaskType.coerceIn(0, 5)
 
         bindViews()
         setupToolbar()
-        setupSpinners()
+        saveButton = findViewById(R.id.saveTaskButton)
+        loadCourses()
+        setupSelectionRows()
         setupDateButtons()
         setupAiParseAction()
         setupAttachmentAction()
+        updateSelectionLabels()
 
         if (editingTaskId > 0L) {
-            editingTask = taskRepository.getTaskById(editingTaskId)
-            val task = editingTask
-            if (task == null) {
-                showMessage(getString(R.string.task_not_found))
-                finish()
-                return
+            saveButton.isEnabled = false
+            lifecycleScope.launch {
+                val task = withContext(Dispatchers.IO) { taskRepository.getTaskById(editingTaskId) }
+                if (task == null) {
+                    showMessage(getString(R.string.task_not_found))
+                    finish()
+                    return@launch
+                }
+                editingTask = task
+                bindTask(task)
+                saveButton.isEnabled = true
             }
-            bindTask(task)
         }
 
-        findViewById<MaterialButton>(R.id.saveTaskButton).setOnClickListener {
+        saveButton.setOnClickListener {
             saveTask()
         }
     }
@@ -118,9 +133,9 @@ class TaskEditActivity : AppCompatActivity() {
         rootView = findViewById(R.id.taskEditRoot)
         titleInput = findViewById(R.id.taskTitleInput)
         descriptionInput = findViewById(R.id.taskDescriptionInput)
-        courseSpinner = findViewById(R.id.taskCourseSpinner)
-        typeSpinner = findViewById(R.id.taskTypeSpinner)
-        prioritySpinner = findViewById(R.id.taskPrioritySpinner)
+        courseValueText = findViewById(R.id.taskCourseValueText)
+        typeValueText = findViewById(R.id.taskTypeValueText)
+        priorityValueText = findViewById(R.id.taskPriorityValueText)
         dueTimeText = findViewById(R.id.taskDueTimeText)
         remindTimeText = findViewById(R.id.taskRemindTimeText)
         aiPrefillStatusText = findViewById(R.id.taskAiPrefillStatusText)
@@ -134,18 +149,66 @@ class TaskEditActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
-    private fun setupSpinners() {
-        courses = courseRepository.getAllCourses()
-        val courseLabels = listOf(getString(R.string.task_no_course)) + courses.map { it.name }
-        courseSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, courseLabels)
-        typeSpinner.adapter = ArrayAdapter.createFromResource(this, R.array.task_type_labels, android.R.layout.simple_spinner_dropdown_item)
-        prioritySpinner.adapter = ArrayAdapter.createFromResource(this, R.array.task_priority_labels, android.R.layout.simple_spinner_dropdown_item)
-        typeSpinner.setSelection(initialTaskType.coerceIn(0, 5))
-        prioritySpinner.setSelection(StudyTask.PRIORITY_NORMAL)
+    private fun loadCourses() {
+        lifecycleScope.launch {
+            courses = withContext(Dispatchers.IO) { courseRepository.getAllCourses() }
+            if (!isFinishing && !isDestroyed) updateSelectionLabels()
+        }
+    }
+
+    private fun setupSelectionRows() {
+        findViewById<View>(R.id.taskCourseRow).setOnClickListener {
+            showCourseSelectionDialog()
+        }
+        findViewById<View>(R.id.taskTypeRow).setOnClickListener {
+            showTypeSelectionDialog()
+        }
+        findViewById<View>(R.id.taskPriorityRow).setOnClickListener {
+            showPrioritySelectionDialog()
+        }
+    }
+
+    private fun showCourseSelectionDialog() {
+        val labels = listOf(getString(R.string.task_no_course)) + courses.map { it.name }
+        val selectedIndex = selectedCourseId?.let { courseId ->
+            courses.indexOfFirst { it.id == courseId }.takeIf { it >= 0 }?.plus(1)
+        } ?: 0
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.task_course)
+            .setSingleChoiceItems(labels.toTypedArray(), selectedIndex) { dialog, which ->
+                selectedCourseId = if (which == 0) null else courses[which - 1].id
+                updateSelectionLabels()
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun showTypeSelectionDialog() {
+        val labels = resources.getStringArray(R.array.task_type_labels)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.task_type)
+            .setSingleChoiceItems(labels, selectedType.coerceIn(labels.indices)) { dialog, which ->
+                selectedType = which
+                updateSelectionLabels()
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun showPrioritySelectionDialog() {
+        val labels = resources.getStringArray(R.array.task_priority_labels)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.task_priority)
+            .setSingleChoiceItems(labels, selectedPriority.coerceIn(labels.indices)) { dialog, which ->
+                selectedPriority = which
+                updateSelectionLabels()
+                dialog.dismiss()
+            }
+            .show()
     }
 
     private fun setupDateButtons() {
-        findViewById<MaterialButton>(R.id.pickDueTimeButton).setOnClickListener {
+        findViewById<View>(R.id.pickDueTimeRow).setOnClickListener {
             pickDateTime(selectedDueAt) {
                 selectedDueAt = it
                 updateDateLabels()
@@ -155,7 +218,7 @@ class TaskEditActivity : AppCompatActivity() {
             selectedDueAt = null
             updateDateLabels()
         }
-        findViewById<MaterialButton>(R.id.pickRemindTimeButton).setOnClickListener {
+        findViewById<View>(R.id.pickRemindTimeRow).setOnClickListener {
             pickDateTime(selectedRemindAt) {
                 selectedRemindAt = it
                 updateDateLabels()
@@ -188,12 +251,12 @@ class TaskEditActivity : AppCompatActivity() {
     private fun bindTask(task: StudyTask) {
         titleInput.setText(task.title)
         descriptionInput.setText(task.description.orEmpty())
-        val courseIndex = task.courseId?.let { id -> courses.indexOfFirst { it.id == id } } ?: -1
-        courseSpinner.setSelection(if (courseIndex >= 0) courseIndex + 1 else 0)
-        typeSpinner.setSelection(task.type.coerceIn(0, 5))
-        prioritySpinner.setSelection(task.priority.coerceIn(0, 2))
+        selectedCourseId = task.courseId
+        selectedType = task.type.coerceIn(0, 5)
+        selectedPriority = task.priority.coerceIn(0, 2)
         selectedDueAt = task.dueAt
         selectedRemindAt = task.remindAt
+        updateSelectionLabels()
         updateDateLabels()
     }
 
@@ -201,10 +264,11 @@ class TaskEditActivity : AppCompatActivity() {
         titleInput.setText(draft.title)
         descriptionInput.setText(draft.description.orEmpty())
         selectCourseByDraftName(draft.courseName)
-        typeSpinner.setSelection(draft.type.coerceIn(0, 5))
-        prioritySpinner.setSelection(draft.priority.coerceIn(0, 2))
+        selectedType = draft.type.coerceIn(0, 5)
+        selectedPriority = draft.priority.coerceIn(0, 2)
         selectedDueAt = draft.dueAt
         selectedRemindAt = draft.remindAt
+        updateSelectionLabels()
         updateDateLabels()
         showAiPrefillStatus(draft)
 
@@ -233,16 +297,22 @@ class TaskEditActivity : AppCompatActivity() {
     private fun selectCourseByDraftName(courseName: String?) {
         val normalizedCourseName = courseName?.trim().orEmpty()
         if (normalizedCourseName.isBlank()) {
-            courseSpinner.setSelection(0)
+            selectedCourseId = null
             return
         }
-        val index = courses.indexOfFirst { course ->
+        selectedCourseId = courses.firstOrNull { course ->
             val normalizedExisting = course.name.trim()
             normalizedExisting.equals(normalizedCourseName, ignoreCase = true) ||
                 normalizedCourseName.contains(normalizedExisting, ignoreCase = true) ||
                 normalizedExisting.contains(normalizedCourseName, ignoreCase = true)
-        }
-        courseSpinner.setSelection(if (index >= 0) index + 1 else 0)
+        }?.id
+    }
+
+    private fun updateSelectionLabels() {
+        courseValueText.text = courses.firstOrNull { it.id == selectedCourseId }?.name
+            ?: getString(R.string.task_no_course)
+        typeValueText.text = TaskUiFormatter.typeLabel(this, selectedType)
+        priorityValueText.text = TaskUiFormatter.priorityLabel(this, selectedPriority)
     }
 
     private fun saveTask() {
@@ -257,24 +327,31 @@ class TaskEditActivity : AppCompatActivity() {
             return
         }
 
-        val savedTaskId = if (task.id > 0L) {
-            if (taskRepository.updateTask(task)) task.id else -1L
-        } else {
-            taskRepository.addTask(task)
+        saveButton.isEnabled = false
+        lifecycleScope.launch {
+            val saveResult = withContext(Dispatchers.IO) {
+                val savedTaskId = if (task.id > 0L) {
+                    if (taskRepository.updateTask(task)) task.id else -1L
+                } else {
+                    taskRepository.addTask(task)
+                }
+                if (savedTaskId <= 0L) return@withContext null
+                savedTaskId to savePendingAttachments(savedTaskId)
+            }
+            if (saveResult == null) {
+                saveButton.isEnabled = true
+                showMessage(getString(R.string.task_save_failed))
+                return@launch
+            }
+            val (savedTaskId, failedAttachments) = saveResult
+            val savedTask = task.copy(id = savedTaskId)
+            handleReminderAfterSave(savedTask)
+            if (failedAttachments > 0) {
+                Toast.makeText(this@TaskEditActivity, R.string.task_attachment_add_failed, Toast.LENGTH_LONG).show()
+            }
+            setResult(RESULT_OK)
+            finish()
         }
-        if (savedTaskId <= 0L) {
-            showMessage(getString(R.string.task_save_failed))
-            return
-        }
-
-        val savedTask = task.copy(id = savedTaskId)
-        val failedAttachments = savePendingAttachments(savedTaskId)
-        handleReminderAfterSave(savedTask)
-        if (failedAttachments > 0) {
-            Toast.makeText(this, R.string.task_attachment_add_failed, Toast.LENGTH_LONG).show()
-        }
-        setResult(RESULT_OK)
-        finish()
     }
 
     private fun addPendingAttachment(uri: Uri) {
@@ -326,18 +403,13 @@ class TaskEditActivity : AppCompatActivity() {
             titleInput.error = getString(R.string.task_title_required)
             return null
         }
-        val selectedCourseId = if (courseSpinner.selectedItemPosition > 0) {
-            courses[courseSpinner.selectedItemPosition - 1].id
-        } else {
-            null
-        }
         return StudyTask(
             id = editingTaskId,
             courseId = selectedCourseId,
             title = title,
             description = descriptionInput.text?.toString()?.trim()?.takeIf { it.isNotBlank() },
-            type = typeSpinner.selectedItemPosition,
-            priority = prioritySpinner.selectedItemPosition,
+            type = selectedType,
+            priority = selectedPriority,
             dueAt = selectedDueAt,
             remindAt = selectedRemindAt,
             status = editingTask?.status ?: StudyTask.STATUS_TODO,

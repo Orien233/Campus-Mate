@@ -7,7 +7,9 @@ import android.view.View
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.example.campusmate.R
+import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.data.model.StudyTask
 import com.example.campusmate.data.repository.CourseRepository
@@ -24,6 +26,9 @@ import com.example.campusmate.util.PermissionUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Dashboard entry point for daily course, task, and focus summaries. */
 class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
@@ -75,37 +80,63 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     override fun onResume() {
         super.onResume()
-        val currentView = view ?: return
-        val todayCourses = courseRepository.getTodayCourses()
-        val pendingTasks = taskRepository.getAllTasks().count { it.status == StudyTask.STATUS_TODO }
+        loadDashboard()
+        if (!maybeShowWeatherLocationGuide()) {
+            loadWeather(forceRefresh = false)
+        }
+    }
+
+    private fun loadDashboard() {
         val todayDate = DateTimeUtils.todayDate()
         val weekStartDate = DateTimeUtils.startOfWeekDate()
-        val todayPlans = planRepository.getPlansByDate(todayDate)
-        val totalPlans = todayPlans.size
-        val completedPlans = todayPlans.count { it.status == StudyPlan.STATUS_COMPLETED }
-        val todayDurationMinutes = getCompletedPlanMinutesForDate(todayDate)
-        val weeklyDurationMinutes = getWeekCompletedMinutes(weekStartDate)
-        val todayTrendDelta = todayDurationMinutes - getCompletedPlanMinutesForDate(DateTimeUtils.datePlusDays(todayDate, -1))
-        val weekTrendDelta = weeklyDurationMinutes - getWeekCompletedMinutes(DateTimeUtils.datePlusDays(weekStartDate, -7))
+        viewLifecycleOwner.lifecycleScope.launch {
+            val snapshot = withContext(Dispatchers.IO) {
+                val todayCourses = courseRepository.getTodayCourses()
+                val pendingTasks = taskRepository.getAllTasks().count { it.status == StudyTask.STATUS_TODO }
+                val todayPlans = planRepository.getPlansByDate(todayDate)
+                val todayDurationMinutes = getCompletedPlanMinutesForDate(todayDate)
+                val weeklyDurationMinutes = getWeekCompletedMinutes(weekStartDate)
+                DashboardSnapshot(
+                    todayCourses = todayCourses,
+                    pendingTasks = pendingTasks,
+                    totalPlans = todayPlans.size,
+                    completedPlans = todayPlans.count { it.status == StudyPlan.STATUS_COMPLETED },
+                    todayDurationMinutes = todayDurationMinutes,
+                    weeklyDurationMinutes = weeklyDurationMinutes,
+                    todayTrendDelta = todayDurationMinutes - getCompletedPlanMinutesForDate(
+                        DateTimeUtils.datePlusDays(todayDate, -1)
+                    ),
+                    weekTrendDelta = weeklyDurationMinutes - getWeekCompletedMinutes(
+                        DateTimeUtils.datePlusDays(weekStartDate, -7)
+                    )
+                )
+            }
+            if (!isAdded || view == null) return@launch
+            bindDashboard(snapshot)
+        }
+    }
 
+    private fun bindDashboard(snapshot: DashboardSnapshot) {
+        val currentView = view ?: return
+        val todayCourses = snapshot.todayCourses
         currentView.findViewById<TextView>(R.id.tvTodayCourseCount).text = todayCourses.size.toString()
-        currentView.findViewById<TextView>(R.id.tvPendingTaskCount).text = pendingTasks.toString()
-        currentView.findViewById<TextView>(R.id.tvTodayFocusMinutes).text = getString(R.string.duration_minutes, todayDurationMinutes)
-        currentView.findViewById<TextView>(R.id.tvWeekFocusMinutes).text = getString(R.string.duration_minutes, weeklyDurationMinutes)
+        currentView.findViewById<TextView>(R.id.tvPendingTaskCount).text = snapshot.pendingTasks.toString()
+        currentView.findViewById<TextView>(R.id.tvTodayFocusMinutes).text = getString(R.string.duration_minutes, snapshot.todayDurationMinutes)
+        currentView.findViewById<TextView>(R.id.tvWeekFocusMinutes).text = getString(R.string.duration_minutes, snapshot.weeklyDurationMinutes)
         currentView.findViewById<TextView>(R.id.tvTodayPlanCompletion).text =
-            if (totalPlans > 0) {
-                val completionRate = completedPlans * 100 / totalPlans
-                getString(R.string.dashboard_plan_completion_format, completedPlans, totalPlans, completionRate)
+            if (snapshot.totalPlans > 0) {
+                val completionRate = snapshot.completedPlans * 100 / snapshot.totalPlans
+                getString(R.string.dashboard_plan_completion_format, snapshot.completedPlans, snapshot.totalPlans, completionRate)
             } else {
                 getString(R.string.dashboard_plan_completion_empty)
             }
         currentView.findViewById<TextView>(R.id.tvTodayTrend).apply {
-            text = formatTrend(R.string.dashboard_today_trend_format, todayTrendDelta)
-            setTextColor(requireContext().getColor(colorForDelta(todayTrendDelta)))
+            text = formatTrend(R.string.dashboard_today_trend_format, snapshot.todayTrendDelta)
+            setTextColor(requireContext().getColor(colorForDelta(snapshot.todayTrendDelta)))
         }
         currentView.findViewById<TextView>(R.id.tvWeekTrend).apply {
-            text = formatTrend(R.string.dashboard_week_trend_format, weekTrendDelta)
-            setTextColor(requireContext().getColor(colorForDelta(weekTrendDelta)))
+            text = formatTrend(R.string.dashboard_week_trend_format, snapshot.weekTrendDelta)
+            setTextColor(requireContext().getColor(colorForDelta(snapshot.weekTrendDelta)))
         }
         currentView.findViewById<TextView>(R.id.tvNextCourseValue).text =
             todayCourses.firstOrNull()?.let { course ->
@@ -114,10 +145,18 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                 } ?: getString(R.string.dashboard_next_course_format, course.name, course.startSection, course.endSection)
             }
                 ?: getString(R.string.dashboard_no_next_course)
-        if (!maybeShowWeatherLocationGuide()) {
-            loadWeather(forceRefresh = false)
-        }
     }
+
+    private data class DashboardSnapshot(
+        val todayCourses: List<Course>,
+        val pendingTasks: Int,
+        val totalPlans: Int,
+        val completedPlans: Int,
+        val todayDurationMinutes: Int,
+        val weeklyDurationMinutes: Int,
+        val todayTrendDelta: Int,
+        val weekTrendDelta: Int
+    )
 
     private fun getCompletedPlanMinutesForDate(date: String): Int {
         return planRepository.getPlansByDate(date)

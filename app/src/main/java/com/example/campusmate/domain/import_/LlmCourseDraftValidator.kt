@@ -88,19 +88,25 @@ class LlmCourseDraftValidator {
             warnings += "第 $index 条课程缺少课程名。"
         }
 
-        val weekday = readInt(courseObject, "weekday", "weekDay", "dayOfWeek", "day_of_week")
+        val weekday = readWeekday(courseObject)
         if (weekday == null || weekday !in 1..7) {
             warnings += "第 $index 条课程星期字段不合法（应为 1..7）。"
         }
 
+        val sectionRange = readSectionRange(courseObject)
         val startSection = readInt(courseObject, "startSection", "start_section", "sectionStart", "section_start")
+            ?: sectionRange?.first
         val endSection = readInt(courseObject, "endSection", "end_section", "sectionEnd", "section_end")
+            ?: sectionRange?.second
         if (startSection == null || endSection == null || startSection <= 0 || endSection <= 0 || startSection > endSection || endSection > MAX_SECTION) {
             warnings += "第 $index 条课程节次范围不合法（startSection/endSection）。"
         }
 
+        val weekRange = readWeekRange(courseObject)
         val startWeek = readInt(courseObject, "startWeek", "start_week", "weekStart", "week_start")
+            ?: weekRange?.first
         val endWeek = readInt(courseObject, "endWeek", "end_week", "weekEnd", "week_end")
+            ?: weekRange?.second
         if (startWeek == null || endWeek == null || startWeek <= 0 || endWeek <= 0 || startWeek > endWeek || endWeek > MAX_WEEK) {
             warnings += "第 $index 条课程周次范围不合法（startWeek/endWeek）。"
         }
@@ -155,6 +161,44 @@ class LlmCourseDraftValidator {
                 "address",
                 "site"
             )
+    }
+
+    private fun readWeekday(courseObject: JSONObject): Int? {
+        val raw = readJsonValue(courseObject, "weekday", "weekDay", "dayOfWeek", "day_of_week", "day")
+        return when (raw) {
+            is Number -> raw.toInt()
+            is String -> {
+                raw.trim().toIntOrNull() ?: when (raw.trim().lowercase()) {
+                    "周一", "星期一", "mon", "monday" -> 1
+                    "周二", "星期二", "tue", "tuesday" -> 2
+                    "周三", "星期三", "wed", "wednesday" -> 3
+                    "周四", "星期四", "thu", "thursday" -> 4
+                    "周五", "星期五", "fri", "friday" -> 5
+                    "周六", "星期六", "sat", "saturday" -> 6
+                    "周日", "周天", "星期日", "星期天", "sun", "sunday" -> 7
+                    else -> null
+                }
+            }
+            else -> null
+        }
+    }
+
+    private fun readSectionRange(courseObject: JSONObject): Pair<Int, Int>? {
+        val raw = readJsonValue(courseObject, "section", "sections", "period", "periods", "timeSlot", "time_slot")
+            ?.toString()?.trim().orEmpty()
+        val match = SECTION_RANGE_PATTERN.find(raw) ?: return null
+        val start = match.groupValues[1].toIntOrNull() ?: return null
+        val end = match.groupValues.getOrNull(2)?.takeIf { it.isNotBlank() }?.toIntOrNull() ?: start
+        return start to end
+    }
+
+    private fun readWeekRange(courseObject: JSONObject): Pair<Int, Int>? {
+        val raw = readJsonValue(courseObject, "weeks", "weekRange", "week_range", "teachingWeeks", "teaching_weeks")
+            ?.toString()?.trim().orEmpty()
+        val match = WEEK_RANGE_PATTERN.find(raw) ?: return null
+        val start = match.groupValues[1].toIntOrNull() ?: return null
+        val end = match.groupValues.getOrNull(2)?.takeIf { it.isNotBlank() }?.toIntOrNull() ?: start
+        return start to end
     }
 
     private fun readNote(courseObject: JSONObject, classroom: String?): String? {
@@ -295,6 +339,8 @@ class LlmCourseDraftValidator {
     companion object {
         private const val MAX_SECTION = 40
         private const val MAX_WEEK = 60
+        private val SECTION_RANGE_PATTERN = Regex("""(?:第\s*)?(\d{1,2})(?:\s*节)?(?:\s*[-~—至到、,，]\s*(\d{1,2})(?:\s*节)?)?""")
+        private val WEEK_RANGE_PATTERN = Regex("""(?:第\s*)?(\d{1,2})(?:\s*[-~—至到]\s*(\d{1,2}))?\s*周?""")
     }
 
     private data class ParsedCourse(

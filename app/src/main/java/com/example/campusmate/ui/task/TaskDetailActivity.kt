@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.campusmate.R
@@ -23,6 +24,9 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Read-only task detail screen with edit, complete, and delete actions. */
 class TaskDetailActivity : AppCompatActivity() {
@@ -87,20 +91,28 @@ class TaskDetailActivity : AppCompatActivity() {
     }
 
     private fun loadTask() {
-        val task = taskRepository.getTaskById(taskId)
-        if (task == null) {
-            Snackbar.make(rootView, R.string.task_not_found, Snackbar.LENGTH_SHORT).show()
-            finish()
-            return
+        lifecycleScope.launch {
+            val snapshot = withContext(Dispatchers.IO) {
+                val task = taskRepository.getTaskById(taskId)
+                task to task?.courseId?.let { courseRepository.getCourseById(it)?.name }
+            }
+            if (isFinishing || isDestroyed) return@launch
+            val task = snapshot.first
+            val courseName = snapshot.second
+            if (task == null) {
+                Snackbar.make(rootView, R.string.task_not_found, Snackbar.LENGTH_SHORT).show()
+                finish()
+                return@launch
+            }
+            currentTask = task
+            bindTask(task, courseName)
         }
-        currentTask = task
-        bindTask(task)
     }
 
-    private fun bindTask(task: StudyTask) {
-        val courseName = task.courseId?.let { courseRepository.getCourseById(it)?.name } ?: getString(R.string.task_no_course)
+    private fun bindTask(task: StudyTask, courseName: String?) {
+        val resolvedCourseName = courseName ?: getString(R.string.task_no_course)
         findViewById<TextView>(R.id.taskDetailTitleText).text = task.title
-        findViewById<TextView>(R.id.taskDetailCourseText).text = courseName
+        findViewById<TextView>(R.id.taskDetailCourseText).text = resolvedCourseName
         findViewById<TextView>(R.id.taskDetailMetaText).text = getString(
             R.string.task_meta_format,
             TaskUiFormatter.typeLabel(this, task.type),
@@ -136,9 +148,12 @@ class TaskDetailActivity : AppCompatActivity() {
 
     private fun loadAttachments() {
         if (taskId <= 0L) return
-        val attachments = attachmentRepository.getAttachmentsByTask(taskId)
-        attachmentAdapter.submitList(attachments)
-        findViewById<View>(R.id.attachmentEmptyText).visibility = if (attachments.isEmpty()) View.VISIBLE else View.GONE
+        lifecycleScope.launch {
+            val attachments = withContext(Dispatchers.IO) { attachmentRepository.getAttachmentsByTask(taskId) }
+            if (isFinishing || isDestroyed) return@launch
+            attachmentAdapter.submitList(attachments)
+            findViewById<View>(R.id.attachmentEmptyText).visibility = if (attachments.isEmpty()) View.VISIBLE else View.GONE
+        }
     }
 
     private fun addPickedAttachment(uri: Uri) {
@@ -148,18 +163,17 @@ class TaskDetailActivity : AppCompatActivity() {
             // Some providers do not support persistable permissions; best effort only.
         }
 
-        val mimeType = contentResolver.getType(uri)
-        val title = TaskAttachmentUiUtils.queryDisplayName(this, uri)
-        val id = attachmentRepository.addAttachment(
-            taskId = taskId,
-            uri = uri.toString(),
-            mimeType = mimeType,
-            title = title
-        )
-        if (id > 0L) {
-            loadAttachments()
-        } else {
-            Snackbar.make(rootView, R.string.task_attachment_add_failed, Snackbar.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val id = withContext(Dispatchers.IO) {
+                attachmentRepository.addAttachment(
+                    taskId = taskId,
+                    uri = uri.toString(),
+                    mimeType = contentResolver.getType(uri),
+                    title = TaskAttachmentUiUtils.queryDisplayName(this@TaskDetailActivity, uri)
+                )
+            }
+            if (id > 0L) loadAttachments()
+            else Snackbar.make(rootView, R.string.task_attachment_add_failed, Snackbar.LENGTH_SHORT).show()
         }
     }
 
@@ -182,10 +196,12 @@ class TaskDetailActivity : AppCompatActivity() {
             .setMessage(getString(R.string.task_attachment_delete_message, item.title ?: item.uri))
             .setNegativeButton(R.string.action_cancel, null)
             .setPositiveButton(R.string.action_delete) { _, _ ->
-                if (attachmentRepository.deleteAttachment(item.id)) {
-                    loadAttachments()
-                } else {
-                    Snackbar.make(rootView, R.string.task_attachment_delete_failed, Snackbar.LENGTH_SHORT).show()
+                lifecycleScope.launch {
+                    if (withContext(Dispatchers.IO) { attachmentRepository.deleteAttachment(item.id) }) {
+                        loadAttachments()
+                    } else {
+                        Snackbar.make(rootView, R.string.task_attachment_delete_failed, Snackbar.LENGTH_SHORT).show()
+                    }
                 }
             }
             .show()
@@ -196,16 +212,17 @@ class TaskDetailActivity : AppCompatActivity() {
         if (TaskReminderPolicy.shouldCancelWhenCompleted(task.status, updatedStatus)) {
             reminderScheduler.cancelTaskReminder(task.id)
         }
-        val success = if (updatedStatus == StudyTask.STATUS_TODO) {
-            taskRepository.markTodo(task.id)
-        } else {
-            taskRepository.markDone(task.id)
-        }
-        if (success) {
-            scheduleReminderIfReopened(task, updatedStatus)
-            loadTask()
-        } else {
-            Snackbar.make(rootView, R.string.task_status_update_failed, Snackbar.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val success = withContext(Dispatchers.IO) {
+                if (updatedStatus == StudyTask.STATUS_TODO) taskRepository.markTodo(task.id)
+                else taskRepository.markDone(task.id)
+            }
+            if (success) {
+                scheduleReminderIfReopened(task, updatedStatus)
+                loadTask()
+            } else {
+                Snackbar.make(rootView, R.string.task_status_update_failed, Snackbar.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -230,12 +247,13 @@ class TaskDetailActivity : AppCompatActivity() {
             .setNegativeButton(R.string.action_cancel, null)
             .setPositiveButton(R.string.action_delete) { _, _ ->
                 reminderScheduler.cancelTaskReminder(task.id)
-                if (taskRepository.deleteTask(task.id)) {
-                    attachmentRepository.deleteAttachmentsByTask(task.id)
-                    setResult(RESULT_OK)
-                    finish()
-                } else {
-                    Snackbar.make(rootView, R.string.task_delete_failed, Snackbar.LENGTH_SHORT).show()
+                lifecycleScope.launch {
+                    if (withContext(Dispatchers.IO) { taskRepository.deleteTask(task.id) }) {
+                        setResult(RESULT_OK)
+                        finish()
+                    } else {
+                        Snackbar.make(rootView, R.string.task_delete_failed, Snackbar.LENGTH_SHORT).show()
+                    }
                 }
             }
             .show()

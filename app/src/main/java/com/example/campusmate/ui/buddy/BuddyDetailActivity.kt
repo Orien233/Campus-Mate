@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.campusmate.R
 import com.example.campusmate.data.model.StudyBuddy
 import com.example.campusmate.data.repository.StudyBuddyRepository
@@ -12,6 +13,9 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Read-only detail screen for a saved study buddy. */
 class BuddyDetailActivity : AppCompatActivity() {
@@ -51,14 +55,16 @@ class BuddyDetailActivity : AppCompatActivity() {
     }
 
     private fun loadBuddy() {
-        val buddy = repository.getBuddyById(buddyId)
-        if (buddy == null) {
-            Snackbar.make(rootView, R.string.buddy_not_found, Snackbar.LENGTH_SHORT).show()
-            finish()
-            return
+        lifecycleScope.launch {
+            val buddy = withContext(Dispatchers.IO) { repository.getBuddyById(buddyId) }
+            if (buddy == null) {
+                Snackbar.make(rootView, R.string.buddy_not_found, Snackbar.LENGTH_SHORT).show()
+                finish()
+                return@launch
+            }
+            currentBuddy = buddy
+            bindBuddy(buddy)
         }
-        currentBuddy = buddy
-        bindBuddy(buddy)
     }
 
     private fun bindBuddy(buddy: StudyBuddy) {
@@ -80,11 +86,13 @@ class BuddyDetailActivity : AppCompatActivity() {
             .setMessage(getString(R.string.buddy_delete_message, buddy.nickname))
             .setNegativeButton(R.string.action_cancel, null)
             .setPositiveButton(R.string.action_delete) { _, _ ->
-                if (repository.deleteBuddy(buddy.id)) {
-                    Snackbar.make(rootView, R.string.buddy_delete_success, Snackbar.LENGTH_SHORT).show()
-                    finish()
-                } else {
-                    Snackbar.make(rootView, R.string.buddy_delete_failed, Snackbar.LENGTH_SHORT).show()
+                lifecycleScope.launch {
+                    if (withContext(Dispatchers.IO) { repository.deleteBuddy(buddy.id) }) {
+                        Snackbar.make(rootView, R.string.buddy_delete_success, Snackbar.LENGTH_SHORT).show()
+                        finish()
+                    } else {
+                        Snackbar.make(rootView, R.string.buddy_delete_failed, Snackbar.LENGTH_SHORT).show()
+                    }
                 }
             }
             .show()

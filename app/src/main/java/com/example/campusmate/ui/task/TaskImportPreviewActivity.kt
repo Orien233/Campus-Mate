@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.campusmate.R
@@ -18,6 +19,9 @@ import com.example.campusmate.util.PermissionUtils
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Preview and confirmation screen for AI-parsed task drafts. */
 class TaskImportPreviewActivity : AppCompatActivity() {
@@ -28,6 +32,8 @@ class TaskImportPreviewActivity : AppCompatActivity() {
     private lateinit var settingsRepository: SettingsRepository
     private lateinit var reminderScheduler: AlarmReminderScheduler
     private var warnings: List<String> = emptyList()
+    private var draftCount: Int = 0
+    private lateinit var importButton: MaterialButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,7 +65,9 @@ class TaskImportPreviewActivity : AppCompatActivity() {
     }
 
     private fun setupList() {
-        adapter = TaskDraftAdapter()
+        adapter = TaskDraftAdapter {
+            refreshSummary()
+        }
         findViewById<RecyclerView>(R.id.taskDraftRecyclerView).apply {
             layoutManager = LinearLayoutManager(this@TaskImportPreviewActivity)
             adapter = this@TaskImportPreviewActivity.adapter
@@ -67,7 +75,8 @@ class TaskImportPreviewActivity : AppCompatActivity() {
     }
 
     private fun setupActions() {
-        findViewById<MaterialButton>(R.id.importSelectedTasksButton).setOnClickListener {
+        importButton = findViewById(R.id.importSelectedTasksButton)
+        importButton.setOnClickListener {
             importSelected()
         }
     }
@@ -76,12 +85,9 @@ class TaskImportPreviewActivity : AppCompatActivity() {
     private fun loadDrafts() {
         val drafts = intent.getSerializableExtra(EXTRA_TASK_DRAFTS) as? ArrayList<TaskDraft> ?: arrayListOf()
         val items = drafts.map { TaskDraftItem(it) }
+        draftCount = items.size
         adapter.submitList(items)
-        findViewById<TextView>(R.id.taskImportPreviewSummaryText).text = getString(
-            R.string.task_import_preview_summary,
-            items.size,
-            items.count { it.selected }
-        )
+        refreshSummary()
         findViewById<TextView>(R.id.taskImportPreviewWarningText).apply {
             visibility = if (warnings.isEmpty()) View.GONE else View.VISIBLE
             text = if (warnings.isEmpty()) {
@@ -94,6 +100,14 @@ class TaskImportPreviewActivity : AppCompatActivity() {
         }
     }
 
+    private fun refreshSummary() {
+        findViewById<TextView>(R.id.taskImportPreviewSummaryText).text = getString(
+            R.string.task_import_preview_summary,
+            draftCount,
+            adapter.selectedItems().size
+        )
+    }
+
     private fun importSelected() {
         val selected = adapter.selectedItems()
         if (selected.isEmpty()) {
@@ -101,31 +115,37 @@ class TaskImportPreviewActivity : AppCompatActivity() {
             return
         }
 
-        val courses = courseRepository.getAllCourses()
-        var importedCount = 0
-        var reminderSkippedCount = 0
-        selected.forEach { item ->
-            val task = item.draft.toTask(resolveCourseId(item.draft.courseName, courses))
-            val taskId = taskRepository.addTask(task)
-            if (taskId > 0L) {
-                importedCount += 1
-                val savedTask = task.copy(id = taskId)
-                if (!scheduleReminderIfPossible(savedTask)) {
-                    reminderSkippedCount += if (savedTask.remindAt == null) 0 else 1
+        importButton.isEnabled = false
+        lifecycleScope.launch {
+            val (importedCount, reminderSkippedCount) = withContext(Dispatchers.IO) {
+                val courses = courseRepository.getAllCourses()
+                var imported = 0
+                var reminderSkipped = 0
+                selected.forEach { item ->
+                    val task = item.draft.toTask(resolveCourseId(item.draft.courseName, courses))
+                    val taskId = taskRepository.addTask(task)
+                    if (taskId > 0L) {
+                        imported += 1
+                        val savedTask = task.copy(id = taskId)
+                        if (!scheduleReminderIfPossible(savedTask)) {
+                            reminderSkipped += if (savedTask.remindAt == null) 0 else 1
+                        }
+                    }
+                }
+                imported to reminderSkipped
+            }
+
+            val message = buildString {
+                append(getString(R.string.task_import_success, importedCount))
+                if (reminderSkippedCount > 0) {
+                    append("\n")
+                    append(getString(R.string.task_import_reminder_skipped, reminderSkippedCount))
                 }
             }
+            Toast.makeText(this@TaskImportPreviewActivity, message, Toast.LENGTH_LONG).show()
+            setResult(RESULT_OK)
+            finish()
         }
-
-        val message = buildString {
-            append(getString(R.string.task_import_success, importedCount))
-            if (reminderSkippedCount > 0) {
-                append("\n")
-                append(getString(R.string.task_import_reminder_skipped, reminderSkippedCount))
-            }
-        }
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-        setResult(RESULT_OK)
-        finish()
     }
 
     private fun scheduleReminderIfPossible(task: StudyTask): Boolean {

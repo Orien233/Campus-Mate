@@ -3,10 +3,25 @@ package com.example.campusmate.domain.llm
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
+import java.net.URI
 import java.nio.charset.StandardCharsets
 
-internal object LlmHttpUtils {
+object LlmHttpUtils {
     fun timeoutMillis(value: Int): Int = value.coerceIn(1_000, 120_000)
+
+    fun validateHttpsEndpoint(baseUrl: String): String? {
+        val normalized = baseUrl.trim()
+        if (normalized.isBlank()) return "请填写 Base URL"
+        val uri = try {
+            URI(normalized)
+        } catch (_: Exception) {
+            return "Base URL 格式无效"
+        }
+        if (!uri.isAbsolute || !uri.scheme.equals("https", ignoreCase = true) || uri.host.isNullOrBlank()) {
+            return "仅支持 HTTPS Base URL"
+        }
+        return null
+    }
 
     fun readResponse(connection: HttpURLConnection): String {
         val stream = if (connection.responseCode in 200..299) {

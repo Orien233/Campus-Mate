@@ -270,28 +270,32 @@ $contextText
     }
 
     private fun bindCourseConflictStatus() {
-        val context = StudyPlanContextBuilder(this).buildForDate(planDate)
-        val conflicts = PlanCourseConflictChecker.findConflicts(generatedPlans, context)
-        if (conflicts.isEmpty()) {
-            courseConflictStatusText.text = getString(R.string.llm_plan_course_check_passed)
-            courseConflictStatusText.setTextColor(getColor(R.color.success))
-            return
+        lifecycleScope.launch {
+            val conflicts = withContext(Dispatchers.IO) {
+                val context = StudyPlanContextBuilder(this@LlmPlanPreviewActivity).buildForDate(planDate)
+                PlanCourseConflictChecker.findConflicts(generatedPlans, context)
+            }
+            if (conflicts.isEmpty()) {
+                courseConflictStatusText.text = getString(R.string.llm_plan_course_check_passed)
+                courseConflictStatusText.setTextColor(getColor(R.color.success))
+                return@launch
+            }
+            courseConflictStatusText.text = buildString {
+                append(getString(R.string.llm_plan_course_check_warning))
+                append("\n")
+                append(
+                    conflicts.take(3).joinToString("\n") { conflict ->
+                        getString(
+                            R.string.llm_plan_course_conflict_format,
+                            conflict.planTitle,
+                            conflict.courseName,
+                            conflict.courseTimeRange
+                        )
+                    }
+                )
+            }
+            courseConflictStatusText.setTextColor(getColor(R.color.warning))
         }
-        courseConflictStatusText.text = buildString {
-            append(getString(R.string.llm_plan_course_check_warning))
-            append("\n")
-            append(
-                conflicts.take(3).joinToString("\n") { conflict ->
-                    getString(
-                        R.string.llm_plan_course_conflict_format,
-                        conflict.planTitle,
-                        conflict.courseName,
-                        conflict.courseTimeRange
-                    )
-                }
-            )
-        }
-        courseConflictStatusText.setTextColor(getColor(R.color.warning))
     }
 
     private fun savePlans(append: Boolean) {
@@ -314,7 +318,7 @@ $contextText
                 finish()
             } catch (e: Exception) {
                 Snackbar.make(findViewById(android.R.id.content),
-                    getString(R.string.task_save_failed), Snackbar.LENGTH_SHORT).show()
+                    getString(R.string.plan_save_failed), Snackbar.LENGTH_SHORT).show()
             }
         }
     }

@@ -3,10 +3,13 @@ package com.example.campusmate.ui.task
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.campusmate.R
@@ -19,10 +22,11 @@ import com.example.campusmate.domain.reminder.TaskReminderPolicy
 import com.example.campusmate.domain.task.TaskDraft
 import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.chip.ChipGroup
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Shows study tasks, filters, and quick complete toggles. */
 class TaskListFragment : Fragment(R.layout.fragment_task_list) {
@@ -36,8 +40,16 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
     private lateinit var todoCountText: TextView
     private lateinit var upcomingCountText: TextView
     private lateinit var overdueCountText: TextView
-    private lateinit var filterGroup: ChipGroup
+    private lateinit var filterContainer: LinearLayout
     private var currentFilter: TaskFilter = TaskFilter.TODO
+
+    private val filterOptions = listOf(
+        FilterOption(TaskFilter.TODO, R.string.task_filter_todo),
+        FilterOption(TaskFilter.DONE, R.string.task_filter_done),
+        FilterOption(TaskFilter.UPCOMING, R.string.task_filter_upcoming),
+        FilterOption(TaskFilter.OVERDUE, R.string.task_filter_overdue),
+        FilterOption(TaskFilter.ALL, R.string.task_filter_all)
+    )
 
     private val taskWebParseLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -68,6 +80,7 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         todoCountText = view.findViewById(R.id.taskTodoCountText)
         upcomingCountText = view.findViewById(R.id.taskUpcomingCountText)
         overdueCountText = view.findViewById(R.id.taskOverdueCountText)
+        filterContainer = view.findViewById(R.id.taskFilterContainer)
         recyclerView = view.findViewById(R.id.taskRecyclerView)
         adapter = TaskAdapter(
             onTaskClick = { openDetail(it.id) },
@@ -82,16 +95,8 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
             showAddTaskMenu(anchor)
         }
         view.findViewById<MaterialButton>(R.id.taskEmptyActionButton).setOnClickListener { openEdit() }
-        filterGroup = view.findViewById(R.id.taskFilterGroup)
-        filterGroup.setOnCheckedStateChangeListener { _, checkedIds ->
-            currentFilter = filterForChipId(checkedIds.firstOrNull() ?: R.id.filterTodoTasksChip)
-            loadTasks()
-        }
-        // Set default checked chip after layout, then scroll to start
-        filterGroup.post {
-            filterGroup.check(R.id.filterTodoTasksChip)
-            (filterGroup.parent as? android.widget.HorizontalScrollView)?.scrollTo(0, 0)
-        }
+
+        renderFilterPills()
     }
 
     override fun onResume() {
@@ -99,10 +104,49 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         loadTasks()
     }
 
+    private fun renderFilterPills() {
+        filterContainer.removeAllViews()
+        filterOptions.forEach { option ->
+            val pill = layoutInflater.inflate(R.layout.item_selection_pill, filterContainer, false) as TextView
+            pill.text = getString(option.labelRes)
+            pill.isSelected = option.filter == currentFilter
+            pill.tag = option.filter
+            pill.setOnClickListener {
+                if (currentFilter == option.filter) return@setOnClickListener
+                currentFilter = option.filter
+                updateFilterPillSelection()
+                loadTasks()
+            }
+            filterContainer.addView(pill)
+        }
+    }
+
+    private fun updateFilterPillSelection() {
+        for (index in 0 until filterContainer.childCount) {
+            val child = filterContainer.getChildAt(index)
+            child.isSelected = child.tag == currentFilter
+        }
+    }
+
     private fun loadTasks() {
-        val courseNameById = courseRepository.getAllCourses().associate { it.id to it.name }
-        val now = System.currentTimeMillis()
-        val allTasks = taskRepository.getAllTasks()
+        val filter = currentFilter
+        viewLifecycleOwner.lifecycleScope.launch {
+            val snapshot = withContext(Dispatchers.IO) {
+                TaskListSnapshot(
+                    courseNameById = courseRepository.getAllCourses().associate { it.id to it.name },
+                    allTasks = taskRepository.getAllTasks(),
+                    now = System.currentTimeMillis()
+                )
+            }
+            if (!isAdded) return@launch
+            bindTasks(snapshot, filter)
+        }
+    }
+
+    private fun bindTasks(snapshot: TaskListSnapshot, filter: TaskFilter) {
+        val courseNameById = snapshot.courseNameById
+        val now = snapshot.now
+        val allTasks = snapshot.allTasks
         val todoCount = allTasks.count { it.status == StudyTask.STATUS_TODO }
         val upcomingCount = allTasks.count {
             it.status == StudyTask.STATUS_TODO && it.dueAt?.let { dueAt -> dueAt >= now } == true
@@ -115,7 +159,7 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         overdueCountText.text = overdueCount.toString()
 
         val tasks = allTasks.filter { task ->
-            when (currentFilter) {
+            when (filter) {
                 TaskFilter.ALL -> true
                 TaskFilter.TODO -> task.status == StudyTask.STATUS_TODO
                 TaskFilter.DONE -> task.status == StudyTask.STATUS_DONE
@@ -137,16 +181,18 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         if (TaskReminderPolicy.shouldCancelWhenCompleted(task.status, updatedStatus)) {
             reminderScheduler.cancelTaskReminder(task.id)
         }
-        val success = if (updatedStatus == StudyTask.STATUS_TODO) {
-            taskRepository.markTodo(task.id)
-        } else {
-            taskRepository.markDone(task.id)
-        }
-        if (success) {
-            scheduleReminderIfReopened(task, updatedStatus)
-            loadTasks()
-        } else {
-            Snackbar.make(requireView(), R.string.task_status_update_failed, Snackbar.LENGTH_SHORT).show()
+        viewLifecycleOwner.lifecycleScope.launch {
+            val success = withContext(Dispatchers.IO) {
+                if (updatedStatus == StudyTask.STATUS_TODO) taskRepository.markTodo(task.id)
+                else taskRepository.markDone(task.id)
+            }
+            if (!isAdded) return@launch
+            if (success) {
+                scheduleReminderIfReopened(task, updatedStatus)
+                loadTasks()
+            } else {
+                Snackbar.make(requireView(), R.string.task_status_update_failed, Snackbar.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -201,30 +247,24 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
     }
 
     private fun confirmDelete(task: StudyTask) {
-        MaterialAlertDialogBuilder(requireContext())
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.task_delete_title)
             .setMessage(getString(R.string.task_delete_message, task.title))
             .setNegativeButton(R.string.action_cancel, null)
             .setPositiveButton(R.string.action_delete) { _, _ ->
                 reminderScheduler.cancelTaskReminder(task.id)
-                if (taskRepository.deleteTask(task.id)) {
-                    Snackbar.make(requireView(), R.string.task_delete_success, Snackbar.LENGTH_SHORT).show()
-                    loadTasks()
-                } else {
-                    Snackbar.make(requireView(), R.string.task_delete_failed, Snackbar.LENGTH_SHORT).show()
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val deleted = withContext(Dispatchers.IO) { taskRepository.deleteTask(task.id) }
+                    if (!isAdded) return@launch
+                    if (deleted) {
+                        Snackbar.make(requireView(), R.string.task_delete_success, Snackbar.LENGTH_SHORT).show()
+                        loadTasks()
+                    } else {
+                        Snackbar.make(requireView(), R.string.task_delete_failed, Snackbar.LENGTH_SHORT).show()
+                    }
                 }
             }
             .show()
-    }
-
-    private fun filterForChipId(chipId: Int): TaskFilter {
-        return when (chipId) {
-            R.id.filterTodoTasksChip -> TaskFilter.TODO
-            R.id.filterDoneTasksChip -> TaskFilter.DONE
-            R.id.filterUpcomingTasksChip -> TaskFilter.UPCOMING
-            R.id.filterOverdueTasksChip -> TaskFilter.OVERDUE
-            else -> TaskFilter.ALL
-        }
     }
 
     private enum class TaskFilter {
@@ -235,4 +275,14 @@ class TaskListFragment : Fragment(R.layout.fragment_task_list) {
         OVERDUE
     }
 
+    private data class FilterOption(
+        val filter: TaskFilter,
+        @StringRes val labelRes: Int
+    )
+
+    private data class TaskListSnapshot(
+        val courseNameById: Map<Long, String>,
+        val allTasks: List<StudyTask>,
+        val now: Long
+    )
 }

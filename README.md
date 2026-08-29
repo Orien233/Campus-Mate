@@ -45,9 +45,9 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 | --- | --- | --- |
 | 首页 Dashboard | 已完成 | 展示今日课程、待办任务、今日/本周学习时长、计划完成趋势、下一节课（含教室）、天气卡片、城市来源和开始专注入口。 |
 | 课程管理 | 已完成 | 支持新增、编辑、详情、软删除、按星期筛选、周课表网格展示和时间冲突提示。 |
-| 任务管理 | 已完成 | 支持新增、编辑、详情、软删除、完成状态切换、类型、优先级、截止时间、提醒时间、AI 网页解析预填和多任务导入预览确认。 |
-| 任务提醒 | 已完成 | `AlarmManager` + `ReminderReceiver` + 通知渠道；开机后通过 `BootReminderReceiver` 恢复未来提醒。 |
-| 课表导入 | 已完成 | 支持粘贴 HTML、WebView 提取、LLM 优先/本地回退解析、导入预览、冲突标记和确认写入；界面不再提供示例 HTML 导入按钮。 |
+| 任务管理 | 已完成 | 支持新增、编辑、详情、软删除、完成状态切换、类型、优先级、截止时间、提醒时间、网页任务解析预填和多任务导入预览确认；AI 不可用或调用失败时可使用本地规则解析。 |
+| 任务提醒 | 已完成 | `AlarmManager` + `ReminderReceiver` + 通知渠道；开机后通过 `BootReminderReceiver` 恢复未来提醒；接收器在后台线程读取任务状态，任务软删除会同步清理附件。 |
+| 课表导入 | 已完成 | 支持粘贴 HTML、WebView 提取、LLM 优先/本地回退解析、导入预览、冲突标记和确认写入；本地规则支持常见表格、数值星期、卡片式课程块和 BJTU 标题属性格式；界面不再提供示例 HTML 导入按钮。 |
 | WebView 课表导入基础页 | 基础完成 / 待验证 | `WebViewImportActivity` 默认进入 BJTU MIS 门户，可手动登录导航并提取当前 HTML；进入、打开和退出时会尽力清理 Cookie/登录态；真实教务系统页面结构仍需现场验证。 |
 | 专注计时 | 已完成 | `FocusActivity` 选择任务和时长，`FocusService` 前台计时，支持暂停、继续、完成、取消。 |
 | 翻转手机专注 | 已完成 / 待真机验证 | `FaceDownDetector` 基于加速度传感器判断屏幕朝下；传感器不可用时保留手动开始。 |
@@ -61,7 +61,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 | 二维码 | 已完成 | `StudyCardActivity` 生成公开 JSON 二维码；`ScanQrActivity` 扫码后先预览，再手动确认添加。 |
 | 学习伙伴 | 已完成 | 扫码确认后写入 `study_buddies`，支持列表、详情和删除；NFC 名片交换入口已移除。 |
 | 天气 | 已完成 / 待真机验证 | 手动城市配置、粗略定位辅助、`wttr.in` 远程请求、30 分钟缓存和无网缓存降级；不再提供 Mock 数据，不保存经纬度。 |
-| 通知弱化 / 勿扰增强 | 实验功能 / 待真机验证 | `FocusService` 可按设置调用 `DndManager` 并启用 `NotificationFilterService` 标记；依赖用户系统授权。 |
+| 通知弱化 / 勿扰增强 | 实验功能 / 待真机验证 | `FocusService` 可按设置调用 `DndManager` 并启用 `NotificationFilterService` 标记；服务异常重建时会结束遗留专注会话并尝试恢复专注前的通知状态；依赖用户系统授权。 |
 | 演示数据 | 基础完成 | `DemoDataRepository` 生成课程、任务、学习计划、学习记录、学习名片、二维码伙伴和导入日志样例；附件仍需用户通过 SAF 选择真实图片。 |
 | LLM 接口基础设施 | 已完成 | 已有设置页、加密 API Key 存储、OpenAI-Compatible/Gemini Client、连接测试、课表解析、任务网页解析预填/批量预览和学习计划生成；业务结果必须预览或回填确认。 |
 | 项目展示页 / 技术点展示页 | 待实现 | 当前代码中未发现独立项目展示页。 |
@@ -79,7 +79,8 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 - 天气：远程请求依赖网络；失败时只回退缓存。定位使用粗略位置反查城市，只保存城市名，不保存经纬度；权限授予/拒绝需真机验证。
 - 图片附件：当前只通过 Storage Access Framework 选择图片并持久化 Uri；不申请相册读取权限，不支持拍照、裁剪、压缩或内置大图预览。
 - 学习计划：已有手动添加、本地规则生成、AI 今日/本周计划预览、状态切换和详情页；按课程/考试细分生成、计划提醒和复杂编辑尚未接入。
-- LLM：当前已有设置、Client、连接测试、课表解析、任务解析和学习计划主流程接入。任何 AI 结果都必须先进入预览确认页或回填表单，不能直接静默写入数据库。
+- LLM：当前已有设置、Client、连接测试、课表解析、任务解析和学习计划主流程接入。用户配置的 Base URL 只允许 HTTPS；网页输入会按不可信数据处理并限制长度，任何 AI 结果都必须先进入预览确认页或回填表单，不能直接静默写入数据库。
+- 数据一致性：课程软删除会解除活动任务的课程关联但保留历史专注/学习记录；任务软删除会清理任务附件，避免残留 Uri 记录。
 
 ## 5. 项目结构说明
 
@@ -169,7 +170,7 @@ app/src/androidTest/java/com/example/campusmate
 ## 6. 分层职责说明
 
 - `app` 层：`Application`、`AppConfig`、`FeatureFlags`，保存应用级常量和功能开关占位。
-- `ui` 层：Activity、Fragment、Adapter，负责界面展示、用户输入、页面跳转、系统入口调用和权限请求入口；不直接操作 `SQLiteDatabase`。
+- `ui` 层：Activity、Fragment、Adapter，负责界面展示、用户输入、页面跳转、系统入口调用和权限请求入口；不直接操作 `SQLiteDatabase`，Repository 查询和写入在生命周期协程的 `Dispatchers.IO` 中执行，再回到主线程更新界面。
 - `domain` 层：业务规则、HTML 解析、传感器、提醒调度、计划生成、天气、通知弱化、LLM 请求构造等逻辑。
 - `data/model` 层：课程、任务、专注、学习记录、计划、附件、名片、伙伴、LLM 配置等数据对象。
 - `data/repository` 层：封装 `ContentResolver`、SharedPreferences 或加密存储访问；UI 不直接访问 SQLite。
@@ -228,7 +229,7 @@ ImportScheduleActivity / WebViewImportActivity
 ```
 
 - 粘贴 HTML：用户粘贴 HTML 后交给 `JsoupScheduleParser`。
-- WebView 当前页：`WebViewImportActivity` 让用户手动打开网页，`WebViewScheduleExtractor` 只用 `evaluateJavascript` 提取当前页面 HTML。
+- WebView 当前页：`WebViewImportActivity` 让用户手动打开网页，`WebViewScheduleExtractor` 只用 `evaluateJavascript` 提取当前页面 HTML，并识别课表表格或课程卡片后优先提取相关片段。
 - BJTU 场景：WebView 默认预填 `https://mis.bjtu.edu.cn/`，避免直接打开教务子页面时因 SSO/session 缺失导致登录失败；用户登录后自行进入课表页再提取。
 - 隐私清理：进入 `WebViewImportActivity`、点击打开页面和退出 Activity 时都会尽力清理 Cookie、WebStorage、缓存、历史、表单、SSL 偏好和 HTTP Auth 数据；清理过程采用异步和超时兜底，不能阻塞 UI。
 - `WebViewScheduleExtractor`：会等待 DOM 中出现疑似课表表格后优先抓取表格 `outerHTML`，超时则抓取整页 `document.documentElement.outerHTML`。
@@ -403,7 +404,7 @@ SettingsFragment
 - 连接测试从手机直接请求用户选择的模型服务商。
 - 错误详情会通过 `LlmHttpUtils` 屏蔽当前 API Key，避免完整密钥出现在 UI 或测试输出中。
 - 当前支持 OpenAI-Compatible 和 Gemini 两类客户端；预设只用于填表，用户可以按控制台实际配置修改。
-- 当前已把 LLM 接入课表导入、任务网页解析和学习计划主流程：课表进入导入预览，任务可回填编辑表单或进入多任务导入预览，计划进入预览确认；失败时可回退本地规则或提示用户配置。
+- 当前已把 LLM 接入课表导入、任务网页解析和学习计划主流程：课表进入导入预览，任务可回填编辑表单或进入多任务导入预览，计划进入预览确认；课表与任务在 AI 不可用时会改用本地规则，AI 请求失败时用户也可选择本地回退，结果仍需确认后保存。
 - AI 解析字段已拓展到地点别名（`location`、`venue`、`campus`、`building`、`room` 等）、教师别名、周次和单双周；仍需用户在预览页或表单里确认。
 
 ## 8. 数据库设计说明

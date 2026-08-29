@@ -6,11 +6,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.campusmate.R
 import com.example.campusmate.data.model.StudyTask
+import com.example.campusmate.data.model.DailyStudyStat
+import com.example.campusmate.data.model.StudyRecord
 import com.example.campusmate.data.repository.StudyRecordRepository
 import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.domain.statistics.HeatmapCalculator
@@ -21,6 +24,9 @@ import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.time.LocalDate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Shows study duration summary, heatmap, and per-day study records. */
 class StatisticsFragment : Fragment(R.layout.fragment_statistics) {
@@ -100,19 +106,27 @@ class StatisticsFragment : Fragment(R.layout.fragment_statistics) {
         val startDate = LocalDate.parse(today, HeatmapCalculator.formatter)
             .minusDays((HeatmapCalculator.DEFAULT_DAY_COUNT - 1).toLong())
             .format(HeatmapCalculator.formatter)
-        val stats = repository.getDailyStats(startDate, today)
-        val todayDuration = repository.getTodayDuration()
-        val weeklyDuration = repository.getWeeklyDuration()
-        val streak = calculator.calculateStreak(stats, today)
 
-        todayDurationText.text = getString(R.string.duration_minutes, todayDuration / 60)
-        weekDurationText.text = getString(R.string.duration_minutes, weeklyDuration / 60)
-        streakText.text = getString(R.string.statistics_streak_days, streak)
-        bindHeatmap(stats, today)
-        bindStudyRecords(startDate, today)
-        bindTaskCompletion()
-
-        contentView.visibility = View.VISIBLE
+        viewLifecycleOwner.lifecycleScope.launch {
+            val snapshot = withContext(Dispatchers.IO) {
+                StatisticsSnapshot(
+                    stats = repository.getDailyStats(startDate, today),
+                    todayDuration = repository.getTodayDuration(),
+                    weeklyDuration = repository.getWeeklyDuration(),
+                    records = repository.getRecordsBetween(startDate, today),
+                    tasks = taskRepository.getAllTasks()
+                )
+            }
+            if (!isAdded) return@launch
+            val streak = calculator.calculateStreak(snapshot.stats, today)
+            todayDurationText.text = getString(R.string.duration_minutes, snapshot.todayDuration / 60)
+            weekDurationText.text = getString(R.string.duration_minutes, snapshot.weeklyDuration / 60)
+            streakText.text = getString(R.string.statistics_streak_days, streak)
+            bindHeatmap(snapshot.stats, today)
+            bindStudyRecords(snapshot.records)
+            bindTaskCompletion(snapshot.tasks)
+            contentView.visibility = View.VISIBLE
+        }
     }
 
     private fun bindHeatmap(stats: List<com.example.campusmate.data.model.DailyStudyStat>, today: String) {
@@ -128,8 +142,8 @@ class StatisticsFragment : Fragment(R.layout.fragment_statistics) {
         heatmapIndicatorText.setText(if (heatmapExpanded) R.string.ui_collapse else R.string.ui_expand)
     }
 
-    private fun bindStudyRecords(startDate: String, today: String) {
-        val records = repository.getRecordsBetween(startDate, today)
+    private fun bindStudyRecords(allRecords: List<StudyRecord>) {
+        val records = allRecords
             .sortedByDescending { it.startAt ?: it.createdAt }
             .take(RECENT_RECORD_LIMIT)
         recordsAdapter.submitList(records)
@@ -138,8 +152,7 @@ class StatisticsFragment : Fragment(R.layout.fragment_statistics) {
         recordsRecyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
     }
 
-    private fun bindTaskCompletion() {
-        val tasks = taskRepository.getAllTasks()
+    private fun bindTaskCompletion(tasks: List<StudyTask>) {
         val total = tasks.size
         val done = tasks.count { it.status == StudyTask.STATUS_DONE }
         val todo = tasks.count { it.status == StudyTask.STATUS_TODO }
@@ -152,24 +165,35 @@ class StatisticsFragment : Fragment(R.layout.fragment_statistics) {
     }
 
     private fun showDayRecords(day: HeatmapDay) {
-        val records = repository.getRecordsByDate(day.date)
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_day_records, null)
-        dialogView.findViewById<TextView>(R.id.dayRecordsSummaryText).text =
-            getString(R.string.statistics_day_summary, day.date, day.durationSec / 60, day.recordCount)
-        val emptyText = dialogView.findViewById<TextView>(R.id.dayRecordsEmptyText)
-        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.dayRecordsRecyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = StudyRecordAdapter().apply { submitList(records) }
-        val isEmpty = records.isEmpty()
-        emptyText.visibility = if (isEmpty) View.VISIBLE else View.GONE
-        recyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
+        viewLifecycleOwner.lifecycleScope.launch {
+            val records = withContext(Dispatchers.IO) { repository.getRecordsByDate(day.date) }
+            if (!isAdded) return@launch
+            val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_day_records, null)
+            dialogView.findViewById<TextView>(R.id.dayRecordsSummaryText).text =
+                getString(R.string.statistics_day_summary, day.date, day.durationSec / 60, day.recordCount)
+            val emptyText = dialogView.findViewById<TextView>(R.id.dayRecordsEmptyText)
+            val recyclerView = dialogView.findViewById<RecyclerView>(R.id.dayRecordsRecyclerView)
+            recyclerView.layoutManager = LinearLayoutManager(requireContext())
+            recyclerView.adapter = StudyRecordAdapter().apply { submitList(records) }
+            val isEmpty = records.isEmpty()
+            emptyText.visibility = if (isEmpty) View.VISIBLE else View.GONE
+            recyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
 
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.statistics_day_detail_title)
-            .setView(dialogView)
-            .setPositiveButton(R.string.action_close, null)
-            .show()
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.statistics_day_detail_title)
+                .setView(dialogView)
+                .setPositiveButton(R.string.action_close, null)
+                .show()
+        }
     }
+
+    private data class StatisticsSnapshot(
+        val stats: List<DailyStudyStat>,
+        val todayDuration: Int,
+        val weeklyDuration: Int,
+        val records: List<StudyRecord>,
+        val tasks: List<StudyTask>
+    )
 
     companion object {
         private const val COMPACT_HEATMAP_DAY_COUNT = 28

@@ -107,8 +107,18 @@ class LlmTaskDraftValidator(
             return ParsedTask(null, warnings)
         }
 
-        val dueAt = parseTime(readJsonValue(taskObject, "dueAt", "dueTime", "deadline", "dueDate", "endTime"))
-        val remindAt = parseTime(readJsonValue(taskObject, "remindAt", "reminderAt", "reminderTime", "notifyAt"))
+        val rawDueAt = readJsonValue(
+            taskObject,
+            "dueAt", "dueTime", "due_time", "deadline", "deadlineAt", "dueDate", "due_date", "endTime"
+        )
+        val rawRemindAt = readJsonValue(
+            taskObject,
+            "remindAt", "reminderAt", "reminderTime", "reminder_time", "notifyAt", "notify_at"
+        )
+        val dueAt = parseTime(rawDueAt)
+        val remindAt = parseTime(rawRemindAt)
+        if (rawDueAt != null && dueAt == null) warnings += "第 $index 条任务截止时间格式无法识别，已留空。"
+        if (rawRemindAt != null && remindAt == null) warnings += "第 $index 条任务提醒时间格式无法识别，已留空。"
 
         return ParsedTask(
             draft = TaskDraft(
@@ -129,14 +139,22 @@ class LlmTaskDraftValidator(
     private fun parseTaskType(raw: Any?): Int? {
         return when (raw) {
             is Number -> raw.toInt().takeIf { it in 0..5 }
-            is String -> when (raw.trim().lowercase(Locale.ROOT)) {
-                "0", "homework", "assignment", "作业", "习题" -> StudyTask.TYPE_HOMEWORK
-                "1", "experiment", "lab", "实验", "实验报告" -> StudyTask.TYPE_EXPERIMENT
-                "2", "exam", "test", "quiz", "考试", "测验", "期中", "期末" -> StudyTask.TYPE_EXAM
-                "3", "review", "revision", "复习", "预习" -> StudyTask.TYPE_REVIEW
-                "4", "project", "项目", "大作业", "课程设计" -> StudyTask.TYPE_PROJECT
-                "5", "other", "其他" -> StudyTask.TYPE_OTHER
-                else -> null
+            is String -> {
+                val value = raw.trim().lowercase(Locale.ROOT)
+                when {
+                    value in setOf("0", "homework", "assignment", "作业", "习题") ||
+                        value.contains("作业") || value.contains("homework") || value.contains("assignment") -> StudyTask.TYPE_HOMEWORK
+                    value in setOf("1", "experiment", "lab", "实验", "实验报告") ||
+                        value.contains("实验") || value.contains("experiment") || value.contains("lab") -> StudyTask.TYPE_EXPERIMENT
+                    value in setOf("2", "exam", "test", "quiz", "考试", "测验", "期中", "期末") ||
+                        value.contains("考试") || value.contains("测验") || value.contains("exam") || value.contains("quiz") -> StudyTask.TYPE_EXAM
+                    value in setOf("3", "review", "revision", "复习", "预习") ||
+                        value.contains("复习") || value.contains("预习") || value.contains("review") -> StudyTask.TYPE_REVIEW
+                    value in setOf("4", "project", "项目", "大作业", "课程设计") ||
+                        value.contains("项目") || value.contains("课程设计") || value.contains("project") -> StudyTask.TYPE_PROJECT
+                    value in setOf("5", "other", "其他") -> StudyTask.TYPE_OTHER
+                    else -> null
+                }
             }
             null -> StudyTask.TYPE_HOMEWORK
             else -> null
@@ -146,11 +164,15 @@ class LlmTaskDraftValidator(
     private fun parsePriority(raw: Any?): Int? {
         return when (raw) {
             is Number -> raw.toInt().takeIf { it in 0..2 }
-            is String -> when (raw.trim().lowercase(Locale.ROOT)) {
-                "0", "low", "低", "不急" -> StudyTask.PRIORITY_LOW
-                "1", "normal", "medium", "middle", "普通", "正常", "中" -> StudyTask.PRIORITY_NORMAL
-                "2", "high", "urgent", "important", "高", "紧急", "重要", "快截止" -> StudyTask.PRIORITY_HIGH
-                else -> null
+            is String -> {
+                val value = raw.trim().lowercase(Locale.ROOT)
+                when {
+                    value in setOf("0", "low", "低", "不急") || value.contains("可选") -> StudyTask.PRIORITY_LOW
+                    value in setOf("2", "high", "urgent", "important", "高", "紧急", "重要", "快截止") ||
+                        value.contains("紧急") || value.contains("重要") || value.contains("urgent") || value.contains("important") -> StudyTask.PRIORITY_HIGH
+                    value in setOf("1", "normal", "medium", "middle", "普通", "正常", "中") -> StudyTask.PRIORITY_NORMAL
+                    else -> null
+                }
             }
             else -> null
         }
@@ -173,6 +195,7 @@ class LlmTaskDraftValidator(
         val text = raw.trim()
         if (text.isBlank()) return null
         parseRelativeDate(text)?.let { return it }
+        parseRelativeWeekday(text)?.let { return it }
         DATE_TIME_FORMATS.forEach { pattern ->
             runCatching {
                 SimpleDateFormat(pattern, Locale.CHINA).apply { isLenient = false }
@@ -204,6 +227,26 @@ class LlmTaskDraftValidator(
         }.timeInMillis
     }
 
+    private fun parseRelativeWeekday(text: String): Long? {
+        val match = Regex("""(本周|这周|下周)?\s*(?:星期|周)([一二三四五六日天])""").find(text) ?: return null
+        val target = "一二三四五六日".indexOf(match.groupValues[2].replace('天', '日')) + 1
+        if (target !in 1..7) return null
+        val calendar = Calendar.getInstance().apply { timeInMillis = nowMillisProvider() }
+        val current = ((calendar.get(Calendar.DAY_OF_WEEK) + 5) % 7) + 1
+        var offset = target - current
+        if (match.groupValues[1] == "下周") offset += 7
+        else if (match.groupValues[1].isBlank() && offset < 0) offset += 7
+        val timeMatch = Regex("""(\d{1,2})[:：](\d{1,2})""").find(text)
+        val hour = timeMatch?.groupValues?.getOrNull(1)?.toIntOrNull() ?: 23
+        val minute = timeMatch?.groupValues?.getOrNull(2)?.toIntOrNull() ?: 59
+        calendar.add(Calendar.DAY_OF_MONTH, offset)
+        calendar.set(Calendar.HOUR_OF_DAY, hour.coerceIn(0, 23))
+        calendar.set(Calendar.MINUTE, minute.coerceIn(0, 59))
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        return calendar.timeInMillis
+    }
+
     private fun parseMonthDayTime(text: String): Long? {
         val match = Regex("""(\d{1,2})\s*月\s*(\d{1,2})\s*日?(?:\s+(\d{1,2})[:：](\d{1,2}))?""")
             .find(text) ?: return null
@@ -219,6 +262,9 @@ class LlmTaskDraftValidator(
             set(Calendar.MINUTE, minute.coerceIn(0, 59))
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
+            if (timeInMillis < nowMillisProvider() - ONE_DAY_MILLIS) {
+                add(Calendar.YEAR, 1)
+            }
         }.timeInMillis
     }
 
@@ -307,12 +353,17 @@ class LlmTaskDraftValidator(
         private val DATE_TIME_FORMATS = listOf(
             "yyyy-MM-dd HH:mm",
             "yyyy/MM/dd HH:mm",
+            "yyyy.MM.dd HH:mm",
             "yyyy年M月d日 HH:mm",
+            "yyyy年M月d日HH:mm:ss",
             "yyyy-MM-dd'T'HH:mm",
+            "yyyy-MM-dd'T'HH:mm:ss",
             "yyyy-MM-dd",
             "yyyy/MM/dd",
+            "yyyy.MM.dd",
             "yyyy年M月d日"
         )
+        private const val ONE_DAY_MILLIS = 24 * 60 * 60 * 1000L
     }
 
     private data class ParsedTask(

@@ -11,7 +11,8 @@ import com.example.campusmate.util.DateTimeUtils
 class LlmTaskParseService(
     private val llmSettingsRepository: LlmSettingsRepository,
     private val llmClientFactory: (LlmProviderConfig) -> LlmClient = { config -> LlmClientFactory.create(config) },
-    private val validator: LlmTaskDraftValidator = LlmTaskDraftValidator()
+    private val validator: LlmTaskDraftValidator = LlmTaskDraftValidator(),
+    private val localParser: LocalTaskParser = LocalTaskParser()
 ) {
     fun isAvailable(): Boolean {
         val config = llmSettingsRepository.getConfig()
@@ -38,4 +39,6 @@ class LlmTaskParseService(
             is LlmGenerateResult.Failure -> throw TaskParseException(response.message)
         }
     }
+
+    fun parseLocal(pageContent: String): LlmTaskDraftValidationResult = localParser.parse(pageContent)
 }

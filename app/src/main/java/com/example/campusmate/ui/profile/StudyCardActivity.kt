@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.campusmate.R
 import com.example.campusmate.data.model.UserProfile
 import com.example.campusmate.data.repository.UserProfileRepository
@@ -17,6 +18,9 @@ import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import org.json.JSONObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Generates a QR bitmap from the public profile JSON. */
 class StudyCardActivity : AppCompatActivity() {
@@ -46,23 +50,27 @@ class StudyCardActivity : AppCompatActivity() {
     }
 
     private fun bindQrCard() {
-        val profile = repository.getProfile()
-        if (profile == null) {
-            Snackbar.make(rootView, R.string.profile_qr_generate_failed, Snackbar.LENGTH_SHORT).show()
-            finish()
-            return
+        lifecycleScope.launch {
+            val payload = withContext(Dispatchers.IO) {
+                val profile = repository.getProfile() ?: return@withContext null
+                val json = runCatching { repository.buildPublicProfileJson() }.getOrNull()
+                    ?: return@withContext null
+                profile to json
+            }
+            if (payload == null) {
+                Snackbar.make(rootView, R.string.profile_qr_generate_failed, Snackbar.LENGTH_SHORT).show()
+                finish()
+                return@launch
+            }
+            val (profile, json) = payload
+            val qrBitmap = withContext(Dispatchers.Default) { createQrBitmap(json) }
+            findViewById<TextView>(R.id.studyCardNameText).text = profile.nickname
+            findViewById<TextView>(R.id.studyCardSchoolText).text =
+                ProfileUiFormatter.schoolLine(profile.school, profile.major, profile.grade)
+            findViewById<TextView>(R.id.publicScopeText).text = publicScope(profile)
+            findViewById<TextView>(R.id.publicJsonText).text = prettyJson(json)
+            findViewById<ImageView>(R.id.qrImageView).setImageBitmap(qrBitmap)
         }
-        val json = runCatching { repository.buildPublicProfileJson() }.getOrElse {
-            Snackbar.make(rootView, R.string.profile_qr_generate_failed, Snackbar.LENGTH_SHORT).show()
-            finish()
-            return
-        }
-        findViewById<TextView>(R.id.studyCardNameText).text = profile.nickname
-        findViewById<TextView>(R.id.studyCardSchoolText).text =
-            ProfileUiFormatter.schoolLine(profile.school, profile.major, profile.grade)
-        findViewById<TextView>(R.id.publicScopeText).text = publicScope(profile)
-        findViewById<TextView>(R.id.publicJsonText).text = prettyJson(json)
-        findViewById<ImageView>(R.id.qrImageView).setImageBitmap(createQrBitmap(json))
     }
 
     private fun publicScope(profile: UserProfile): String {

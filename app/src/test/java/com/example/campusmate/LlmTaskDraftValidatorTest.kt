@@ -83,4 +83,42 @@ class LlmTaskDraftValidatorTest {
         assertEquals("完成实验报告", result.drafts[0].title)
         assertEquals("复习高等数学", result.drafts[1].title)
     }
+
+    @Test
+    fun parse_acceptsCommonAliasesAndRelativeWeekday() {
+        val result = LlmTaskDraftValidator { fixedNow }.parse(
+            """
+            {
+              "tasks": [
+                {
+                  "task_name": "提交网络实验报告",
+                  "course": "计算机网络",
+                  "category": "课程实验",
+                  "urgency": "非常重要",
+                  "due_time": "下周一 20:00"
+                }
+              ]
+            }
+            """.trimIndent()
+        )
+
+        val task = result.drafts.single()
+        assertEquals(StudyTask.TYPE_EXPERIMENT, task.type)
+        assertEquals(StudyTask.PRIORITY_HIGH, task.priority)
+        assertEquals(
+            SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.CHINA).parse("2026-06-08 20:00")!!.time,
+            task.dueAt
+        )
+    }
+
+    @Test
+    fun parse_keepsTaskAndWarnsForMalformedOptionalDeadline() {
+        val result = LlmTaskDraftValidator { fixedNow }.parse(
+            """{"tasks":[{"title":"完成作业","type":"homework","deadline":"月底之前"}]}"""
+        )
+
+        assertEquals(1, result.drafts.size)
+        assertEquals(null, result.drafts.single().dueAt)
+        assertTrue(result.warnings.any { it.contains("截止时间格式") })
+    }
 }

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.campusmate.R
 import com.example.campusmate.data.model.UserProfile
 import com.example.campusmate.data.repository.UserProfileRepository
@@ -12,6 +13,9 @@ import com.example.campusmate.ui.buddy.BuddyListActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Entry screen for the local study card, QR card, scanner, and buddy list. */
 class ProfileActivity : AppCompatActivity() {
@@ -66,12 +70,10 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun loadProfile() {
-        val profile = repository.getProfile()
-        currentProfile = profile
-        if (profile == null) {
-            bindEmptyProfile()
-        } else {
-            bindProfile(profile)
+        lifecycleScope.launch {
+            val profile = withContext(Dispatchers.IO) { repository.getProfile() }
+            currentProfile = profile
+            if (profile == null) bindEmptyProfile() else bindProfile(profile)
         }
     }
 
