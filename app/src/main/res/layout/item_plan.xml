@@ -4,20 +4,25 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="@dimen/space_s"
+    android:foreground="?attr/selectableItemBackground"
     app:cardCornerRadius="8dp"
-    app:cardElevation="1dp">
+    app:cardElevation="1dp"
+    app:strokeColor="@color/campus_outline"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="104dp"
         android:orientation="horizontal"
         android:padding="@dimen/space_m">
 
         <CheckBox
             android:id="@+id/planItemCheckbox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical" />
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
+            android:buttonTint="@color/campus_primary" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -28,36 +33,40 @@
 
             <TextView
                 android:id="@+id/planItemTitle"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:textColor="@color/campus_text_primary"
-                android:textSize="16sp" />
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/planItemTime"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="@color/campus_text_secondary"
-                android:textSize="14sp" />
+                android:layout_marginTop="@dimen/space_s"
+                android:textColor="@color/campus_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/planItemDuration"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="@dimen/space_xs"
                 android:textColor="@color/campus_text_secondary"
-                android:textSize="12sp" />
+                android:textSize="13sp" />
         </LinearLayout>
 
         <ImageButton
             android:id="@+id/planItemMoreButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_gravity="center_vertical"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/task_more_actions"
-            android:padding="@dimen/space_s"
-            android:src="@drawable/ic_more_vert" />
+            android:src="@drawable/ic_more_vert"
+            app:tint="@color/campus_text_secondary" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -130,6 +130,7 @@
     <string name="action_save">保存</string>
     <string name="action_cancel">取消</string>
     <string name="action_delete">删除</string>
+    <string name="action_edit">编辑</string>
     <string name="action_select">选择</string>
     <string name="action_replace">替换</string>
     <string name="action_clear">清空</string>
@@ -480,6 +481,7 @@
     <string name="plan_generate_failed">%1$s</string>
     <string name="plan_regenerate_confirm">确定重新生成吗？将删除当日现有计划</string>
     <string name="plan_delete_confirm">确定删除此计划项吗？</string>
+    <string name="plan_delete_success">计划已删除</string>
     <string name="plan_detail_title">计划详情</string>
     <string name="plan_item_time_format">%1$s - %2$s</string>
     <string name="plan_item_duration_format">%1$d 分钟</string>
@@ -493,8 +495,10 @@
     <string name="plan_source_auto">自动生成</string>
     <string name="plan_source_manual">手动创建</string>
     <string name="plan_today_summary">今日计划: %1$d 项 · %2$d 分钟</string>
+    <string name="plan_day_summary">%1$s 计划: %2$d 项 · %3$d 分钟</string>
     <string name="plan_week_summary">本周计划: %1$d 项 · %2$d 分钟</string>
     <string name="plan_completion_rate">完成率: %1$d%%</string>
+    <string name="plan_date_label_format">%1$s %2$s</string>
     <string name="plan_selected_date_content_description">已选择%1$s，%2$s日</string>
     <string name="plan_date_content_description">选择%1$s，%2$s日</string>
     <string name="plan_week_preview_title">本周计划预览</string>
@@ -502,10 +506,15 @@
     <string name="plan_week_day_empty">当天暂无计划</string>
     <string name="plan_confirm_all">一键全部确认</string>
     <string name="plan_confirm">确认</string>
+    <string name="plan_none_selected">请至少选择一项计划</string>
     <string name="plan_local_generation_tip">未检测到 API Key，当前计划基于本地课程和考试数据生成</string>
     <string name="plan_week_save_success">已保存 %1$d 项计划</string>
     <string name="plan_source_llm">AI 生成</string>
     <string name="plan_no_specific_time">时间待定</string>
+    <string name="plan_date_today">今天</string>
+    <string name="plan_save_failed">计划保存失败</string>
+    <string name="plan_delete_failed">删除失败</string>
+    <string name="plan_status_update_failed">状态更新失败</string>
     <string name="action_retry">重试</string>
 
     <!-- LLM 学习计划生成 -->

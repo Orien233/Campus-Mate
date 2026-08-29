@@ -28,7 +28,7 @@ class LlmPlanPreviewAdapter(
         private val titleText: TextView = itemView.findViewById(R.id.planPreviewTitle)
         private val timeText: TextView = itemView.findViewById(R.id.planPreviewTime)
         private val durationText: TextView = itemView.findViewById(R.id.planPreviewDuration)
-        private val typeText: TextView = itemView.findViewById(R.id.planPreviewType)
+        private val sourceText: TextView = itemView.findViewById(R.id.planPreviewSourceText)
 
         fun bind(plan: StudyPlan) {
             titleText.text = plan.title
@@ -46,7 +46,7 @@ class LlmPlanPreviewAdapter(
                 StudyPlan.SOURCE_LLM -> itemView.context.getString(R.string.plan_source_llm)
                 else -> itemView.context.getString(R.string.plan_source_auto)
             }
-            typeText.text = sourceName
+            sourceText.text = sourceName
 
             itemView.setOnClickListener { onItemClick?.invoke(plan) }
         }
