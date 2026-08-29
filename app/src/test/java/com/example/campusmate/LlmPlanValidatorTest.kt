@@ -1,5 +1,6 @@
 package com.example.campusmate
 
+import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.domain.plan.LlmPlanValidator
 import com.example.campusmate.domain.plan.StudyPlanContext
 import org.junit.Assert.assertEquals
@@ -53,6 +54,37 @@ class LlmPlanValidatorTest {
 
         assertEquals(1, result.plans.size)
         assertEquals("16:00", result.plans.first().startTime)
+    }
+
+    @Test
+    fun parseAndValidate_acceptsFencedJsonAndUsesLocalMetadata() {
+        val result = LlmPlanValidator().parseAndValidate(
+            jsonContent = """
+                模型说明
+                ```json
+                {
+                  "plans": [
+                    {
+                      "title": "完成数据库项目",
+                      "plannedMinutes": 60,
+                      "startTime": "16:00",
+                      "endTime": "17:00",
+                      "type": 999,
+                      "sourceType": 999
+                    }
+                  ],
+                  "warnings": ["已优先安排临近截止任务"]
+                }
+                ```
+            """.trimIndent(),
+            planContext = context(generationStartTime = "15:30"),
+            outputPlanType = StudyPlan.TYPE_WEEKLY
+        )
+
+        assertEquals(1, result.plans.size)
+        assertEquals(StudyPlan.TYPE_WEEKLY, result.plans.first().type)
+        assertEquals(StudyPlan.SOURCE_LLM, result.plans.first().sourceType)
+        assertTrue(result.warnings.contains("已优先安排临近截止任务"))
     }
 
     private fun context(generationStartTime: String): StudyPlanContext {
