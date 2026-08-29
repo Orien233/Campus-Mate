@@ -160,8 +160,7 @@
                             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/task_attachment_add"
-                            app:icon="@drawable/ic_add" />
+                            android:text="@string/task_attachment_add" />
                     </LinearLayout>
 
                     <TextView
@@ -185,8 +184,7 @@
                 android:id="@+id/toggleTaskDoneButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_l"
-                app:icon="@drawable/ic_task" />
+                android:layout_marginTop="@dimen/space_l" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -201,8 +199,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="@dimen/space_s"
                     android:layout_weight="1"
-                    android:text="@string/task_action_edit"
-                    app:icon="@drawable/ic_task" />
+                    android:text="@string/task_action_edit" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/deleteTaskButton"
@@ -211,8 +208,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/space_s"
                     android:layout_weight="1"
-                    android:text="@string/task_action_delete"
-                    app:icon="@drawable/ic_delete" />
+                    android:text="@string/task_action_delete" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

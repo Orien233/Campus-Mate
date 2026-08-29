@@ -15,6 +15,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_back"
+            app:navigationIconTint="@color/campus_text_primary"
             app:title="@string/plan_week_preview_title"
             app:titleTextColor="@color/campus_text_primary" />
     </com.google.android.material.appbar.AppBarLayout>
@@ -25,7 +26,6 @@
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <!-- Loading State -->
         <LinearLayout
             android:id="@+id/loadingContainer"
             android:layout_width="match_parent"
@@ -48,7 +48,6 @@
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- Error State -->
         <LinearLayout
             android:id="@+id/errorContainer"
             android:layout_width="match_parent"
@@ -75,7 +74,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/retryButton"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_m"
@@ -83,13 +82,12 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/fallbackLocalButton"
-                style="@style/Widget.Material3.Button.TextButton"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/plan_generate_fallback_to_local" />
         </LinearLayout>
 
-        <!-- Week Plan Content -->
         <LinearLayout
             android:id="@+id/contentContainer"
             android:layout_width="match_parent"
@@ -97,7 +95,6 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <!-- Local Generation Tip Banner -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/localGenerationTip"
                 android:layout_width="match_parent"
@@ -143,14 +140,10 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Summary Header -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/space_m"
-                app:cardBackgroundColor="@color/campus_primary"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                android:layout_margin="@dimen/space_m">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -160,20 +153,19 @@
 
                     <TextView
                         android:id="@+id/weekSummaryText"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/campus_text_primary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/weekWarningText"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_xs"
-                        android:textColor="@android:color/white"
-                        android:alpha="0.8"
-                        android:textSize="12sp"
+                        android:textColor="@color/warning"
+                        android:textSize="13sp"
                         android:visibility="gone" />
 
                     <TextView
@@ -181,39 +173,26 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_s"
-                        android:textColor="@android:color/white"
-                        android:alpha="0.9"
-                        android:textSize="12sp" />
+                        android:textColor="@color/campus_text_secondary"
+                        android:textSize="13sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Day Selector Tab Layout -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/campus_surface"
-                android:elevation="2dp"
+                android:layout_marginStart="@dimen/space_m"
+                android:layout_marginEnd="@dimen/space_m"
+                android:overScrollMode="never"
                 android:scrollbars="none">
 
-                <com.google.android.material.tabs.TabLayout
-                    android:id="@+id/dayTabLayout"
+                <LinearLayout
+                    android:id="@+id/daySelectorContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@color/campus_surface"
-                    android:paddingHorizontal="@dimen/space_m"
-                    app:tabGravity="start"
-                    app:tabIndicator="@drawable/tab_indicator"
-                    app:tabIndicatorFullWidth="false"
-                    app:tabIndicatorHeight="3dp"
-                    app:tabMode="scrollable"
-                    app:tabPaddingEnd="@dimen/space_s"
-                    app:tabPaddingStart="@dimen/space_s"
-                    app:tabRippleColor="@color/campus_primary_light"
-                    app:tabSelectedTextColor="@color/campus_primary"
-                    app:tabTextColor="@color/campus_text_secondary" />
+                    android:orientation="horizontal" />
             </HorizontalScrollView>
 
-            <!-- Plans List for Selected Day -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/weekPlanRecyclerView"
                 android:layout_width="match_parent"
@@ -223,7 +202,6 @@
                 android:padding="@dimen/space_m"
                 android:paddingBottom="100dp" />
 
-            <!-- Empty State for Day -->
             <LinearLayout
                 android:id="@+id/dayEmptyState"
                 android:layout_width="match_parent"
@@ -242,59 +220,44 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Bottom Action Bar -->
-        <com.google.android.material.card.MaterialCardView
+        <LinearLayout
             android:id="@+id/actionBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="@color/campus_surface"
-            app:cardCornerRadius="0dp"
-            app:cardElevation="8dp">
+            android:background="@color/campus_surface"
+            android:elevation="8dp"
+            android:orientation="vertical"
+            android:padding="@dimen/space_m">
+
+            <TextView
+                android:id="@+id/weekCourseConflictStatusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_s"
+                android:textColor="@color/campus_text_secondary"
+                android:textSize="13sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/space_m">
+                android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/weekCourseConflictStatusText"
-                    android:layout_width="match_parent"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/cancelButton"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/space_s"
-                    android:textColor="@color/campus_text_secondary"
-                    android:textSize="13sp" />
+                    android:layout_weight="1"
+                    android:text="@string/action_cancel" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/confirmAllButton"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/cancelButton"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="56dp"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="@dimen/space_s"
-                        android:text="@string/action_cancel"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/confirmAllButton"
-                        style="@style/Widget.Material3.Button"
-                        android:layout_width="0dp"
-                        android:layout_height="56dp"
-                        android:layout_weight="1"
-                        android:text="@string/plan_confirm"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        app:icon="@drawable/ic_check"
-                        app:iconGravity="textStart"
-                        app:iconPadding="8dp" />
-                </LinearLayout>
+                    android:layout_marginStart="@dimen/space_s"
+                    android:layout_weight="1"
+                    android:text="@string/plan_confirm_all" />
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

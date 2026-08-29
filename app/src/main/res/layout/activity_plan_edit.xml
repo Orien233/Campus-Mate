@@ -56,28 +56,44 @@
                     android:orientation="vertical"
                     android:padding="@dimen/space_m">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/plan_form_date_label"
-                        android:textColor="@color/campus_text_secondary"
-                        android:textSize="13sp" />
-
-                    <TextView
-                        android:id="@+id/planDateText"
+                    <LinearLayout
+                        android:id="@+id/pickDateRow"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_xs"
-                        android:textColor="@color/campus_text_primary"
-                        android:textSize="17sp" />
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="@dimen/selection_row_min_height"
+                        android:orientation="horizontal">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/pickDateButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_s"
-                        android:text="@string/action_select" />
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/plan_form_date_label"
+                                android:textColor="@color/campus_text_secondary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/planDateText"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/space_xs"
+                                android:textColor="@color/campus_text_primary"
+                                android:textSize="16sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="@dimen/selection_icon_size"
+                            android:layout_height="@dimen/selection_icon_size"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/campus_text_secondary" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -106,43 +122,51 @@
                     android:orientation="vertical"
                     android:padding="@dimen/space_m">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/plan_form_start_time"
-                        android:textColor="@color/campus_text_secondary"
-                        android:textSize="13sp" />
-
-                    <TextView
-                        android:id="@+id/planStartTimeText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_xs"
-                        android:textColor="@color/campus_text_primary"
-                        android:textSize="17sp" />
-
                     <LinearLayout
+                        android:id="@+id/pickStartTimeRow"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_s"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="@dimen/selection_row_min_height"
                         android:orientation="horizontal">
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/pickStartTimeButton"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="@dimen/space_s"
                             android:layout_weight="1"
-                            android:text="@string/action_select" />
+                            android:orientation="vertical">
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/clearStartTimeButton"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/action_clear" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/plan_form_start_time"
+                                android:textColor="@color/campus_text_secondary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/planStartTimeText"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/space_xs"
+                                android:textColor="@color/campus_text_primary"
+                                android:textSize="16sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="@dimen/selection_icon_size"
+                            android:layout_height="@dimen/selection_icon_size"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/campus_text_secondary" />
                     </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/clearStartTimeButton"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/action_clear" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -157,66 +181,106 @@
                     android:orientation="vertical"
                     android:padding="@dimen/space_m">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/plan_form_end_time"
-                        android:textColor="@color/campus_text_secondary"
-                        android:textSize="13sp" />
-
-                    <TextView
-                        android:id="@+id/planEndTimeText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_xs"
-                        android:textColor="@color/campus_text_primary"
-                        android:textSize="17sp" />
-
                     <LinearLayout
+                        android:id="@+id/pickEndTimeRow"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_s"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="@dimen/selection_row_min_height"
                         android:orientation="horizontal">
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/pickEndTimeButton"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="@dimen/space_s"
                             android:layout_weight="1"
-                            android:text="@string/action_select" />
+                            android:orientation="vertical">
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/clearEndTimeButton"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/action_clear" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/plan_form_end_time"
+                                android:textColor="@color/campus_text_secondary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/planEndTimeText"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/space_xs"
+                                android:textColor="@color/campus_text_primary"
+                                android:textSize="16sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="@dimen/selection_icon_size"
+                            android:layout_height="@dimen/selection_icon_size"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/campus_text_secondary" />
                     </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/clearEndTimeButton"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/action_clear" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_m"
-                android:text="@string/plan_form_type_label"
-                android:textColor="@color/campus_text_secondary"
-                android:textSize="14sp" />
-
-            <Spinner
-                android:id="@+id/planTypeSpinner"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
-                android:layout_height="48dp" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m">
+
+                <LinearLayout
+                    android:id="@+id/planTypeRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:minHeight="@dimen/selection_row_min_height"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/space_m">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/plan_form_type_label"
+                            android:textColor="@color/campus_text_secondary"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/planTypeValueText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_xs"
+                            android:textColor="@color/campus_text_primary"
+                            android:textSize="16sp" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="@dimen/selection_icon_size"
+                        android:layout_height="@dimen/selection_icon_size"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/campus_text_secondary" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/savePlanButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_l"
-                android:text="@string/action_save"
-                app:icon="@drawable/ic_plan" />
+                android:text="@string/action_save" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

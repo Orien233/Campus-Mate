@@ -66,8 +66,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_s"
-                android:text="@string/task_ai_parse_from_web"
-                app:icon="@drawable/ic_import" />
+                android:text="@string/task_ai_parse_from_web" />
 
             <TextView
                 android:id="@+id/taskAiPrefillHintText"
@@ -87,45 +86,6 @@
                 android:textSize="13sp"
                 android:visibility="gone" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_m"
-                android:text="@string/task_course"
-                android:textColor="@color/campus_text_secondary"
-                android:textSize="14sp" />
-
-            <Spinner
-                android:id="@+id/taskCourseSpinner"
-                android:layout_width="match_parent"
-                android:layout_height="48dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_m"
-                android:text="@string/task_type"
-                android:textColor="@color/campus_text_secondary"
-                android:textSize="14sp" />
-
-            <Spinner
-                android:id="@+id/taskTypeSpinner"
-                android:layout_width="match_parent"
-                android:layout_height="48dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_m"
-                android:text="@string/task_priority"
-                android:textColor="@color/campus_text_secondary"
-                android:textSize="14sp" />
-
-            <Spinner
-                android:id="@+id/taskPrioritySpinner"
-                android:layout_width="match_parent"
-                android:layout_height="48dp" />
-
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -137,42 +97,131 @@
                     android:orientation="vertical"
                     android:padding="@dimen/space_m">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/task_due_time"
-                        android:textColor="@color/campus_text_secondary"
-                        android:textSize="13sp" />
-
-                    <TextView
-                        android:id="@+id/taskDueTimeText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_xs"
-                        android:textColor="@color/campus_text_primary"
-                        android:textSize="17sp" />
-
                     <LinearLayout
+                        android:id="@+id/taskCourseRow"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_s"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="@dimen/selection_row_min_height"
                         android:orientation="horizontal">
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/pickDueTimeButton"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="@dimen/space_s"
                             android:layout_weight="1"
-                            android:text="@string/action_select" />
+                            android:orientation="vertical">
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/clearDueTimeButton"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="wrap_content"
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/task_course"
+                                android:textColor="@color/campus_text_secondary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/taskCourseValueText"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/space_xs"
+                                android:textColor="@color/campus_text_primary"
+                                android:textSize="16sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="@dimen/selection_icon_size"
+                            android:layout_height="@dimen/selection_icon_size"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/campus_text_secondary" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/campus_outline" />
+
+                    <LinearLayout
+                        android:id="@+id/taskTypeRow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="@dimen/selection_row_min_height"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="@string/action_clear" />
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/task_type"
+                                android:textColor="@color/campus_text_secondary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/taskTypeValueText"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/space_xs"
+                                android:textColor="@color/campus_text_primary"
+                                android:textSize="16sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="@dimen/selection_icon_size"
+                            android:layout_height="@dimen/selection_icon_size"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/campus_text_secondary" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/campus_outline" />
+
+                    <LinearLayout
+                        android:id="@+id/taskPriorityRow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="@dimen/selection_row_min_height"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/task_priority"
+                                android:textColor="@color/campus_text_secondary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/taskPriorityValueText"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/space_xs"
+                                android:textColor="@color/campus_text_primary"
+                                android:textSize="16sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="@dimen/selection_icon_size"
+                            android:layout_height="@dimen/selection_icon_size"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/campus_text_secondary" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -188,46 +237,123 @@
                     android:orientation="vertical"
                     android:padding="@dimen/space_m">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/task_remind_time"
-                        android:textColor="@color/campus_text_secondary"
-                        android:textSize="13sp" />
-
-                    <TextView
-                        android:id="@+id/taskRemindTimeText"
+                    <LinearLayout
+                        android:id="@+id/pickDueTimeRow"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_xs"
-                        android:textColor="@color/campus_text_primary"
-                        android:textSize="17sp" />
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="@dimen/selection_row_min_height"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/task_due_time"
+                                android:textColor="@color/campus_text_secondary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/taskDueTimeText"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/space_xs"
+                                android:textColor="@color/campus_text_primary"
+                                android:textSize="16sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="@dimen/selection_icon_size"
+                            android:layout_height="@dimen/selection_icon_size"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/campus_text_secondary" />
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/clearDueTimeButton"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/action_clear" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/space_m">
+
+                    <LinearLayout
+                        android:id="@+id/pickRemindTimeRow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="@dimen/selection_row_min_height"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/task_remind_time"
+                                android:textColor="@color/campus_text_secondary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/taskRemindTimeText"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/space_xs"
+                                android:textColor="@color/campus_text_primary"
+                                android:textSize="16sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="@dimen/selection_icon_size"
+                            android:layout_height="@dimen/selection_icon_size"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/campus_text_secondary" />
+                    </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_s"
-                        android:orientation="vertical">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/pickRemindTimeButton"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/action_select" />
+                        android:orientation="horizontal">
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/demoReminderButton"
                             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/space_s"
+                            android:layout_marginEnd="@dimen/space_s"
+                            android:layout_weight="1"
                             android:text="@string/task_demo_reminder_10s" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/clearRemindTimeButton"
                             style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/action_clear" />
                     </LinearLayout>
@@ -267,8 +393,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_s"
-                        android:text="@string/task_attachment_add"
-                        app:icon="@drawable/ic_import" />
+                        android:text="@string/task_attachment_add" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -277,8 +402,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_l"
-                android:text="@string/action_save"
-                app:icon="@drawable/ic_task" />
+                android:text="@string/action_save" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

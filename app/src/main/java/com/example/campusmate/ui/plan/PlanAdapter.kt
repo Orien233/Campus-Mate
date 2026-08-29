@@ -22,6 +22,7 @@ data class PlanListItem(
 class PlanAdapter(
     private val onPlanClick: (StudyPlan) -> Unit,
     private val onToggleComplete: (StudyPlan) -> Unit,
+    private val onEditClick: (StudyPlan) -> Unit,
     private val onDeleteClick: (StudyPlan) -> Unit
 ) : ListAdapter<PlanListItem, PlanAdapter.PlanViewHolder>(PlanDiffCallback()) {
 
@@ -55,44 +56,42 @@ class PlanAdapter(
             durationText.text = context.getString(R.string.plan_item_duration_format, plan.plannedMinutes)
 
             val isCompleted = plan.status == StudyPlan.STATUS_COMPLETED
+            checkbox.setOnCheckedChangeListener(null)
             checkbox.isChecked = isCompleted
 
             if (isCompleted) {
                 titleText.paintFlags = titleText.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
                 titleText.alpha = 0.6f
+                timeText.alpha = 0.6f
+                durationText.alpha = 0.6f
             } else {
                 titleText.paintFlags = titleText.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                 titleText.alpha = 1.0f
+                timeText.alpha = 1.0f
+                durationText.alpha = 1.0f
             }
 
-            checkbox.setOnClickListener {
+            checkbox.setOnCheckedChangeListener { _, _ ->
                 onToggleComplete(plan)
             }
-
-            itemView.setOnClickListener {
-                onPlanClick(plan)
-            }
-
-            moreButton.setOnClickListener { view ->
-                showPopupMenu(view, plan)
+            itemView.setOnClickListener { onPlanClick(plan) }
+            moreButton.setOnClickListener { showMenu(plan, moreButton) }
+            itemView.setOnLongClickListener {
+                showMenu(plan, moreButton)
+                true
             }
         }
 
-        private fun showPopupMenu(view: View, plan: StudyPlan) {
-            PopupMenu(view.context, view).apply {
-                menuInflater.inflate(R.menu.menu_plan_item, menu)
-                setOnMenuItemClickListener { menuItem ->
-                    when (menuItem.itemId) {
-                        R.id.action_mark_complete -> {
-                            onToggleComplete(plan)
-                            true
-                        }
-                        R.id.action_delete -> {
-                            onDeleteClick(plan)
-                            true
-                        }
-                        else -> false
+        private fun showMenu(plan: StudyPlan, anchor: View) {
+            PopupMenu(anchor.context, anchor).apply {
+                menu.add(0, MENU_EDIT, 0, R.string.action_edit)
+                menu.add(0, MENU_DELETE, 1, R.string.action_delete)
+                setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        MENU_EDIT -> onEditClick(plan)
+                        MENU_DELETE -> onDeleteClick(plan)
                     }
+                    true
                 }
                 show()
             }
@@ -107,5 +106,10 @@ class PlanAdapter(
         override fun areContentsTheSame(oldItem: PlanListItem, newItem: PlanListItem): Boolean {
             return oldItem.plan == newItem.plan
         }
+    }
+
+    private companion object {
+        const val MENU_EDIT = 1
+        const val MENU_DELETE = 2
     }
 }
