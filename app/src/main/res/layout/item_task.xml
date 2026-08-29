@@ -5,8 +5,8 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="@dimen/space_s"
     android:foreground="?attr/selectableItemBackground"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="1dp"
     app:strokeColor="@color/campus_outline"
     app:strokeWidth="1dp">
 
@@ -21,11 +21,13 @@
             android:id="@+id/taskDoneCheckBox"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:buttonTint="@color/campus_primary"
             android:contentDescription="@string/task_toggle_done" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_s"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -40,10 +42,21 @@
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/taskCourseText"
+                android:id="@+id/taskDueText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/campus_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/taskCourseText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_s"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="@color/campus_text_secondary"
@@ -53,15 +66,6 @@
                 android:id="@+id/taskMetaText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_s"
-                android:textColor="@color/campus_primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/taskDueText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
                 android:textColor="@color/campus_text_secondary"
                 android:textSize="13sp" />
@@ -69,8 +73,8 @@
 
         <ImageButton
             android:id="@+id/taskMoreButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/task_more_actions"
             android:src="@drawable/ic_more_vert"

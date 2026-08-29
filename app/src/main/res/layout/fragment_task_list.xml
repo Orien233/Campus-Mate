@@ -128,48 +128,11 @@
             android:overScrollMode="never"
             android:scrollbars="none">
 
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/taskFilterGroup"
+            <LinearLayout
+                android:id="@+id/taskFilterContainer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:singleLine="true"
-                app:singleSelection="true">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/filterAllTasksChip"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/task_filter_all" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/filterTodoTasksChip"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/task_filter_todo" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/filterDoneTasksChip"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/task_filter_done" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/filterUpcomingTasksChip"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/task_filter_upcoming" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/filterOverdueTasksChip"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/task_filter_overdue" />
-            </com.google.android.material.chip.ChipGroup>
+                android:orientation="horizontal" />
         </HorizontalScrollView>
 
         <androidx.recyclerview.widget.RecyclerView

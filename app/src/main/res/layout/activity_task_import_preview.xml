@@ -21,37 +21,44 @@
             app:titleTextColor="@color/campus_text_primary" />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <TextView
-        android:id="@+id/taskImportPreviewSummaryText"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingStart="@dimen/space_m"
-        android:paddingTop="@dimen/space_m"
-        android:paddingEnd="@dimen/space_m"
-        android:textColor="@color/campus_text_secondary"
-        android:textSize="14sp" />
+        android:layout_margin="@dimen/space_m">
 
-    <TextView
-        android:id="@+id/taskImportPreviewInfoText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingStart="@dimen/space_m"
-        android:paddingTop="@dimen/space_xs"
-        android:paddingEnd="@dimen/space_m"
-        android:text="@string/task_import_preview_info"
-        android:textColor="@color/campus_text_secondary"
-        android:textSize="13sp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/space_m">
 
-    <TextView
-        android:id="@+id/taskImportPreviewWarningText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingStart="@dimen/space_m"
-        android:paddingTop="@dimen/space_xs"
-        android:paddingEnd="@dimen/space_m"
-        android:textColor="@color/warning"
-        android:textSize="13sp"
-        android:visibility="gone" />
+            <TextView
+                android:id="@+id/taskImportPreviewSummaryText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/campus_text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/taskImportPreviewInfoText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/task_import_preview_info"
+                android:textColor="@color/campus_text_secondary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/taskImportPreviewWarningText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:textColor="@color/warning"
+                android:textSize="13sp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/taskDraftRecyclerView"
@@ -72,7 +79,6 @@
             android:id="@+id/importSelectedTasksButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/task_import_selected"
-            app:icon="@drawable/ic_import" />
+            android:text="@string/task_import_selected" />
     </LinearLayout>
 </LinearLayout>

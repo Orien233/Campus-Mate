@@ -5,6 +5,9 @@
     <dimen name="space_m">16dp</dimen>
     <dimen name="space_l">24dp</dimen>
     <dimen name="space_xl">32dp</dimen>
+    <dimen name="selection_pill_min_height">48dp</dimen>
+    <dimen name="selection_row_min_height">64dp</dimen>
+    <dimen name="selection_icon_size">18dp</dimen>
     <dimen name="toolbar_elevation">0dp</dimen>
     <dimen name="system_bar_top_protection">48dp</dimen>
 </resources>
