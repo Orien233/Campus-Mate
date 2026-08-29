@@ -1,11 +1,14 @@
 package com.example.campusmate
 
 import com.example.campusmate.data.model.StudyTask
+import com.example.campusmate.data.repository.WeatherRepository
 import com.example.campusmate.domain.plan.StudyPlanContext
 import com.example.campusmate.domain.plan.StudyPlanContextBuilder
+import com.example.campusmate.domain.weather.WeatherResult
 import java.text.SimpleDateFormat
 import java.util.Locale
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StudyPlanContextBuilderTest {
@@ -82,6 +85,36 @@ class StudyPlanContextBuilderTest {
         )
 
         assertEquals(listOf("课程预习", "实验报告", "长期阅读"), sorted.map { it.title })
+    }
+
+    @Test
+    fun toPromptText_marksStaleWeatherAsHistoricalReference() {
+        val context = StudyPlanContext(
+            date = "2026-06-08",
+            weekday = 1,
+            weekdayName = "周一",
+            dailyGoalMinutes = 60,
+            courses = emptyList(),
+            tasks = emptyList(),
+            weather = WeatherResult(
+                city = "北京",
+                weatherText = "晴",
+                temperature = "26°C",
+                humidity = "40%",
+                wind = "东风 2 级",
+                source = "test",
+                updatedAt = System.currentTimeMillis() - WeatherRepository.CACHE_MAX_AGE_MILLIS - 1L
+            ),
+            recentStudyRecords = emptyList(),
+            existingPlans = emptyList(),
+            coursesById = emptyMap(),
+            courseTimeRanges = emptyMap(),
+            planEarliestTime = "08:00",
+            planLatestTime = "22:00",
+            generationStartTime = "08:00"
+        )
+
+        assertTrue(context.toPromptText().contains("缓存已过期，只能作为历史参考"))
     }
 
     private fun task(
