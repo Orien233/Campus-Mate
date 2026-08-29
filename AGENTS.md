@@ -20,7 +20,7 @@ Agent 必须以真实文件为准，不得假设不存在的模块已经完成�
 - 已存在模块：Dashboard、课程管理、任务管理、任务提醒、任务 AI 网页解析预填、课表导入、WebView 课表导入基础页、专注计时、翻转检测、前台服务、学习记录、热力图统计、设置页、学习计划、任务图片附件、学习名片、二维码、学习伙伴、天气定位、通知弱化/勿扰增强、LLM API 设置与 Client 基础设施、LLM 课表解析和 LLM 学习计划预览确认。
 - 待实现或待增强模块：项目展示页/技术点展示页、JSON 导出/备份、完整演示数据覆盖、真实教务系统 WebView 适配增强、学习计划按课程/考试生成和提醒、真实 AI 调用效果验证。
 - 当前不做登录、云同步、后端服务、头像/照片资料、聊天、动态、关注、点赞、评论或社交广场。
-- LLM 当前状态：设置页、预设、加密 Key 存储、连接测试、OpenAI-Compatible/Gemini Client、`LlmScheduleParseService`、`LlmTaskParseService` 和 `LlmPlanGenerateService` 已存在；课表导入已按设置接入 AI 优先/本地回退，解析结果通过 `ScheduleParseResult` 携带 drafts、warnings、parserLabel、fallbackReason 和 sectionTimeSlots；任务网页解析只回填 `TaskEditActivity`；学习计划主流程已通过 `LlmPlanPreviewActivity` / `LlmWeekPlanPreviewActivity` 接入预览确认和本地规则回退。
+- LLM 当前状态：设置页、预设、加密 Key 存储、连接测试、OpenAI-Compatible/Gemini Client、`LlmScheduleParseService`、`LlmTaskParseService` 和 `LlmPlanGenerateService` 已存在；课表导入已按设置接入 AI 优先/本地回退，解析结果通过 `ScheduleParseResult` 携带 drafts、warnings、parserLabel、fallbackReason 和 sectionTimeSlots；任务网页解析只回填 `TaskEditActivity`；学习计划主流程已通过 `LlmPlanPreviewActivity` / `LlmWeekPlanPreviewActivity` 接入预览确认和本地规则回退；课表、任务和计划已使用版本化 Prompt 契约、统一 JSON 提取和本地 Validator，`domain/ai/context` 已提供课程、任务、计划、天气和学习进度的只读上下文快照。
 - 当前工作目录未检测到 `.git` 元数据时，Agent 不得声称已创建分支、提交或推送。
 - 根目录存在 `local.properties`，但 `.gitignore` 已排除；Agent 不得提交或要求提交该文件。
 - 创建分支必须遵循 `CONTRIBUTING.md` 的命名格式，例如 `feature/xxx`、`fix/xxx`、`docs/xxx`；不要自行添加 `codex/` 等额外前缀，除非用户明确要求。
@@ -122,7 +122,7 @@ Agent 必须以真实文件为准，不得假设不存在的模块已经完成�
 - `app/src/main/res/layout/fragment_plan_list.xml`
 - `app/src/main/res/layout/activity_plan_detail.xml`
 
-边界：当前主流程包含本地规则生成器、`StudyPlanContextBuilder` 和 LLM 今日/本周预览确认入口；上下文会读取课程、任务、天气、近 7 天学习记录、已有计划和每日目标；按课程/考试生成仍是占位；LLM 结果必须先进入预览页，用户确认后才可追加或替换计划。生成 prompt 必须要求避开课程占用时间。修改后验证今日/本周生成、AI 可用/不可用回退、重复生成提示、手动添加、完成状态、删除和详情页。
+边界：当前主流程包含本地规则生成器、`StudyPlanContextBuilder` 和 LLM 今日/本周预览确认入口；上下文会读取课程、任务、设置城市天气、近 7 天学习记录、已有计划和每日目标；不得回退到其他城市天气，过期缓存只能作为历史参考；按课程/考试生成仍是占位；LLM 结果必须先进入预览页，用户确认后才可追加或替换计划。生成 prompt 必须要求避开课程占用时间。修改后验证今日/本周生成、AI 可用/不可用回退、重复生成提示、手动添加、完成状态、删除和详情页。
 
 ### 任务附件
 
@@ -182,7 +182,9 @@ Agent 必须以真实文件为准，不得假设不存在的模块已经完成�
 
 - `app/src/main/java/com/example/campusmate/data/model/llm`
 - `app/src/main/java/com/example/campusmate/data/repository/LlmSettingsRepository.kt`
+- `app/src/main/java/com/example/campusmate/domain/ai/context`
 - `app/src/main/java/com/example/campusmate/domain/llm`
+- `app/src/main/java/com/example/campusmate/domain/schedule/CourseTimeResolver.kt`
 - `app/src/main/java/com/example/campusmate/domain/import_/LlmScheduleParseService.kt`
 - `app/src/main/java/com/example/campusmate/domain/plan/LlmPlanGenerateService.kt`
 - `app/src/main/java/com/example/campusmate/ui/settings/LlmSettingsUiBinder.kt`
@@ -193,10 +195,14 @@ Agent 必须以真实文件为准，不得假设不存在的模块已经完成�
 - 用户自带 API Key，App 不提供模型服务，不内置 Key，不提供后端代理。
 - API Key 必须保存在本机加密存储中；不得写入 Logcat、Toast、Snackbar、README 或测试输出。
 - 预设服务商只用于填充表单，baseUrl、model 和 Header 类型必须允许用户修改。
-- 当前只实现设置、Key 存储、连接测试和基础生成请求。
+- 当前已实现设置、Key 存储、连接测试、基础生成请求、课表/任务解析、计划生成以及通用只读 AI 上下文快照；首页建议、多模态文件分析和 RAG 记忆仍按真实代码状态判断。
 - 课表解析已接入 `LLM_FIRST_FALLBACK_LOCAL` 类似策略；业务接入仍必须进入导入预览，并展示解析方式、回退原因和 warnings 摘要。
 - 任务网页解析已接入 `TaskWebViewParseActivity`，只回填 `TaskEditActivity`，用户保存前必须可检查。
 - 计划生成已接入 LLM 预览确认；修改时不能绕过用户确认，不能让 AI 结果直接静默写数据库。
+- `AiContextOrchestrator` 只能通过 Repository 读取数据，不得直接操作数据库；快照不得包含 API Key、Base URL、Authorization 配置或天气 `rawJson`。
+- 课程上下文当前只能按星期匹配，必须保留起止周与单双周并标记教学周未解析，不能宣称目标日期一定开课。
+- 天气上下文只使用设置城市缓存，并携带更新时间和新鲜度；异地、无时间戳、明显未来或过期数据不得当作实时天气。
+- 文件分析用途必须坚持最小披露；默认不读取天气和学习历史，不输出教师、教室、任务描述或设置城市。模型返回的本地引用必须与快照 allowlist 交叉验证，不能直接执行或写库。
 
 ### 数据库 / Provider
 
