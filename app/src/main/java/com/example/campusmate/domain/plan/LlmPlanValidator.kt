@@ -1,6 +1,7 @@
 package com.example.campusmate.domain.plan
 
 import com.example.campusmate.data.model.StudyPlan
+import com.example.campusmate.domain.llm.LlmJsonPayloadExtractor
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -12,24 +13,39 @@ class LlmPlanValidator {
         val warnings: List<String>
     )
 
-    fun parseAndValidate(jsonContent: String, planDate: String): ValidationResult {
-        return parseAndValidate(jsonContent, planDate, null)
+    fun parseAndValidate(
+        jsonContent: String,
+        planDate: String,
+        outputPlanType: Int = StudyPlan.TYPE_DAILY
+    ): ValidationResult {
+        return parseAndValidate(jsonContent, planDate, null, outputPlanType)
     }
 
-    fun parseAndValidate(jsonContent: String, planContext: StudyPlanContext): ValidationResult {
-        return parseAndValidate(jsonContent, planContext.date, planContext)
+    fun parseAndValidate(
+        jsonContent: String,
+        planContext: StudyPlanContext,
+        outputPlanType: Int = StudyPlan.TYPE_DAILY
+    ): ValidationResult {
+        return parseAndValidate(jsonContent, planContext.date, planContext, outputPlanType)
     }
 
     private fun parseAndValidate(
         jsonContent: String,
         planDate: String,
-        planContext: StudyPlanContext?
+        planContext: StudyPlanContext?,
+        outputPlanType: Int
     ): ValidationResult {
+        require(outputPlanType == StudyPlan.TYPE_DAILY || outputPlanType == StudyPlan.TYPE_WEEKLY) {
+            "Unsupported plan type: $outputPlanType"
+        }
         val warnings = mutableListOf<String>()
         val plans = mutableListOf<StudyPlan>()
 
         try {
-            val json = JSONObject(jsonContent)
+            val jsonText = LlmJsonPayloadExtractor.extractObject(jsonContent)
+                ?: return ValidationResult(emptyList(), listOf("未找到有效 JSON 对象"))
+            val json = JSONObject(jsonText)
+            warnings += readWarnings(json)
             val plansArray = json.optJSONArray("plans") ?: return ValidationResult(emptyList(), listOf("未找到 plans 数组"))
 
             for (i in 0 until plansArray.length()) {
@@ -66,7 +82,7 @@ class LlmPlanValidator {
                     plannedMinutes = plannedMinutes,
                     startTime = startTime,
                     endTime = endTime,
-                    type = planJson.optInt("type", StudyPlan.TYPE_DAILY),
+                    type = outputPlanType,
                     sourceType = StudyPlan.SOURCE_LLM
                 )
                 val localWarning = planContext?.let { validateAgainstContext(plan, it) }
@@ -86,6 +102,15 @@ class LlmPlanValidator {
         } catch (e: Exception) {
             return ValidationResult(emptyList(), listOf("JSON 解析失败: ${e.message}"))
         }
+    }
+
+    private fun readWarnings(root: JSONObject): List<String> {
+        val values = root.optJSONArray("warnings") ?: return emptyList()
+        return (0 until minOf(values.length(), MAX_MODEL_WARNINGS))
+            .mapNotNull { index ->
+                values.optString(index, "").trim().takeIf(String::isNotBlank)?.take(MAX_WARNING_CHARS)
+            }
+            .distinct()
     }
 
     private fun isValidTimeFormat(time: String): Boolean {
@@ -161,5 +186,7 @@ class LlmPlanValidator {
 
     companion object {
         private val COURSE_LEARNING_KEYWORDS = listOf("上课", "课程学习", "完成课程学习", "课堂", "听课")
+        private const val MAX_MODEL_WARNINGS = 8
+        private const val MAX_WARNING_CHARS = 240
     }
 }

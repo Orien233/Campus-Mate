@@ -196,8 +196,10 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
 
         selectableDates().forEach { dayDate ->
             if (aiAvailable) {
-                val prompt = buildDayPrompt(dayDate)
-                val request = llmPlanGenerateService.buildPrompt(prompt)
+                val dayContext = planContextBuilder.buildForDate(dayDate)
+                val request = llmPlanGenerateService.buildPrompt(
+                    dayContext.toPromptText(maxTasks = 8)
+                )
                 val config = llmSettingsRepository.getConfig()
                 val apiKey = llmSettingsRepository.getApiKey() ?: return linkedMapOf()
                 val client = LlmClientFactory.create(config)
@@ -205,8 +207,11 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
 
                 when (llmResult) {
                     is LlmGenerateResult.Success -> {
-                        val dayContext = planContextBuilder.buildForDate(dayDate)
-                        val (plans, dayWarnings) = planValidator.parseAndValidate(llmResult.text, dayContext)
+                        val (plans, dayWarnings) = planValidator.parseAndValidate(
+                            jsonContent = llmResult.text,
+                            planContext = dayContext,
+                            outputPlanType = StudyPlan.TYPE_WEEKLY
+                        )
                         warningsList.addAll(dayWarnings.map { "${formatDayLabel(dayDate)}: $it" })
                         generated[dayDate] = plans
                     }
@@ -227,28 +232,6 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
 
     private fun generateLocalDayPlans(date: String): List<StudyPlan> {
         return localPlanGenerator.generatePreviewPlans(date, StudyPlan.TYPE_WEEKLY)
-    }
-
-    private fun buildDayPrompt(date: String): String {
-        val contextText = planContextBuilder.buildForDate(date).toPromptText(maxTasks = 8)
-        return """
-$contextText
-
-## 输出要求
-请以 JSON 格式返回学习计划：
-{
-  "plans": [
-    {
-      "title": "计划标题",
-      "plannedMinutes": 计划时长（分钟）,
-      "startTime": "开始时间 HH:mm",
-      "endTime": "结束时间 HH:mm",
-      "type": 0,
-      "sourceType": 2
-    }
-  ]
-}
-        """.trimIndent()
     }
 
     private fun mapExceptionToMessage(e: Exception): String {

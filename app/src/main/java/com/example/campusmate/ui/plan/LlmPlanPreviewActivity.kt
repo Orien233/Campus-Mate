@@ -153,8 +153,10 @@ class LlmPlanPreviewActivity : AppCompatActivity() {
 
     private suspend fun generatePlanWithLlm(): Result<List<StudyPlan>> {
         return try {
-            val prompt = buildPrompt()
-            val request = llmPlanGenerateService.buildPrompt(prompt)
+            val planContext = StudyPlanContextBuilder(this).buildForDate(planDate)
+            val request = llmPlanGenerateService.buildPrompt(
+                planContext.toPromptText(maxTasks = 12)
+            )
             val config = llmSettingsRepository.getConfig()
             val apiKey = llmSettingsRepository.getApiKey() ?: return Result.failure(Exception("No API Key"))
 
@@ -164,8 +166,11 @@ class LlmPlanPreviewActivity : AppCompatActivity() {
             return when (llmResult) {
                 is com.example.campusmate.domain.llm.LlmGenerateResult.Success -> {
                     val jsonContent = llmResult.text
-                    val planContext = StudyPlanContextBuilder(this).buildForDate(planDate)
-                    val (plans, validationWarnings) = planValidator.parseAndValidate(jsonContent, planContext)
+                    val (plans, validationWarnings) = planValidator.parseAndValidate(
+                        jsonContent = jsonContent,
+                        planContext = planContext,
+                        outputPlanType = StudyPlan.TYPE_DAILY
+                    )
                     warnings = validationWarnings
                     if (plans.isEmpty()) {
                         Result.failure(Exception(getString(R.string.llm_plan_parse_error)))
@@ -180,39 +185,6 @@ class LlmPlanPreviewActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
-
-    private fun buildPrompt(): String {
-        val contextText = StudyPlanContextBuilder(this)
-            .buildForDate(planDate)
-            .toPromptText(maxTasks = 12)
-
-        return """
-$contextText
-
-## 输出要求
-请以 JSON 格式返回学习计划，格式如下：
-{
-  "plans": [
-    {
-      "title": "计划标题",
-      "plannedMinutes": 计划时长（分钟）,
-      "startTime": "开始时间 HH:mm",
-      "endTime": "结束时间 HH:mm",
-      "type": 0,
-      "sourceType": 2
-    }
-  ]
-}
-
-注意事项：
-1. 计划时长建议在 15-180 分钟之间
-2. 普通作业、复习、项目和考试准备计划必须避开课程时间
-3. “上课”“完成课程学习”“课程学习”等课程本身相关计划应放在对应课程时间内，并在标题中保留课程名
-4. 合理安排休息时间
-5. 优先安排高优先级和即将截止的任务
-6. 只返回 JSON，不要其他内容
-        """.trimIndent()
     }
 
     private fun getTodayDate(): String {

@@ -14,15 +14,7 @@ class LlmPlanGenerateService(
     }
 
     fun buildPrompt(input: String): LlmGenerateRequest {
-        return LlmGenerateRequest(
-            systemPrompt = """
-                你是 CampusMate 的学习计划生成助手。
-                根据课程、任务和可用时间生成结构化学习计划。
-                当前阶段只构造请求，不直接写入数据库。
-            """.trimIndent(),
-            userPrompt = input.trim(),
-            responseJsonOnly = true
-        )
+        return LlmPlanPromptFactory.buildRequest(input)
     }
 
     @Suppress("unused")

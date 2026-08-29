@@ -1,13 +1,18 @@
 package com.example.campusmate.domain.llm
 
 internal object LlmJsonPrompt {
-    private const val JSON_ONLY_INSTRUCTION = "\u53ea\u8fd4\u56de JSON\uff0c\u4e0d\u8981 markdown\uff0c\u4e0d\u8981\u89e3\u91ca\u3002"
+    private const val JSON_ONLY_INSTRUCTION =
+        "只返回一个合法 JSON 对象或数组，不要输出 markdown、代码块、解释或任何前后缀文本。"
 
     fun buildSystemPrompt(request: LlmGenerateRequest): String {
         val basePrompt = request.systemPrompt.trim()
-        if (!request.responseJsonOnly) return basePrompt
-        return listOf(basePrompt, JSON_ONLY_INSTRUCTION)
-            .filter { it.isNotBlank() }
+        return listOf(
+            "[CampusMate prompt=${request.promptTag}]",
+            basePrompt,
+            JSON_ONLY_INSTRUCTION.takeIf { request.responseJsonOnly }
+        )
+            .filterNotNull()
+            .filter(String::isNotBlank)
             .joinToString(separator = "\n")
     }
 }

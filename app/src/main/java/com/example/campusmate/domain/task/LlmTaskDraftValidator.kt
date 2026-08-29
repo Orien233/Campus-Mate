@@ -1,6 +1,7 @@
 package com.example.campusmate.domain.task
 
 import com.example.campusmate.data.model.StudyTask
+import com.example.campusmate.domain.llm.LlmJsonPayloadExtractor
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -273,25 +274,8 @@ class LlmTaskDraftValidator(
         if (trimmed.isBlank()) {
             throw TaskParseException("AI 返回内容为空。")
         }
-        fencedJson(trimmed)?.let { return it }
-
-        val objectStart = trimmed.indexOfFirst { it == '{' || it == '[' }
-        val objectEnd = trimmed.indexOfLast { it == '}' || it == ']' }
-        if (objectStart >= 0 && objectEnd > objectStart) {
-            return trimmed.substring(objectStart, objectEnd + 1)
-        }
-
-        throw TaskParseException("AI 返回内容不包含可解析的 JSON。")
-    }
-
-    private fun fencedJson(text: String): String? {
-        val fenceStart = text.indexOf("```")
-        if (fenceStart < 0) return null
-        val firstLineBreak = text.indexOf('\n', fenceStart)
-        if (firstLineBreak < 0) return null
-        val fenceEnd = text.lastIndexOf("```")
-        if (fenceEnd <= firstLineBreak) return null
-        return text.substring(firstLineBreak + 1, fenceEnd).trim()
+        return LlmJsonPayloadExtractor.extract(trimmed)
+            ?: throw TaskParseException("AI 返回内容不包含可解析的 JSON。")
     }
 
     private fun readJsonArray(root: JSONObject, vararg names: String): JSONArray? {
