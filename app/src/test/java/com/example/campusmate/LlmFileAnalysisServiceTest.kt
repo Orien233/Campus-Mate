@@ -72,7 +72,7 @@ class LlmFileAnalysisServiceTest {
             clientFactory = { client }
         )
 
-        val result = service.generate(TEXT_INPUT, ::fileSnapshot) as AiFileAnalysisResult.Success
+        val result = service.generate(TEXT_INPUT) { fileSnapshot() } as AiFileAnalysisResult.Success
 
         assertEquals(1, client.generateCalls)
         assertEquals("private-key", client.receivedApiKey)
@@ -140,7 +140,7 @@ class LlmFileAnalysisServiceTest {
 
         val result = service.generate(
             AiFileInput.Inline(LlmInlineData("image/png", byteArrayOf(1, 2, 3))),
-            ::fileSnapshot
+            { fileSnapshot() }
         )
 
         assertTrue(result is AiFileAnalysisResult.Success)
@@ -156,7 +156,7 @@ class LlmFileAnalysisServiceTest {
         val requestFailure = LlmFileAnalysisService(
             settingsSource = settings,
             clientFactory = { FakeClient(LlmGenerateResult.Failure("HTTP 503")) }
-        ).generate(TEXT_INPUT, ::fileSnapshot) as AiFileAnalysisResult.Failure
+        ).generate(TEXT_INPUT) { fileSnapshot() } as AiFileAnalysisResult.Failure
         assertEquals(AiFileAnalysisError.REQUEST_FAILED, requestFailure.error)
 
         val invalidResponse = LlmFileAnalysisService(
@@ -170,7 +170,7 @@ class LlmFileAnalysisServiceTest {
                     )
                 )
             }
-        ).generate(TEXT_INPUT, ::fileSnapshot) as AiFileAnalysisResult.Failure
+        ).generate(TEXT_INPUT) { fileSnapshot() } as AiFileAnalysisResult.Failure
         assertEquals(AiFileAnalysisError.INVALID_RESPONSE, invalidResponse.error)
     }
 
