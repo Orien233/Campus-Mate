@@ -5,7 +5,8 @@ data class LlmGenerateRequest(
     val userPrompt: String,
     val responseJsonOnly: Boolean = true,
     val promptId: String = DEFAULT_PROMPT_ID,
-    val promptVersion: Int = 1
+    val promptVersion: Int = 1,
+    val inlineData: List<LlmInlineData> = emptyList()
 ) {
     init {
         require(promptId.matches(PROMPT_ID_PATTERN)) {

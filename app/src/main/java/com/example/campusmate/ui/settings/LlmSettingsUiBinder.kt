@@ -6,6 +6,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.campusmate.R
 import com.example.campusmate.data.model.llm.LlmAuthHeaderType
+import com.example.campusmate.data.model.llm.LlmMultimodalCapability
 import com.example.campusmate.data.model.llm.LlmProviderConfig
 import com.example.campusmate.data.model.llm.LlmProviderPreset
 import com.example.campusmate.data.model.llm.LlmProviderType
@@ -35,11 +36,13 @@ class LlmSettingsUiBinder(
     private lateinit var taskParseSwitch: SwitchMaterial
     private lateinit var planGenerateSwitch: SwitchMaterial
     private lateinit var dashboardAdviceSwitch: SwitchMaterial
+    private lateinit var fileAnalysisSwitch: SwitchMaterial
     private lateinit var providerInput: MaterialAutoCompleteTextView
     private lateinit var baseUrlInputLayout: TextInputLayout
     private lateinit var baseUrlInput: TextInputEditText
     private lateinit var modelInputLayout: TextInputLayout
     private lateinit var modelInput: TextInputEditText
+    private lateinit var multimodalCapabilityInput: MaterialAutoCompleteTextView
     private lateinit var authHeaderInput: MaterialAutoCompleteTextView
     private lateinit var apiKeyInput: TextInputEditText
     private lateinit var apiKeyStatusText: TextView
@@ -59,11 +62,13 @@ class LlmSettingsUiBinder(
 
     private var selectedPreset: LlmProviderPreset = LlmProviderPresets.default
     private var advancedExpanded: Boolean = false
+    private var capabilityModel: String = ""
 
     fun bind() {
         bindViews()
         setupProviderDropdown()
         setupAuthHeaderDropdown()
+        setupMultimodalCapabilityDropdown()
         bindCurrentSettings()
         setupActions()
     }
@@ -78,11 +83,13 @@ class LlmSettingsUiBinder(
         taskParseSwitch = rootView.findViewById(R.id.llmTaskParseSwitch)
         planGenerateSwitch = rootView.findViewById(R.id.llmPlanGenerateSwitch)
         dashboardAdviceSwitch = rootView.findViewById(R.id.llmDashboardAdviceSwitch)
+        fileAnalysisSwitch = rootView.findViewById(R.id.llmFileAnalysisSwitch)
         providerInput = rootView.findViewById(R.id.llmProviderInput)
         baseUrlInputLayout = rootView.findViewById(R.id.llmBaseUrlInputLayout)
         baseUrlInput = rootView.findViewById(R.id.llmBaseUrlInput)
         modelInputLayout = rootView.findViewById(R.id.llmModelInputLayout)
         modelInput = rootView.findViewById(R.id.llmModelInput)
+        multimodalCapabilityInput = rootView.findViewById(R.id.llmMultimodalCapabilityInput)
         authHeaderInput = rootView.findViewById(R.id.llmAuthHeaderInput)
         apiKeyInput = rootView.findViewById(R.id.llmApiKeyInput)
         apiKeyStatusText = rootView.findViewById(R.id.llmApiKeyStatusText)
@@ -127,6 +134,22 @@ class LlmSettingsUiBinder(
         }
     }
 
+    private fun setupMultimodalCapabilityDropdown() {
+        multimodalCapabilityInput.setAdapter(
+            ArrayAdapter(
+                fragment.requireContext(),
+                android.R.layout.simple_dropdown_item_1line,
+                multimodalCapabilityOptions().map { it.first }
+            )
+        )
+        multimodalCapabilityInput.setOnClickListener {
+            multimodalCapabilityInput.showDropDown()
+        }
+        multimodalCapabilityInput.setOnItemClickListener { _, _, _, _ ->
+            capabilityModel = modelInput.text?.toString()?.trim().orEmpty()
+        }
+    }
+
     private fun bindCurrentSettings() {
         val config = repository.getConfig()
         selectedPreset = LlmProviderPresets.findById(config.providerPresetId) ?: LlmProviderPresets.default
@@ -135,9 +158,12 @@ class LlmSettingsUiBinder(
         taskParseSwitch.isChecked = config.taskParseEnabled
         planGenerateSwitch.isChecked = config.planGenerateEnabled
         dashboardAdviceSwitch.isChecked = config.dashboardAdviceEnabled
+        fileAnalysisSwitch.isChecked = config.fileAnalysisEnabled
         providerInput.setText(selectedPreset.displayName, false)
         baseUrlInput.setText(config.baseUrl)
         modelInput.setText(config.model)
+        multimodalCapabilityInput.setText(multimodalCapabilityLabel(config.multimodalCapability), false)
+        capabilityModel = config.model.trim()
         authHeaderInput.setText(authHeaderLabel(config.authHeaderType), false)
         temperatureInput.setText(config.temperature.toString())
         timeoutInput.setText(config.timeoutMillis.toString())
@@ -153,6 +179,18 @@ class LlmSettingsUiBinder(
                 apiKeyInput.setText("")
             } else if (!hasFocus && value.isBlank() && repository.hasApiKey()) {
                 apiKeyInput.setText(repository.getMaskedApiKey())
+            }
+        }
+        modelInput.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                val currentModel = modelInput.text?.toString()?.trim().orEmpty()
+                if (!currentModel.equals(capabilityModel, ignoreCase = true)) {
+                    multimodalCapabilityInput.setText(
+                        multimodalCapabilityLabel(LlmMultimodalCapability.TEXT_ONLY),
+                        false
+                    )
+                    capabilityModel = currentModel
+                }
             }
         }
         saveButton.setOnClickListener { saveSettings() }
@@ -185,6 +223,11 @@ class LlmSettingsUiBinder(
         providerInput.setText(preset.displayName, false)
         baseUrlInput.setText(preset.baseUrl)
         modelInput.setText(preset.defaultModel)
+        multimodalCapabilityInput.setText(
+            multimodalCapabilityLabel(LlmMultimodalCapability.TEXT_ONLY),
+            false
+        )
+        capabilityModel = preset.defaultModel.trim()
         authHeaderInput.setText(authHeaderLabel(preset.authHeaderType), false)
         presetNotesText.text = preset.notes
         clearInputErrors()
@@ -266,6 +309,8 @@ class LlmSettingsUiBinder(
             taskParseEnabled = taskParseSwitch.isChecked,
             planGenerateEnabled = planGenerateSwitch.isChecked,
             dashboardAdviceEnabled = dashboardAdviceSwitch.isChecked,
+            fileAnalysisEnabled = fileAnalysisSwitch.isChecked,
+            multimodalCapability = resolveMultimodalCapability(),
             providerPresetId = preset.id,
             providerType = providerType,
             displayName = preset.displayName,
@@ -342,6 +387,29 @@ class LlmSettingsUiBinder(
     private fun resolveAuthHeaderType(): LlmAuthHeaderType {
         val label = authHeaderInput.text?.toString().orEmpty()
         return authHeaderOptions().firstOrNull { it.first == label }?.second ?: selectedPreset.authHeaderType
+    }
+
+    private fun multimodalCapabilityOptions(): List<Pair<String, LlmMultimodalCapability>> {
+        return listOf(
+            fragment.getString(R.string.settings_llm_multimodal_text_only) to
+                LlmMultimodalCapability.TEXT_ONLY,
+            fragment.getString(R.string.settings_llm_multimodal_images) to
+                LlmMultimodalCapability.IMAGE_INPUT,
+            fragment.getString(R.string.settings_llm_multimodal_images_files) to
+                LlmMultimodalCapability.IMAGE_AND_FILE_INPUT
+        )
+    }
+
+    private fun multimodalCapabilityLabel(capability: LlmMultimodalCapability): String {
+        return multimodalCapabilityOptions().first { it.second == capability }.first
+    }
+
+    private fun resolveMultimodalCapability(): LlmMultimodalCapability {
+        val label = multimodalCapabilityInput.text?.toString().orEmpty()
+        return multimodalCapabilityOptions()
+            .firstOrNull { it.first == label }
+            ?.second
+            ?: LlmMultimodalCapability.TEXT_ONLY
     }
 
     private fun clearInputErrors() {

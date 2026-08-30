@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.example.campusmate.data.model.llm.LlmAuthHeaderType
+import com.example.campusmate.data.model.llm.LlmMultimodalCapability
 import com.example.campusmate.data.model.llm.LlmProviderConfig
 import com.example.campusmate.data.model.llm.LlmProviderType
 import com.example.campusmate.data.model.llm.LlmScheduleParseMode
@@ -39,6 +40,14 @@ class LlmSettingsRepository(context: Context) : LlmScheduleParseSettingsSource {
                 KEY_DASHBOARD_ADVICE_ENABLED,
                 default.dashboardAdviceEnabled
             ),
+            fileAnalysisEnabled = preferences.getBoolean(
+                KEY_FILE_ANALYSIS_ENABLED,
+                default.fileAnalysisEnabled
+            ),
+            multimodalCapability = preferences.getEnum(
+                KEY_MULTIMODAL_CAPABILITY,
+                default.multimodalCapability
+            ),
             scheduleParseMode = preferences.getEnum(KEY_SCHEDULE_PARSE_MODE, default.scheduleParseMode),
             providerPresetId = preferences.getString(KEY_PROVIDER_PRESET_ID, default.providerPresetId)
                 ?: default.providerPresetId,
@@ -60,6 +69,8 @@ class LlmSettingsRepository(context: Context) : LlmScheduleParseSettingsSource {
             .putBoolean(KEY_TASK_PARSE_ENABLED, config.taskParseEnabled)
             .putBoolean(KEY_PLAN_GENERATE_ENABLED, config.planGenerateEnabled)
             .putBoolean(KEY_DASHBOARD_ADVICE_ENABLED, config.dashboardAdviceEnabled)
+            .putBoolean(KEY_FILE_ANALYSIS_ENABLED, config.fileAnalysisEnabled)
+            .putString(KEY_MULTIMODAL_CAPABILITY, config.multimodalCapability.name)
             .putString(KEY_SCHEDULE_PARSE_MODE, config.scheduleParseMode.name)
             .putString(KEY_PROVIDER_PRESET_ID, config.providerPresetId)
             .putString(KEY_PROVIDER_TYPE, config.providerType.name)
@@ -109,6 +120,8 @@ class LlmSettingsRepository(context: Context) : LlmScheduleParseSettingsSource {
         private const val KEY_TASK_PARSE_ENABLED = "task_parse_enabled"
         private const val KEY_PLAN_GENERATE_ENABLED = "plan_generate_enabled"
         private const val KEY_DASHBOARD_ADVICE_ENABLED = "dashboard_advice_enabled"
+        private const val KEY_FILE_ANALYSIS_ENABLED = "file_analysis_enabled"
+        private const val KEY_MULTIMODAL_CAPABILITY = "multimodal_capability"
         private const val KEY_SCHEDULE_PARSE_MODE = "schedule_parse_mode"
         private const val KEY_PROVIDER_PRESET_ID = "provider_preset_id"
         private const val KEY_PROVIDER_TYPE = "provider_type"

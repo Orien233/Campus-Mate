@@ -615,17 +615,23 @@
 
 
     <string name="settings_llm_title">AI 辅助功能</string>
-    <string name="settings_llm_body">AI 辅助功能需要你填写自己的模型 API Key。CampusMate 不提供模型服务、不内置 API Key、不代理请求。API Key 由用户自行填写，仅保存在本机加密存储中。调用费用和数据处理规则以用户选择的模型服务商为准。点击首页建议、AI 解析课表或生成计划时，完成对应功能所需的课程、任务、计划、天气缓存或学习进度会发送给所选模型服务商。可以随时关闭能力开关或清空 API Key。</string>
+    <string name="settings_llm_body">AI 辅助功能需要你填写自己的模型 API Key。CampusMate 不提供模型服务、不内置 API Key、不代理请求。API Key 由用户自行填写，仅保存在本机加密存储中。调用费用和数据处理规则以用户选择的模型服务商为准。只有在你主动使用对应功能时，完成任务所需的本地上下文或本次选择的文件内容才会发送给所选模型服务商。可以随时关闭能力开关或清空 API Key。</string>
     <string name="settings_llm_enabled">启用 AI 辅助功能</string>
     <string name="settings_llm_schedule_parse">AI 辅助课表解析</string>
     <string name="settings_llm_task_parse">AI 辅助任务解析</string>
     <string name="settings_llm_plan_generate">AI 学习计划生成</string>
     <string name="settings_llm_dashboard_advice">首页 AI 建议</string>
+    <string name="settings_llm_file_analysis">AI 文件分析</string>
     <string name="settings_llm_capabilities_title">能力开关</string>
     <string name="settings_llm_provider_title">模型服务配置</string>
     <string name="settings_llm_provider">模型服务商</string>
     <string name="settings_llm_base_url">接口地址 Base URL</string>
     <string name="settings_llm_model">模型名称 Model</string>
+    <string name="settings_llm_multimodal_capability">当前模型的输入能力（由你确认）</string>
+    <string name="settings_llm_multimodal_capability_help">不会按模型名自动推断；切换服务商或修改模型后会重置为仅文本。</string>
+    <string name="settings_llm_multimodal_text_only">仅文本文件</string>
+    <string name="settings_llm_multimodal_images">文本与图片</string>
+    <string name="settings_llm_multimodal_images_files">文本、图片与 PDF</string>
     <string name="settings_llm_auth_header">Header 类型</string>
     <string name="settings_llm_auth_bearer">Authorization: Bearer</string>
     <string name="settings_llm_auth_google">x-goog-api-key</string>

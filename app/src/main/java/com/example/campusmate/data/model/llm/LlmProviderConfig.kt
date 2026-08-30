@@ -6,6 +6,8 @@ data class LlmProviderConfig(
     val taskParseEnabled: Boolean = true,
     val planGenerateEnabled: Boolean = true,
     val dashboardAdviceEnabled: Boolean = true,
+    val fileAnalysisEnabled: Boolean = true,
+    val multimodalCapability: LlmMultimodalCapability = LlmMultimodalCapability.TEXT_ONLY,
     val scheduleParseMode: LlmScheduleParseMode = LlmScheduleParseMode.LLM_FIRST_FALLBACK_LOCAL,
     val providerPresetId: String = "deepseek",
     val providerType: LlmProviderType = LlmProviderType.OPENAI_COMPATIBLE,
