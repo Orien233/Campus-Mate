@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.campusmate.R
 import com.example.campusmate.data.model.StudyTask
+import com.example.campusmate.data.repository.DashboardAdviceCacheRepository
 import com.example.campusmate.data.repository.DataMaintenanceRepository
 import com.example.campusmate.data.repository.DemoDataRepository
 import com.example.campusmate.data.repository.SettingsRepository
@@ -39,6 +40,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var taskRepository: TaskRepository
     private lateinit var reminderScheduler: AlarmReminderScheduler
     private lateinit var dataMaintenanceRepository: DataMaintenanceRepository
+    private lateinit var dashboardAdviceCacheRepository: DashboardAdviceCacheRepository
     private lateinit var llmSettingsUiBinder: LlmSettingsUiBinder
 
     private lateinit var rootView: View
@@ -89,6 +91,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         taskRepository = TaskRepository(requireContext())
         reminderScheduler = AlarmReminderScheduler(requireContext())
         dataMaintenanceRepository = DataMaintenanceRepository(requireContext())
+        dashboardAdviceCacheRepository = DashboardAdviceCacheRepository(requireContext())
 
         bindViews(view)
         llmSettingsUiBinder = LlmSettingsUiBinder(this, view, ::showMessage)
@@ -353,6 +356,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             val outcome = withContext(Dispatchers.IO) {
                 cancelAllTaskReminders()
                 dataMaintenanceRepository.clearAllData()
+                dashboardAdviceCacheRepository.clear()
                 val result = DemoDataRepository(appContext).seedPresentationDemoData()
                 result to rescheduleFutureReminders()
             }
@@ -386,7 +390,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         viewLifecycleOwner.lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
                 cancelAllTaskReminders()
-                dataMaintenanceRepository.clearAllData()
+                dataMaintenanceRepository.clearAllData().also {
+                    dashboardAdviceCacheRepository.clear()
+                }
             }
             if (!isAdded) return@launch
             showMessage(getString(R.string.settings_clear_data_result, result.totalCount))

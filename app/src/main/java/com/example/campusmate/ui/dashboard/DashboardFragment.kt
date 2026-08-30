@@ -13,20 +13,35 @@ import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.data.model.StudyTask
 import com.example.campusmate.data.repository.CourseRepository
+import com.example.campusmate.data.repository.DashboardAdviceCacheRepository
+import com.example.campusmate.data.repository.LlmSettingsRepository
 import com.example.campusmate.data.repository.SettingsRepository
 import com.example.campusmate.data.repository.StudyPlanRepository
 import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.data.repository.WeatherRepository
+import com.example.campusmate.domain.ai.advice.AiAdvicePriority
+import com.example.campusmate.domain.ai.advice.AiDashboardAdviceEnvelope
+import com.example.campusmate.domain.ai.advice.AiDashboardAdviceFailureReason
+import com.example.campusmate.domain.ai.advice.AiDashboardAdviceItem
+import com.example.campusmate.domain.ai.advice.AiDashboardAdviceResult
+import com.example.campusmate.domain.ai.advice.AiDashboardAdviceUnavailableReason
+import com.example.campusmate.domain.ai.advice.DashboardAdviceRefreshPolicy
+import com.example.campusmate.domain.ai.advice.LlmDashboardAdviceService
+import com.example.campusmate.domain.ai.context.AiContextBuildRequest
+import com.example.campusmate.domain.ai.context.AiContextOrchestrator
 import com.example.campusmate.domain.weather.WeatherLocationResolver
 import com.example.campusmate.domain.weather.WeatherResult
 import com.example.campusmate.ui.common.CollapsibleSection
 import com.example.campusmate.ui.focus.FocusActivity
+import com.example.campusmate.ui.settings.SettingsFragment
+import com.example.campusmate.ui.settings.SettingsSectionActivity
 import com.example.campusmate.util.DateTimeUtils
 import com.example.campusmate.util.PermissionUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -37,8 +52,14 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     private lateinit var planRepository: StudyPlanRepository
     private lateinit var settingsRepository: SettingsRepository
     private lateinit var weatherRepository: WeatherRepository
+    private lateinit var llmSettingsRepository: LlmSettingsRepository
+    private lateinit var dashboardAdviceCacheRepository: DashboardAdviceCacheRepository
+    private lateinit var aiContextOrchestrator: AiContextOrchestrator
+    private lateinit var dashboardAdviceService: LlmDashboardAdviceService
     private var weatherLoadToken: Long = 0L
     private var weatherGuideDialogShowing = false
+    private var dashboardAdviceLoadToken: Long = 0L
+    private var dashboardAdviceJob: Job? = null
 
     private val weatherLocationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -60,6 +81,10 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         planRepository = StudyPlanRepository(requireContext())
         settingsRepository = SettingsRepository(requireContext())
         weatherRepository = WeatherRepository(requireContext())
+        llmSettingsRepository = LlmSettingsRepository(requireContext())
+        dashboardAdviceCacheRepository = DashboardAdviceCacheRepository(requireContext())
+        aiContextOrchestrator = AiContextOrchestrator(requireContext().applicationContext)
+        dashboardAdviceService = LlmDashboardAdviceService(llmSettingsRepository)
 
         view.findViewById<MaterialButton>(R.id.startFocusButton).setOnClickListener {
             startActivity(Intent(requireContext(), FocusActivity::class.java))
@@ -69,6 +94,17 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         }
         view.findViewById<MaterialButton>(R.id.refreshCurrentWeatherButton).setOnClickListener {
             loadWeather(forceRefresh = true)
+        }
+        view.findViewById<MaterialButton>(R.id.refreshDashboardAdviceButton).setOnClickListener {
+            generateDashboardAdvice()
+        }
+        view.findViewById<MaterialButton>(R.id.dashboardAiAdviceSettingsButton).setOnClickListener {
+            startActivity(
+                SettingsSectionActivity.intentFor(
+                    requireContext(),
+                    SettingsFragment.SECTION_AI
+                )
+            )
         }
         CollapsibleSection.bind(
             root = view,
@@ -81,9 +117,17 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     override fun onResume() {
         super.onResume()
         loadDashboard()
+        loadCachedDashboardAdvice()
         if (!maybeShowWeatherLocationGuide()) {
             loadWeather(forceRefresh = false)
         }
+    }
+
+    override fun onDestroyView() {
+        dashboardAdviceLoadToken += 1L
+        dashboardAdviceJob?.cancel()
+        dashboardAdviceJob = null
+        super.onDestroyView()
     }
 
     private fun loadDashboard() {
@@ -157,6 +201,242 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val todayTrendDelta: Int,
         val weekTrendDelta: Int
     )
+
+    private data class DashboardAdviceRefreshOutcome(
+        val result: AiDashboardAdviceResult,
+        val cachedBeforeRefresh: AiDashboardAdviceEnvelope?
+    )
+
+    private fun loadCachedDashboardAdvice() {
+        if (!::dashboardAdviceCacheRepository.isInitialized) return
+        dashboardAdviceJob?.cancel()
+        val token = ++dashboardAdviceLoadToken
+        val unavailableReason = dashboardAdviceService.unavailableReason()
+        if (unavailableReason != null) {
+            bindDashboardAdviceIdle(unavailableReason)
+            return
+        }
+        bindDashboardAdviceIdle(null)
+        val targetDate = DateTimeUtils.todayDate()
+        dashboardAdviceJob = viewLifecycleOwner.lifecycleScope.launch {
+            val cached = withContext(Dispatchers.IO) {
+                val snapshot = aiContextOrchestrator.build(
+                    AiContextBuildRequest.dashboard(targetDate)
+                )
+                dashboardAdviceCacheRepository.loadForSnapshot(snapshot)
+            }
+            if (dashboardAdviceLoadToken != token || view == null) return@launch
+            val currentUnavailableReason = dashboardAdviceService.unavailableReason()
+            when {
+                currentUnavailableReason != null ->
+                    bindDashboardAdviceIdle(currentUnavailableReason)
+
+                cached != null -> bindDashboardAdvice(cached)
+                else -> bindDashboardAdviceIdle(null)
+            }
+        }
+    }
+
+    private fun generateDashboardAdvice() {
+        val unavailableReason = dashboardAdviceService.unavailableReason()
+        if (unavailableReason != null) {
+            bindDashboardAdviceIdle(unavailableReason)
+            return
+        }
+
+        val targetDate = DateTimeUtils.todayDate()
+        dashboardAdviceJob?.cancel()
+        val token = ++dashboardAdviceLoadToken
+        bindDashboardAdviceLoading()
+        dashboardAdviceJob = viewLifecycleOwner.lifecycleScope.launch {
+            val outcome = withContext(Dispatchers.IO) {
+                val requestSnapshot = aiContextOrchestrator.build(
+                    AiContextBuildRequest.dashboard(targetDate)
+                )
+                val generated = dashboardAdviceService.generate { requestSnapshot }
+                val currentSnapshot = aiContextOrchestrator.build(
+                    AiContextBuildRequest.dashboard(targetDate)
+                )
+                DashboardAdviceRefreshOutcome(
+                    result = DashboardAdviceRefreshPolicy.revalidate(
+                        generated,
+                        currentSnapshot
+                    ),
+                    cachedBeforeRefresh = dashboardAdviceCacheRepository.loadForSnapshot(
+                        currentSnapshot
+                    )
+                )
+            }
+            if (dashboardAdviceLoadToken != token || view == null) return@launch
+            val currentUnavailableReason = dashboardAdviceService.unavailableReason()
+            if (currentUnavailableReason != null) {
+                bindDashboardAdviceIdle(currentUnavailableReason)
+                return@launch
+            }
+            when (val result = outcome.result) {
+                is AiDashboardAdviceResult.Success -> {
+                    dashboardAdviceCacheRepository.save(result.envelope)
+                    bindDashboardAdvice(result.envelope)
+                }
+
+                is AiDashboardAdviceResult.Unavailable -> bindDashboardAdviceIdle(result.reason)
+                is AiDashboardAdviceResult.Failure -> {
+                    if (outcome.cachedBeforeRefresh != null) {
+                        bindDashboardAdvice(outcome.cachedBeforeRefresh)
+                        view?.let {
+                            Snackbar.make(
+                                it,
+                                R.string.dashboard_ai_advice_refresh_failed_cached,
+                                Snackbar.LENGTH_LONG
+                            ).show()
+                        }
+                    } else {
+                        bindDashboardAdviceError(result.reason)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun bindDashboardAdvice(envelope: AiDashboardAdviceEnvelope) {
+        val currentView = view ?: return
+        currentView.findViewById<View>(R.id.dashboardAiAdviceProgress).visibility = View.GONE
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceStatusText).text = getString(
+            R.string.dashboard_ai_advice_source_format,
+            DateTimeUtils.formatDateTime(envelope.generatedAt),
+            envelope.providerName,
+            envelope.model
+        )
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceHeadlineText).text =
+            envelope.advice.headline
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceSummaryText).text =
+            envelope.advice.summary
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceItemsText).apply {
+            visibility = View.VISIBLE
+            text = envelope.advice.items.joinToString("\n\n", transform = ::formatAdviceItem)
+        }
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceWarningsText).apply {
+            val displayWarnings = envelope.advice.warnings
+            visibility = if (displayWarnings.isEmpty()) View.GONE else View.VISIBLE
+            text = if (displayWarnings.isEmpty()) {
+                ""
+            } else {
+                getString(
+                    R.string.dashboard_ai_advice_warnings_format,
+                    displayWarnings.joinToString("；")
+                )
+            }
+        }
+        currentView.findViewById<MaterialButton>(R.id.refreshDashboardAdviceButton).apply {
+            text = getString(R.string.dashboard_ai_advice_refresh)
+            isEnabled = dashboardAdviceService.unavailableReason() == null
+        }
+    }
+
+    private fun bindDashboardAdviceIdle(
+        unavailableReason: AiDashboardAdviceUnavailableReason?
+    ) {
+        val currentView = view ?: return
+        currentView.findViewById<View>(R.id.dashboardAiAdviceProgress).visibility = View.GONE
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceStatusText).text =
+            getString(R.string.dashboard_ai_advice_local_only_status)
+        val (titleRes, bodyRes) = when (unavailableReason) {
+            AiDashboardAdviceUnavailableReason.API_KEY_MISSING ->
+                R.string.dashboard_ai_advice_no_key_title to
+                    R.string.dashboard_ai_advice_no_key_body
+
+            AiDashboardAdviceUnavailableReason.AI_DISABLED,
+            AiDashboardAdviceUnavailableReason.DASHBOARD_ADVICE_DISABLED ->
+                R.string.dashboard_ai_advice_disabled_title to
+                    R.string.dashboard_ai_advice_disabled_body
+
+            null ->
+                R.string.dashboard_ai_advice_idle_title to
+                    R.string.dashboard_ai_advice_idle_body
+        }
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceHeadlineText).text =
+            getString(titleRes)
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceSummaryText).text =
+            getString(bodyRes)
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceItemsText).visibility = View.GONE
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceWarningsText).visibility = View.GONE
+        currentView.findViewById<MaterialButton>(R.id.refreshDashboardAdviceButton).apply {
+            text = getString(R.string.dashboard_ai_advice_generate)
+            isEnabled = unavailableReason == null
+        }
+    }
+
+    private fun bindDashboardAdviceLoading() {
+        val currentView = view ?: return
+        currentView.findViewById<View>(R.id.dashboardAiAdviceProgress).visibility = View.VISIBLE
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceStatusText).text =
+            getString(R.string.dashboard_ai_advice_local_only_status)
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceHeadlineText).text =
+            getString(R.string.dashboard_ai_advice_loading_title)
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceSummaryText).text =
+            getString(R.string.dashboard_ai_advice_loading_body)
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceItemsText).visibility = View.GONE
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceWarningsText).visibility = View.GONE
+        currentView.findViewById<MaterialButton>(R.id.refreshDashboardAdviceButton).isEnabled = false
+    }
+
+    private fun bindDashboardAdviceError(reason: AiDashboardAdviceFailureReason) {
+        val currentView = view ?: return
+        currentView.findViewById<View>(R.id.dashboardAiAdviceProgress).visibility = View.GONE
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceStatusText).text =
+            getString(R.string.dashboard_ai_advice_local_only_status)
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceHeadlineText).text =
+            getString(R.string.dashboard_ai_advice_error_title)
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceSummaryText).text = getString(
+            when (reason) {
+                AiDashboardAdviceFailureReason.REQUEST_FAILED ->
+                    R.string.dashboard_ai_advice_request_error
+
+                AiDashboardAdviceFailureReason.INVALID_RESPONSE ->
+                    R.string.dashboard_ai_advice_invalid_error
+
+                AiDashboardAdviceFailureReason.CONTEXT_CHANGED ->
+                    R.string.dashboard_ai_advice_context_changed_error
+            }
+        )
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceItemsText).visibility = View.GONE
+        currentView.findViewById<TextView>(R.id.dashboardAiAdviceWarningsText).visibility = View.GONE
+        currentView.findViewById<MaterialButton>(R.id.refreshDashboardAdviceButton).apply {
+            text = getString(R.string.dashboard_ai_advice_refresh)
+            isEnabled = true
+        }
+    }
+
+    private fun formatAdviceItem(item: AiDashboardAdviceItem): String {
+        val priority = getString(
+            when (item.priority) {
+                AiAdvicePriority.HIGH -> R.string.dashboard_ai_advice_priority_high
+                AiAdvicePriority.NORMAL -> R.string.dashboard_ai_advice_priority_normal
+                AiAdvicePriority.LOW -> R.string.dashboard_ai_advice_priority_low
+            }
+        )
+        val timing = when {
+            item.suggestedDate != null && item.startTime != null && item.endTime != null ->
+                getString(
+                    R.string.dashboard_ai_advice_time_format,
+                    item.suggestedDate,
+                    item.startTime,
+                    item.endTime
+                )
+
+            item.suggestedDate != null ->
+                getString(R.string.dashboard_ai_advice_date_format, item.suggestedDate)
+
+            else -> ""
+        }
+        return getString(
+            R.string.dashboard_ai_advice_item_format,
+            priority,
+            item.title,
+            timing,
+            item.detail
+        )
+    }
 
     private fun getCompletedPlanMinutesForDate(date: String): Int {
         return planRepository.getPlansByDate(date)

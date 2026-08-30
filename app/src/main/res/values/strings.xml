@@ -54,6 +54,32 @@
     <string name="dashboard_week_trend_format">较上周 %1$s%2$d 分钟</string>
     <string name="dashboard_today_trend_placeholder">较昨日 +0 分钟</string>
     <string name="dashboard_week_trend_placeholder">较上周 +0 分钟</string>
+    <string name="dashboard_ai_advice_title">AI 今日建议</string>
+    <string name="dashboard_ai_advice_local_only_status">仅在点击生成时调用所选模型</string>
+    <string name="dashboard_ai_advice_idle_title">尚无今日建议</string>
+    <string name="dashboard_ai_advice_idle_body">点击“生成建议”，AI 会结合课程、任务、计划占用、天气缓存和近期学习进度给出建议。</string>
+    <string name="dashboard_ai_advice_loading_title">正在整理今日建议…</string>
+    <string name="dashboard_ai_advice_loading_body">正在冻结当前本地上下文并请求所选模型，请稍候。</string>
+    <string name="dashboard_ai_advice_disabled_title">首页 AI 建议未启用</string>
+    <string name="dashboard_ai_advice_disabled_body">请在 AI 设置中启用总开关和“首页 AI 建议”。</string>
+    <string name="dashboard_ai_advice_no_key_title">尚未配置 API Key</string>
+    <string name="dashboard_ai_advice_no_key_body">请先在 AI 设置中填写并保存自己的模型 API Key。</string>
+    <string name="dashboard_ai_advice_error_title">本次建议生成失败</string>
+    <string name="dashboard_ai_advice_request_error">模型请求未成功，请检查网络和模型配置后重试。</string>
+    <string name="dashboard_ai_advice_invalid_error">模型返回内容未通过本地校验，请重试或更换模型。</string>
+    <string name="dashboard_ai_advice_context_changed_error">生成期间课程、任务、计划或天气发生变化，请重新生成。</string>
+    <string name="dashboard_ai_advice_source_format">更新于 %1$s · %2$s / %3$s</string>
+    <string name="dashboard_ai_advice_generate">生成建议</string>
+    <string name="dashboard_ai_advice_refresh">刷新建议</string>
+    <string name="dashboard_ai_advice_settings">AI 设置</string>
+    <string name="dashboard_ai_advice_priority_high">高优先 · </string>
+    <string name="dashboard_ai_advice_priority_normal" />
+    <string name="dashboard_ai_advice_priority_low">低优先 · </string>
+    <string name="dashboard_ai_advice_item_format">• %1$s%2$s%3$s\n  %4$s</string>
+    <string name="dashboard_ai_advice_date_format"> · %1$s</string>
+    <string name="dashboard_ai_advice_time_format"> · %1$s %2$s–%3$s</string>
+    <string name="dashboard_ai_advice_warnings_format">提示：%1$s</string>
+    <string name="dashboard_ai_advice_refresh_failed_cached">刷新失败，已保留上一次有效建议</string>
     <string name="placeholder_next_stage">该入口将在后续阶段接入</string>
 
     <string name="empty_courses_title">暂无课程</string>
@@ -589,11 +615,12 @@
 
 
     <string name="settings_llm_title">AI 辅助功能</string>
-    <string name="settings_llm_body">AI 辅助功能需要你填写自己的模型 API Key。CampusMate 不提供模型服务、不内置 API Key、不代理请求。API Key 由用户自行填写，仅保存在本机加密存储中。调用费用和数据处理规则以用户选择的模型服务商为准。后续使用 AI 解析课表或生成计划时，相关课程/任务内容会发送给所选模型服务商。可以随时清空 API Key。</string>
+    <string name="settings_llm_body">AI 辅助功能需要你填写自己的模型 API Key。CampusMate 不提供模型服务、不内置 API Key、不代理请求。API Key 由用户自行填写，仅保存在本机加密存储中。调用费用和数据处理规则以用户选择的模型服务商为准。点击首页建议、AI 解析课表或生成计划时，完成对应功能所需的课程、任务、计划、天气缓存或学习进度会发送给所选模型服务商。可以随时关闭能力开关或清空 API Key。</string>
     <string name="settings_llm_enabled">启用 AI 辅助功能</string>
     <string name="settings_llm_schedule_parse">AI 辅助课表解析</string>
     <string name="settings_llm_task_parse">AI 辅助任务解析</string>
     <string name="settings_llm_plan_generate">AI 学习计划生成</string>
+    <string name="settings_llm_dashboard_advice">首页 AI 建议</string>
     <string name="settings_llm_capabilities_title">能力开关</string>
     <string name="settings_llm_provider_title">模型服务配置</string>
     <string name="settings_llm_provider">模型服务商</string>

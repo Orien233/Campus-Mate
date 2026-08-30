@@ -34,6 +34,7 @@ class LlmSettingsUiBinder(
     private lateinit var scheduleParseSwitch: SwitchMaterial
     private lateinit var taskParseSwitch: SwitchMaterial
     private lateinit var planGenerateSwitch: SwitchMaterial
+    private lateinit var dashboardAdviceSwitch: SwitchMaterial
     private lateinit var providerInput: MaterialAutoCompleteTextView
     private lateinit var baseUrlInputLayout: TextInputLayout
     private lateinit var baseUrlInput: TextInputEditText
@@ -76,6 +77,7 @@ class LlmSettingsUiBinder(
         scheduleParseSwitch = rootView.findViewById(R.id.llmScheduleParseSwitch)
         taskParseSwitch = rootView.findViewById(R.id.llmTaskParseSwitch)
         planGenerateSwitch = rootView.findViewById(R.id.llmPlanGenerateSwitch)
+        dashboardAdviceSwitch = rootView.findViewById(R.id.llmDashboardAdviceSwitch)
         providerInput = rootView.findViewById(R.id.llmProviderInput)
         baseUrlInputLayout = rootView.findViewById(R.id.llmBaseUrlInputLayout)
         baseUrlInput = rootView.findViewById(R.id.llmBaseUrlInput)
@@ -132,6 +134,7 @@ class LlmSettingsUiBinder(
         scheduleParseSwitch.isChecked = config.scheduleParseEnabled
         taskParseSwitch.isChecked = config.taskParseEnabled
         planGenerateSwitch.isChecked = config.planGenerateEnabled
+        dashboardAdviceSwitch.isChecked = config.dashboardAdviceEnabled
         providerInput.setText(selectedPreset.displayName, false)
         baseUrlInput.setText(config.baseUrl)
         modelInput.setText(config.model)
@@ -262,6 +265,7 @@ class LlmSettingsUiBinder(
             scheduleParseEnabled = scheduleParseSwitch.isChecked,
             taskParseEnabled = taskParseSwitch.isChecked,
             planGenerateEnabled = planGenerateSwitch.isChecked,
+            dashboardAdviceEnabled = dashboardAdviceSwitch.isChecked,
             providerPresetId = preset.id,
             providerType = providerType,
             displayName = preset.displayName,

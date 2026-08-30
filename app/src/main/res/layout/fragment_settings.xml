@@ -272,6 +272,14 @@
                     android:textColor="@color/campus_text_primary"
                     android:textSize="16sp" />
 
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/llmDashboardAdviceSwitch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_llm_dashboard_advice"
+                    android:textColor="@color/campus_text_primary"
+                    android:textSize="16sp" />
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
