@@ -14,5 +14,6 @@ data class ImportLog(
         const val SOURCE_LEGACY_LOCAL_HTML = 0
         const val SOURCE_PASTED_HTML = 1
         const val SOURCE_WEBVIEW = 2
+        const val SOURCE_AI_FILE = 3
     }
 }

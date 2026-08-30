@@ -88,6 +88,10 @@
             android:exported="false"
             android:theme="@style/Theme.CampusMate" />
         <activity
+            android:name=".ui.ai.file.AiFileAnalysisActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CampusMate" />
+        <activity
             android:name=".ui.import_.ImportPreviewActivity"
             android:exported="false"
             android:theme="@style/Theme.CampusMate" />

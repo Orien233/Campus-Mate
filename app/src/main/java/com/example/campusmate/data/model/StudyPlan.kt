@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.provider.BaseColumns
 import com.example.campusmate.data.db.CampusMateContract
 import com.example.campusmate.util.DateTimeUtils
+import java.io.Serializable
 
 data class StudyPlan(
     val id: Long = 0L,
@@ -18,7 +19,7 @@ data class StudyPlan(
     val sourceType: Int = SOURCE_AUTO,
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L
-) {
+) : Serializable {
     fun toContentValues(createdAt: Long = this.createdAt, updatedAt: Long = this.updatedAt): ContentValues {
         return ContentValues().apply {
             if (id > 0L) put(BaseColumns._ID, id)

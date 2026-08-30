@@ -66,6 +66,8 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
     private var selectedDayDate: String = DateTimeUtils.todayDate()
     private var warnings: List<String> = emptyList()
     private var usedLocalGeneration: Boolean = false
+    private var precomputedPreviewMode: Boolean = false
+    private var saveInProgress: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,8 +75,24 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
 
         initViews()
         initDependencies()
-        setupDaySelector()
-        generateWeekPlan()
+        if (intent.hasExtra(EXTRA_PRECOMPUTED_PLANS)) {
+            precomputedPreviewMode = true
+            val precomputedPlans = readPrecomputedPlans()
+            if (precomputedPlans.isNullOrEmpty()) {
+                retryButton.visibility = View.GONE
+                fallbackLocalButton.visibility = View.GONE
+                showError(getString(R.string.plan_file_preview_invalid))
+                return
+            }
+            warnings = (
+                intent.getStringArrayListExtra(EXTRA_PREVIEW_WARNINGS).orEmpty() +
+                    getString(R.string.plan_file_preview_local_guard)
+                ).distinct()
+            bindPrecomputedPlans(precomputedPlans)
+        } else {
+            setupDaySelector()
+            generateWeekPlan()
+        }
     }
 
     private fun initViews() {
@@ -148,6 +166,9 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
     }
 
     private fun selectableDates(): List<String> {
+        if (precomputedPreviewMode) {
+            return allWeekPlans.keys.sorted()
+        }
         val today = DateTimeUtils.todayDate()
         return buildList {
             add(today)
@@ -155,6 +176,47 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
                 add(DateTimeUtils.datePlusDays(today, offset))
             }
         }
+    }
+
+    @Suppress("UNCHECKED_CAST", "DEPRECATION")
+    private fun readPrecomputedPlans(): List<StudyPlan>? {
+        val raw = intent.getSerializableExtra(EXTRA_PRECOMPUTED_PLANS) as? ArrayList<*>
+            ?: return null
+        val plans = raw.filterIsInstance<StudyPlan>()
+        return plans.takeIf { it.isNotEmpty() && it.size == raw.size }
+    }
+
+    private fun bindPrecomputedPlans(plans: List<StudyPlan>) {
+        val normalized = plans
+            .map { plan ->
+                plan.copy(
+                    id = 0L,
+                    actualMinutes = 0,
+                    type = StudyPlan.TYPE_WEEKLY,
+                    status = StudyPlan.STATUS_PENDING,
+                    sourceType = StudyPlan.SOURCE_LLM,
+                    createdAt = 0L,
+                    updatedAt = 0L
+                )
+            }
+            .sortedWith(
+                compareBy<StudyPlan>(StudyPlan::planDate)
+                    .thenBy { it.startTime.orEmpty() }
+                    .thenBy(StudyPlan::title)
+            )
+        allWeekPlans = normalized
+            .groupByTo(linkedMapOf(), StudyPlan::planDate)
+            .mapValuesTo(linkedMapOf()) { (_, dayPlans) ->
+                dayPlans.map { WeekPlanItem(it, true) }.toMutableList()
+            }
+        selectedDayDate = allWeekPlans.keys.first()
+        usedLocalGeneration = false
+        findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbar).title =
+            getString(R.string.plan_file_preview_title)
+        confirmAllButton.text = getString(R.string.plan_file_import_selected)
+        retryButton.visibility = View.GONE
+        fallbackLocalButton.visibility = View.GONE
+        showContent()
     }
 
     private fun formatDayLabel(date: String): String {
@@ -346,10 +408,12 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
     }
 
     private fun updateConfirmButtonState() {
-        confirmAllButton.isEnabled = allWeekPlans.values.flatten().any { it.isSelected }
+        confirmAllButton.isEnabled = !saveInProgress &&
+            allWeekPlans.values.flatten().any { it.isSelected }
     }
 
     private fun saveAllPlans() {
+        if (saveInProgress) return
         val selectedPlans = allWeekPlans.values
             .flatten()
             .filter { it.isSelected }
@@ -359,25 +423,91 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
             return
         }
 
+        saveInProgress = true
+        updateConfirmButtonState()
         lifecycleScope.launch {
             try {
-                withContext(Dispatchers.IO) {
-                    planRepository.deletePlansOverlapping(selectedPlans)
-                    selectedPlans.forEach { plan ->
-                        planRepository.addPlan(plan.copy(id = 0L))
+                val (savedCount, skippedCount) = withContext(Dispatchers.IO) {
+                    if (precomputedPreviewMode) {
+                        savePrecomputedPlans(selectedPlans)
+                    } else {
+                        planRepository.deletePlansOverlapping(selectedPlans)
+                        var saved = 0
+                        selectedPlans.forEach { plan ->
+                            if (planRepository.addPlan(plan.copy(id = 0L)) > 0L) saved += 1
+                        }
+                        saved to (selectedPlans.size - saved)
                     }
+                }
+                if (savedCount == 0) {
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        if (precomputedPreviewMode) {
+                            R.string.plan_file_import_no_safe_items
+                        } else {
+                            R.string.plan_save_failed
+                        },
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                    saveInProgress = false
+                    updateConfirmButtonState()
+                    return@launch
                 }
                 Snackbar.make(
                     findViewById(android.R.id.content),
-                    getString(R.string.plan_week_save_success, selectedPlans.size),
+                    if (precomputedPreviewMode) {
+                        getString(R.string.plan_file_import_success, savedCount, skippedCount)
+                    } else {
+                        getString(R.string.plan_week_save_success, savedCount)
+                    },
                     Snackbar.LENGTH_SHORT
                 ).show()
                 setResult(RESULT_OK)
                 finish()
             } catch (e: Exception) {
+                saveInProgress = false
+                updateConfirmButtonState()
                 Snackbar.make(findViewById(android.R.id.content), R.string.plan_save_failed, Snackbar.LENGTH_SHORT).show()
             }
         }
+    }
+
+    private fun savePrecomputedPlans(plans: List<StudyPlan>): Pair<Int, Int> {
+        val accepted = mutableListOf<StudyPlan>()
+        val existingByDate = plans.map(StudyPlan::planDate).distinct().associateWith { date ->
+            planRepository.getPlansByDate(date)
+        }
+        plans.forEach { plan ->
+            val courseConflicts = PlanCourseConflictChecker.findConflicts(
+                listOf(plan),
+                planContextBuilder.buildForDate(plan.planDate)
+            )
+            val hasPlanConflict = (existingByDate[plan.planDate].orEmpty() + accepted)
+                .filter { it.planDate == plan.planDate }
+                .any { existing -> plansOverlap(plan, existing) }
+            if (courseConflicts.isEmpty() && !hasPlanConflict) accepted += plan
+        }
+        var savedCount = 0
+        accepted.forEach { plan ->
+            if (planRepository.addPlan(plan.copy(id = 0L)) > 0L) savedCount += 1
+        }
+        return savedCount to (plans.size - savedCount)
+    }
+
+    private fun plansOverlap(first: StudyPlan, second: StudyPlan): Boolean {
+        val firstStart = parseTimeMinutes(first.startTime) ?: return false
+        val firstEnd = parseTimeMinutes(first.endTime) ?: return false
+        val secondStart = parseTimeMinutes(second.startTime) ?: return false
+        val secondEnd = parseTimeMinutes(second.endTime) ?: return false
+        return firstStart < secondEnd && firstEnd > secondStart
+    }
+
+    private fun parseTimeMinutes(value: String?): Int? {
+        val match = Regex("""^(\d{1,2}):(\d{2})$""").matchEntire(value?.trim().orEmpty())
+            ?: return null
+        val hour = match.groupValues[1].toIntOrNull()?.takeIf { it in 0..23 } ?: return null
+        val minute = match.groupValues[2].toIntOrNull()?.takeIf { it in 0..59 } ?: return null
+        return hour * 60 + minute
     }
 
     private fun useLocalFallback() {
@@ -405,6 +535,8 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_USE_LOCAL_FALLBACK = "use_local_fallback"
+        const val EXTRA_PRECOMPUTED_PLANS = "extra_precomputed_plans"
+        const val EXTRA_PREVIEW_WARNINGS = "extra_preview_warnings"
         const val REQUEST_CODE = 1002
     }
 }

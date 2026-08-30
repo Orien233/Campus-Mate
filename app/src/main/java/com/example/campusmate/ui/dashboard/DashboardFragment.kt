@@ -31,6 +31,7 @@ import com.example.campusmate.domain.ai.context.AiContextBuildRequest
 import com.example.campusmate.domain.ai.context.AiContextOrchestrator
 import com.example.campusmate.domain.weather.WeatherLocationResolver
 import com.example.campusmate.domain.weather.WeatherResult
+import com.example.campusmate.ui.ai.file.AiFileAnalysisActivity
 import com.example.campusmate.ui.common.CollapsibleSection
 import com.example.campusmate.ui.focus.FocusActivity
 import com.example.campusmate.ui.settings.SettingsFragment
@@ -105,6 +106,9 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                     SettingsFragment.SECTION_AI
                 )
             )
+        }
+        view.findViewById<MaterialButton>(R.id.openAiFileAnalysisButton).setOnClickListener {
+            startActivity(Intent(requireContext(), AiFileAnalysisActivity::class.java))
         }
         CollapsibleSection.bind(
             root = view,
