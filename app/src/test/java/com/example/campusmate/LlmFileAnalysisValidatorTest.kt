@@ -150,6 +150,14 @@ class LlmFileAnalysisValidatorTest {
                   "startTime": "08:30",
                   "endTime": "09:00",
                   "evidenceRefs": ["file:selection:1"]
+                },
+                {
+                  "title": "与文件计划冲突",
+                  "planDate": "2026-06-08",
+                  "plannedMinutes": 30,
+                  "startTime": "10:30",
+                  "endTime": "11:00",
+                  "evidenceRefs": ["file:selection:1"]
                 }
               ],
               "insights": [{

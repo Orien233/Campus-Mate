@@ -247,9 +247,15 @@ class LlmFileAnalysisValidator(
                 planDate !in validDates -> "日期不在允许范围"
                 plannedMinutes !in MIN_PLAN_MINUTES..MAX_PLAN_MINUTES -> "时长不在 5-240 分钟"
                 start == null || end == null || end <= start -> "开始或结束时间无效"
+                end - start != plannedMinutes -> "时长与开始结束时间不一致"
                 occupiedByDate[planDate].orEmpty().any { (busyStart, busyEnd) ->
                     start < busyEnd && end > busyStart
                 } -> "与已有安排冲突"
+                results.any { accepted ->
+                    accepted.draft.planDate == planDate &&
+                        start < requireNotNull(parseMinutes(accepted.draft.endTime)) &&
+                        end > requireNotNull(parseMinutes(accepted.draft.startTime))
+                } -> "与本次其他计划冲突"
                 else -> null
             }
             if (invalidReason != null) {
