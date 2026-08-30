@@ -23,7 +23,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 
 - 课程阶段版本：`V1.1-stage-15-p0-3`
 - Gradle `versionName`：`1.0`
-- 当前阶段：学习计划 + AI 辅助解析 + 定位天气协同，已合并 WebView 课表导入、任务图片附件、二维码学习名片、天气、LLM API 设置、LLM 学习计划预览确认和首页 AI 建议能力。
+- 当前阶段：学习计划 + AI 辅助解析 + 定位天气协同，已合并 WebView 课表导入、任务图片附件、二维码学习名片、天气、LLM API 设置、LLM 学习计划预览确认、首页 AI 建议和 AI 文件整理能力。
 - 主闭环状态：课程、任务、提醒、导入、专注、记录、统计、设置页已跑通。
 - 当前扩展功能状态：阶段 9-15 基础能力已进入代码；项目展示页、JSON 导出/备份和完整演示数据仍未完成。
 - 数据库版本：`CampusMateDbHelper.DATABASE_VERSION = 5`
@@ -44,6 +44,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 | 模块 | 状态 | 真实实现说明 |
 | --- | --- | --- |
 | 首页 Dashboard | 已完成 / AI 待真实调用验证 | 展示今日课程、待办任务、今日/本周学习时长、计划完成趋势、下一节课（含教室）、天气和开始专注入口；AI 建议卡由用户手动触发，结合三日课程/任务/计划占用、设置城市天气缓存和近期学习进度生成只读建议。 |
+| AI 文件整理 | 基础完成 / 待真实调用验证 | 首页独立入口通过 SAF 一次选择一个文本、图片或 PDF；用户确认后才发送给所选模型，结果按课程、任务、计划和只读要点分组，本地校验后分别进入现有预览确认页，不能直接写库。 |
 | 课程管理 | 已完成 | 支持新增、编辑、详情、软删除、按星期筛选、周课表网格展示和时间冲突提示。 |
 | 任务管理 | 已完成 | 支持新增、编辑、详情、软删除、完成状态切换、类型、优先级、截止时间、提醒时间、网页任务解析预填和多任务导入预览确认；AI 不可用或调用失败时可使用本地规则解析。 |
 | 任务提醒 | 已完成 | `AlarmManager` + `ReminderReceiver` + 通知渠道；开机后通过 `BootReminderReceiver` 恢复未来提醒；接收器在后台线程读取任务状态，任务软删除会同步清理附件。 |
@@ -54,7 +55,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 | 前台服务 | 已完成 | `FocusService` 使用前台通知展示计时状态，并负责 FocusSession 和 StudyRecord 写入。 |
 | 学习记录 | 已完成 | 专注完成后写入 `focus_sessions` 和 `study_records`。 |
 | 热力图统计 | 已完成 | `StatisticsFragment` 展示今日/本周学习、连续学习、任务完成情况和最近学习热力图。 |
-| 设置页 | 已完成 | 底部导航先进入 AI 设置、功能与权限设置、学习伙伴三个分区；功能页包含学习目标、计划生成时间范围、提醒、沉浸、天气、权限、演示数据和清空数据；AI 页保留独立能力开关。 |
+| 设置页 | 已完成 | 底部导航先进入 AI 设置、功能与权限设置、学习伙伴三个分区；功能页包含学习目标、计划生成时间范围、提醒、沉浸、天气、权限、演示数据和清空数据；AI 页保留独立能力开关，并由用户明确声明当前模型仅文本、支持图片或支持图片与 PDF。 |
 | 学习计划 | 已完成 | `PlanListFragment` 支持今日/本周规则生成、AI 今日/本周预览确认、手动添加，完成状态切换、删除和详情页；生成上下文会参考课程、任务、天气、学习记录、已有计划和每日目标；普通任务避开课程时间，课程学习类计划可安排在对应课程时间。 |
 | 任务图片附件 | 基础完成 | 新增/编辑任务页可先选择图片附件，保存任务后写入 `task_attachments`；详情页可继续添加、打开和删除；未接入拍照、裁剪或内置大图预览。 |
 | 学习名片 | 已完成 | 本地编辑文本资料，保存到 `user_profile`，不需要登录。 |
@@ -63,7 +64,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 | 天气 | 已完成 / 待真机验证 | 手动城市配置、粗略定位辅助、`wttr.in` 远程请求、30 分钟缓存和无网缓存降级；不再提供 Mock 数据，不保存经纬度。 |
 | 通知弱化 / 勿扰增强 | 实验功能 / 待真机验证 | `FocusService` 可按设置调用 `DndManager` 并启用 `NotificationFilterService` 标记；服务异常重建时会结束遗留专注会话并尝试恢复专注前的通知状态；依赖用户系统授权。 |
 | 演示数据 | 基础完成 | `DemoDataRepository` 生成课程、任务、学习计划、学习记录、学习名片、二维码伙伴和导入日志样例；附件仍需用户通过 SAF 选择真实图片。 |
-| LLM 接口基础设施 | 已完成 | 已有设置页、加密 API Key 存储、OpenAI-Compatible/Gemini Client、连接测试、课表解析、任务网页解析预填/批量预览、学习计划生成和首页建议；各能力使用带版本标识的 Prompt 契约、不可信输入分区、共享 JSON 提取和本地 Validator 校验；`AiContextOrchestrator` 可批量组织课程、任务、计划、天气和学习进度。 |
+| LLM 接口基础设施 | 已完成 | 已有设置页、加密 API Key 存储、OpenAI-Compatible/Gemini Client、文本/图片/PDF 临时内联输入、连接测试、课表解析、任务网页解析预填/批量预览、学习计划生成、首页建议和文件整理；各能力使用带版本标识的 Prompt 契约、不可信输入分区、共享 JSON 提取和本地 Validator 校验；`AiContextOrchestrator` 可按用途组织最小只读上下文。 |
 | 项目展示页 / 技术点展示页 | 待实现 | 当前代码中未发现独立项目展示页。 |
 | JSON 导出 / 备份 | 待实现 | 当前未实现本地 JSON 导出/导入流程。 |
 
@@ -80,6 +81,9 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 - 图片附件：当前只通过 Storage Access Framework 选择图片并持久化 Uri；不申请相册读取权限，不支持拍照、裁剪、压缩或内置大图预览。
 - 学习计划：已有手动添加、本地规则生成、AI 今日/本周计划预览、状态切换和详情页；按课程/考试细分生成、计划提醒和复杂编辑尚未接入。
 - LLM：当前已有设置、Client、连接测试、课表解析、任务解析、学习计划和首页建议接入。用户配置的 Base URL 只允许 HTTPS；发送给模型的事实会在本机限长并按不可信数据分区。涉及课程、任务、计划等业务写入的结果必须进入预览确认页或回填表单；首页建议只读展示，不执行跳转或写库。
+- AI 文件整理：一次只处理一个文件；文本支持 TXT、Markdown、CSV、JSON、HTML、XML，最多 256 KiB；图片支持 JPEG、PNG、WebP、GIF，PDF 与二进制文件最多 8 MiB。原始字节、Base64、Uri、文件名、Prompt、上下文和原始响应不写入数据库或设置；完成分析后只保留已校验草稿及服务商/模型/Prompt 版本。SAF 提供商兼容性和真实模型调用仍需设备验证。
+- 多模态能力声明：CampusMate 不按模型名猜测能力。切换预设或修改模型会重置为仅文本；只有用户确认当前端点支持后才允许图片或 PDF。OpenAI-Compatible 自定义端点是否接受当前 `image_url` / `file` 结构，以及 Gemini 模型是否支持对应输入，仍以服务商真实接口为准。
+- RAG 记忆：长期记忆、学习成长路径和过期记忆汰换尚未实现，当前 AI 上下文只读取现有课程、任务、计划、天气和学习记录的受限快照。
 - 首页 AI 建议：只在用户点击生成/刷新时发起模型请求，不会在每次进入首页时自动付费调用；仅缓存通过本地校验的建议、证据引用和来源，不保存 Prompt、上下文、原始响应或 API Key。缓存最长 6 小时且仅限当天，回放前会重建当前上下文并比较指纹；任务、课程、计划占用、天气新鲜度或学习进度变化后不再复用旧建议。
 - AI 上下文：课程目前只能按星期匹配，尚未配置学期起始日，无法精确判断目标日期对应的教学周；统一上下文会保留起止周和单双周并附加警告，不会把匹配结果宣称为已确认开课。天气仅使用设置城市的缓存并携带新鲜度，异地、无时间戳或明显未来时间戳的数据会被排除。
 - 数据一致性：课程软删除会解除活动任务的课程关联但保留历史专注/学习记录；任务软删除会清理任务附件，避免残留 Uri 记录。
@@ -128,6 +132,10 @@ app/src/main/java/com/example/campusmate
 │       ├── UserProfileRepository.kt
 │       └── WeatherRepository.kt
 ├── domain
+│   ├── ai
+│   │   ├── advice
+│   │   ├── context
+│   │   └── file
 │   ├── focus
 │   ├── import_
 │   ├── llm
@@ -137,6 +145,7 @@ app/src/main/java/com/example/campusmate
 │   ├── statistics
 │   └── weather
 ├── ui
+│   ├── ai/file
 │   ├── buddy
 │   ├── common
 │   ├── course
@@ -281,7 +290,7 @@ PlanListFragment
 ```
 
 - `LlmPlanPreviewActivity`：AI 生成计划预览页，调用 LLM 生成计划后展示预览，用户可选择「追加到现有」或「替换当日」；失败时可回退本地规则生成。
-- `LlmWeekPlanPreviewActivity`：本周计划预览页，逐日生成并展示，用户确认后才写入。
+- `LlmWeekPlanPreviewActivity`：本周计划预览页，逐日生成并展示，用户确认后才写入；也可接收文件分析的已校验计划，不再发起第二次模型请求，并在确认时跳过与当前课程或已有计划冲突的条目，不删除旧计划。
 - `LlmPlanGenerateService`：构造 LLM 请求和可用性判断。
 - `LlmPlanValidator`：提取并解析 LLM 返回的 JSON，校验计划时间、时长等合法性；计划类型和 LLM 来源由调用方与本地代码确定，不信任模型字段。
 - `StudyPlanContextBuilder`：统一构建计划上下文，包含当天课程、课程占用时间、待办任务、天气缓存、近 7 天学习记录、已有计划和每日目标。
@@ -412,6 +421,8 @@ SettingsFragment
 - 错误详情会通过 `LlmHttpUtils` 屏蔽当前 API Key，避免完整密钥出现在 UI 或测试输出中。
 - 当前支持 OpenAI-Compatible 和 Gemini 两类客户端；预设只用于填表，用户可以按控制台实际配置修改。
 - 当前已把 LLM 接入首页建议、课表导入、任务网页解析和学习计划主流程：首页建议只读展示，课表进入导入预览，任务可回填编辑表单或进入多任务导入预览，计划进入预览确认；课表与任务在 AI 不可用时会改用本地规则，AI 请求失败时用户也可选择本地回退，业务结果仍需确认后保存。
+- 文件分析从 `AiFileAnalysisActivity` 使用 SAF 选择一个文件；`AiFileContentReader` 只在本次请求内有界读取，`LlmFileAnalysisPromptFactory` 使用 `campusmate.file.analysis@v1` 和文件专用最小上下文，`LlmFileAnalysisValidator` 对证据引用、字段、日期、时长和占用冲突做本地校验。课程进入 `ImportPreviewActivity`，任务进入 `TaskImportPreviewActivity`，计划进入 `LlmWeekPlanPreviewActivity` 的预计算模式；三个板块都必须再次由用户选择确认。
+- 文件用途的上下文不读取天气、学习历史和已有计划详情，不输出教师、教室、任务描述或设置城市；模型提供的 `course:*` / `task:*` 等本地引用必须与当前快照 allowlist 精确相交。文件内容、原始响应和请求对象不缓存。
 - AI 解析字段已拓展到地点别名（`location`、`venue`、`campus`、`building`、`room` 等）、教师别名、周次和单双周；仍需用户在预览页或表单里确认。
 - 课表、任务和计划 Prompt 通过 `promptId@vN` 标识版本；事实输入被视为不可信资料并单独包裹，响应先提取有边界的 JSON，再交给各业务 Validator 校验，不能绕过用户预览直接写库。
 - 通用 AI 上下文按用途生成带版本的只读快照，保留可本地校验的 `course:*`、`task:*`、`plan:*` 引用；条目限长后仍单独保留合并后的完整占用时间，过期天气不能用于实时建议。
@@ -419,7 +430,7 @@ SettingsFragment
 
 ## 8. 数据库设计说明
 
-数据库版本以 `CampusMateDbHelper.DATABASE_VERSION` 为准，当前为 5。LLM 设置和首页已校验建议缓存使用 SharedPreferences，不新增数据库表。
+数据库版本以 `CampusMateDbHelper.DATABASE_VERSION` 为准，当前为 5。LLM 设置和首页已校验建议缓存使用 SharedPreferences；文件分析不新增持久化表或文件缓存。
 
 | 表 | 作用 | 关键字段 | 读写 Repository | 关系 |
 | --- | --- | --- | --- | --- |
@@ -453,7 +464,7 @@ Manifest 当前声明：
 | `ACCESS_COARSE_LOCATION` | 根据粗略位置辅助判断天气城市 | 运行时授权；拒绝后继续使用手动城市和天气缓存。 |
 | `android.hardware.camera required=false` | 相机硬件声明 | 没有相机时扫码不可用。 |
 
-Manifest 当前未声明相册读取权限。图片附件通过 SAF 选择图片，不需要 `READ_MEDIA_IMAGES` 或 `READ_EXTERNAL_STORAGE`。定位仅用于反查天气城市，代码不保存经纬度。
+Manifest 当前未声明相册读取权限。图片附件和 AI 文件整理都通过 SAF 选择内容，不需要 `READ_MEDIA_IMAGES` 或 `READ_EXTERNAL_STORAGE`；文件分析不持久化所选 Uri。定位仅用于反查天气城市，代码不保存经纬度。
 
 勿扰模式和通知访问属于系统设置授权：应用只能引导或提示用户授权，不能绕过系统限制；相关功能需要真机验证。
 
@@ -481,7 +492,7 @@ Debug APK 输出路径：
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-当前已有 JVM/仪器测试文件包括 `ScheduleParserTest`、`LlmTaskDraftValidatorTest`、`LlmJsonPayloadExtractorTest`、`LlmPromptContractTest`、`LlmPlanValidatorTest`、`AiContextOrchestratorTest`、`CourseTimeResolverTest`、`LlmDashboardAdvicePromptFactoryTest`、`LlmDashboardAdviceValidatorTest`、`LlmDashboardAdviceServiceTest`、`LlmDashboardAdviceCacheCodecTest`、`StudyPlanContextBuilderTest`、`FocusStateMachineTest`、`HeatmapCalculatorTest`、`TaskReminderPolicyTest`、`LlmProviderPresetsTest`、`LlmSettingsRepositoryTest`、`OpenAiCompatibleRequestBuilderTest`、`GeminiRequestBuilderTest`、`RepositoryInstrumentedTest`、`WeatherParserInstrumentedTest` 等。
+当前已有 JVM/仪器测试文件包括 `ScheduleParserTest`、`LlmTaskDraftValidatorTest`、`LlmJsonPayloadExtractorTest`、`LlmPromptContractTest`、`LlmPlanValidatorTest`、`AiContextOrchestratorTest`、`CourseTimeResolverTest`、`LlmDashboardAdvicePromptFactoryTest`、`LlmDashboardAdviceValidatorTest`、`LlmDashboardAdviceServiceTest`、`LlmDashboardAdviceCacheCodecTest`、`AiFileInputPolicyTest`、`LlmFileAnalysisPromptFactoryTest`、`LlmFileAnalysisValidatorTest`、`LlmFileAnalysisServiceTest`、`AiFilePreviewPayloadTest`、`StudyPlanContextBuilderTest`、`FocusStateMachineTest`、`HeatmapCalculatorTest`、`TaskReminderPolicyTest`、`LlmProviderPresetsTest`、`LlmSettingsRepositoryTest`、`OpenAiCompatibleRequestBuilderTest`、`GeminiRequestBuilderTest`、`RepositoryInstrumentedTest`、`WeatherParserInstrumentedTest` 等。
 
 真机验证清单：
 
@@ -496,6 +507,7 @@ app/build/outputs/apk/debug/app-debug.apk
 - WebView 导入离开后再次进入必须重新登录，验证未持久化 Cookie/会话；BJTU 场景需从 MIS 门户登录后进入课表页再提取。
 - 课表导入 AI/本地切换：无 API Key 时回退本地解析，LLM 失败时提示原因并可进入本地解析，最终都必须进入预览页。
 - 首页 AI 建议：使用真实自备 API Key 验证成功/失败/缓存状态、设置开关，以及请求期间天气或任务变化时旧结果不落盘。
+- AI 文件整理：验证 DocumentsUI/不同 SAF 提供商的 MIME 与大小信息、文本/图片/PDF 上限、用户能力声明三档、发送确认、真实 OpenAI-Compatible/Gemini 请求，以及课程/任务/计划分别确认或取消后的状态；当前没有 Android 设备，尚未执行这些验证。
 - Android 粗略定位权限授予/拒绝、天气城市反查、远程天气有网/无网缓存降级。
 
 本 README 只说明可运行命令和验证项；是否已通过以本次实际执行结果为准。
