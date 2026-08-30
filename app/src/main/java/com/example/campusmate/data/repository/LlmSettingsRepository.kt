@@ -35,6 +35,10 @@ class LlmSettingsRepository(context: Context) : LlmScheduleParseSettingsSource {
             scheduleParseEnabled = preferences.getBoolean(KEY_SCHEDULE_PARSE_ENABLED, default.scheduleParseEnabled),
             taskParseEnabled = preferences.getBoolean(KEY_TASK_PARSE_ENABLED, default.taskParseEnabled),
             planGenerateEnabled = preferences.getBoolean(KEY_PLAN_GENERATE_ENABLED, default.planGenerateEnabled),
+            dashboardAdviceEnabled = preferences.getBoolean(
+                KEY_DASHBOARD_ADVICE_ENABLED,
+                default.dashboardAdviceEnabled
+            ),
             scheduleParseMode = preferences.getEnum(KEY_SCHEDULE_PARSE_MODE, default.scheduleParseMode),
             providerPresetId = preferences.getString(KEY_PROVIDER_PRESET_ID, default.providerPresetId)
                 ?: default.providerPresetId,
@@ -55,6 +59,7 @@ class LlmSettingsRepository(context: Context) : LlmScheduleParseSettingsSource {
             .putBoolean(KEY_SCHEDULE_PARSE_ENABLED, config.scheduleParseEnabled)
             .putBoolean(KEY_TASK_PARSE_ENABLED, config.taskParseEnabled)
             .putBoolean(KEY_PLAN_GENERATE_ENABLED, config.planGenerateEnabled)
+            .putBoolean(KEY_DASHBOARD_ADVICE_ENABLED, config.dashboardAdviceEnabled)
             .putString(KEY_SCHEDULE_PARSE_MODE, config.scheduleParseMode.name)
             .putString(KEY_PROVIDER_PRESET_ID, config.providerPresetId)
             .putString(KEY_PROVIDER_TYPE, config.providerType.name)
@@ -103,6 +108,7 @@ class LlmSettingsRepository(context: Context) : LlmScheduleParseSettingsSource {
         private const val KEY_SCHEDULE_PARSE_ENABLED = "schedule_parse_enabled"
         private const val KEY_TASK_PARSE_ENABLED = "task_parse_enabled"
         private const val KEY_PLAN_GENERATE_ENABLED = "plan_generate_enabled"
+        private const val KEY_DASHBOARD_ADVICE_ENABLED = "dashboard_advice_enabled"
         private const val KEY_SCHEDULE_PARSE_MODE = "schedule_parse_mode"
         private const val KEY_PROVIDER_PRESET_ID = "provider_preset_id"
         private const val KEY_PROVIDER_TYPE = "provider_type"
