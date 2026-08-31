@@ -14,11 +14,11 @@ Agent 必须以真实文件为准，不得假设不存在的模块已经完成�
 - 本地存储是 `SQLiteOpenHelper` + `ContentProvider` + `ContentResolver` + Repository；当前没有 Room。
 - Android Gradle Plugin 来自 `gradle/libs.versions.toml`，当前为 `9.1.1`。
 - `app/build.gradle.kts` 当前配置：`applicationId = "com.example.campusmate"`、`minSdk = 33`、`targetSdk = 36`、`compileSdk = 36`、`compileSdkMinor = 1`（即 36.1）、`versionName = "1.0"`。
-- `CampusMateDbHelper.DATABASE_NAME = "campus_mate.db"`，`DATABASE_VERSION = 5`。
+- `CampusMateDbHelper.DATABASE_NAME = "campus_mate.db"`，`DATABASE_VERSION = 6`。
 - Manifest 当前声明 `POST_NOTIFICATIONS`、`FOREGROUND_SERVICE`、`FOREGROUND_SERVICE_DATA_SYNC`、`RECEIVE_BOOT_COMPLETED`、`SCHEDULE_EXACT_ALARM`、`CAMERA`、`ACCESS_NOTIFICATION_POLICY`、`INTERNET`、`ACCESS_COARSE_LOCATION`；相机硬件为 `required=false`；`allowBackup=false`。
 - 已使用 Jsoup 做课表 HTML 解析，ZXing 做二维码生成和扫码，AndroidX Security Crypto 做 LLM API Key 加密存储。
-- 已存在模块：Dashboard、首页 AI 建议、AI 文件整理、课程管理、任务管理、任务提醒、任务 AI 网页解析预填、课表导入、WebView 课表导入基础页、专注计时、翻转检测、前台服务、学习记录、热力图统计、设置页、学习计划、任务图片附件、学习名片、二维码、学习伙伴、天气定位、通知弱化/勿扰增强、LLM API 设置与 Client 基础设施、LLM 课表解析和 LLM 学习计划预览确认。
-- 待实现或待增强模块：RAG 长期记忆/成长路径/过期汰换、项目展示页/技术点展示页、JSON 导出/备份、完整演示数据覆盖、真实教务系统 WebView 适配增强、学习计划按课程/考试生成和提醒、真实 AI 调用效果验证。
+- 已存在模块：Dashboard、首页 AI 建议、AI 文件整理、本地 RAG 记忆管理与成长路径、课程管理、任务管理、任务提醒、任务 AI 网页解析预填、课表导入、WebView 课表导入基础页、专注计时、翻转检测、前台服务、学习记录、热力图统计、设置页、学习计划、任务图片附件、学习名片、二维码、学习伙伴、天气定位、通知弱化/勿扰增强、LLM API 设置与 Client 基础设施、LLM 课表解析和 LLM 学习计划预览确认。
+- 待实现或待增强模块：RAG 语义检索增强、项目展示页/技术点展示页、JSON 导出/备份、完整演示数据覆盖、真实教务系统 WebView 适配增强、学习计划按课程/考试生成和提醒、真实 AI 调用效果验证。
 - 当前不做登录、云同步、后端服务、头像/照片资料、聊天、动态、关注、点赞、评论或社交广场。
 - LLM 当前状态：设置页、预设、加密 Key 存储、连接测试、OpenAI-Compatible/Gemini Client、文本/图片/PDF 临时输入、`LlmScheduleParseService`、`LlmTaskParseService`、`LlmPlanGenerateService`、`LlmDashboardAdviceService` 和 `LlmFileAnalysisService` 已存在；课表导入已按设置接入 AI 优先/本地回退，解析结果通过 `ScheduleParseResult` 携带 drafts、warnings、parserLabel、fallbackReason 和 sectionTimeSlots；任务网页解析只回填 `TaskEditActivity`；学习计划主流程已通过 `LlmPlanPreviewActivity` / `LlmWeekPlanPreviewActivity` 接入预览确认和本地规则回退；首页建议由用户手动触发，只读展示并缓存已校验结果；文件整理由用户选择一个文件并确认发送，已校验结果分别进入课程、任务和计划预览页；现有能力已使用版本化 Prompt 契约、统一 JSON 提取和本地 Validator，`domain/ai/context` 已提供按用途裁剪的只读上下文快照。
 - 当前工作目录未检测到 `.git` 元数据时，Agent 不得声称已创建分支、提交或推送。
@@ -199,7 +199,7 @@ Agent 必须以真实文件为准，不得假设不存在的模块已经完成�
 - 用户自带 API Key，App 不提供模型服务，不内置 Key，不提供后端代理。
 - API Key 必须保存在本机加密存储中；不得写入 Logcat、Toast、Snackbar、README 或测试输出。
 - 预设服务商只用于填充表单，baseUrl、model 和 Header 类型必须允许用户修改。
-- 当前已实现设置、Key 存储、连接测试、基础生成请求、首页建议、课表/任务解析、计划生成、用户声明的多模态能力、单文件分析以及通用只读 AI 上下文快照；RAG 长期记忆仍未实现。
+- 当前已实现设置、Key 存储、连接测试、基础生成请求、首页建议、课表/任务解析、计划生成、用户声明的多模态能力、单文件分析、用户管理的本地词法 RAG 和记忆/成长上下文；真实模型与设备交互仍待验证。
 - 课表解析已接入 `LLM_FIRST_FALLBACK_LOCAL` 类似策略；业务接入仍必须进入导入预览，并展示解析方式、回退原因和 warnings 摘要。
 - 任务网页解析已接入 `TaskWebViewParseActivity`，只回填 `TaskEditActivity`，用户保存前必须可检查。
 - 计划生成已接入 LLM 预览确认；修改时不能绕过用户确认，不能让 AI 结果直接静默写数据库。
@@ -214,6 +214,19 @@ Agent 必须以真实文件为准，不得假设不存在的模块已经完成�
 - 当前模型的多模态能力只能由用户声明，默认仅文本；切换服务商预设或修改模型后必须重置为仅文本。不得根据模型名自动开启图片/PDF，也不得宣称自定义 OpenAI-Compatible 端点已经验证兼容。
 - `LlmFileAnalysisValidator` 必须清空 `CourseDraft.sourceText` / `TaskDraft.sourceText`，课程、任务、计划和只读要点都需要 `file:selection:1` 证据；计划还要校验日期、时长、时间范围、课程占用及本次结果内部冲突。
 - 文件课程必须进入 `ImportPreviewActivity`，任务必须进入 `TaskImportPreviewActivity`，计划必须进入 `LlmWeekPlanPreviewActivity` 的预计算模式；计划预计算模式不得再次调用模型，确认时应跳过当前课程或已有计划冲突且不得删除旧计划。
+
+### AI 记忆与成长路径
+
+优先读 `data/model/AiMemory.kt`、`data/repository/AiMemoryRepository.kt`、`domain/ai/memory`、`ui/ai/memory` 和 `AiMemoryContextIntegrationTest`。
+
+- 全局使用开关保存在 `SettingsRepository`，默认关闭。用户手动管理最多 200 条、每条 500 字；没有模型记忆写入 API、embedding 服务或后台摘要。
+- 单条停用优先于置顶；未置顶且到期的记忆不参与检索，物理清理必须由用户确认，不能静默按容量删除有效记忆。
+- 首页与显式 `StudyPlanContextBuilder.buildForAiDate()` 复用本地词法检索；每条最多 300 字，总计最多 1200 字。记忆只是软参考，不得覆盖课程、截止时间、时间窗或已有占用。
+- `allowedMemoryRefs` 与课程/任务等 `allowedLocalRefs` 分开。FILE_ANALYSIS 不读取、不渲染、不允许记忆引用；课表和任务网页抽取也不接入记忆。
+- 成长路径只从 `study_records` 确定性计算最近 56 天的 8 个周片段，不另存派生摘要，不推断能力或成绩，不删除原始历史记录。
+- 上下文与检索只能读取 Repository，不得更新访问时间或计数；首页缓存必须包含实际选中记忆与成长统计的稳定指纹。
+- 清空数据和演示数据重置必须清理 `ai_memories` 及首页建议缓存。迁移 v5→v6 只增表与索引，不重建旧表。
+- 校验记忆表单、启停/置顶/到期、清理确认、文件隔离、检索预算、成长聚合和缓存失效；无设备时不得声称已跑管理界面或迁移仪器测试。
 
 ### 数据库 / Provider
 
@@ -273,5 +286,6 @@ Agent 必须以真实文件为准，不得假设不存在的模块已经完成�
 - 课表导入 AI/本地切换和 LLM 失败回退。
 - 首页 AI 建议真实模型调用、设置开关、加载/失败/缓存状态切换和天气刷新期间的上下文失效。
 - AI 文件整理 SAF MIME/大小读取、用户能力三档、发送确认、真实 OpenAI-Compatible/Gemini 图片/PDF请求、三个板块分别确认/取消及计划冲突复验。
+- AI 记忆管理页保存期间旋转、启停/置顶/到期和清理确认、成长路径展示以及 v5→v6 迁移执行。
 
 无法运行时必须在最终回复和 PR 中写明原因，例如“本地 SDK 缺失”“没有连接 Android 设备”“未提供真实教务系统页面”。未运行的命令不得写成通过。

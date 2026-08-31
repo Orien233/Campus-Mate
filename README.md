@@ -4,7 +4,7 @@
 
 CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单机校园学习管理 App。项目围绕大学生的日常学习场景，提供课程管理、任务管理、任务提醒、课表导入、专注计时、学习记录、统计展示、学习计划和轻量资料交换能力。
 
-当前版本不做登录、云同步和后端服务；不提供模型服务，不内置 API Key；不上传用户隐私数据。当前阶段也不做头像、照片资料、聊天、动态、关注、点赞、评论、社交广场等强社交功能。学习名片只保留文本资料、二维码公开 JSON 和本地学习伙伴列表。
+当前版本不做登录、云同步和后端服务，不提供模型服务、不内置 API Key，也不做自动数据采集。用户主动发起 AI 请求时，按用途裁剪的上下文或用户确认的文件会直接发送到其配置的服务商；长期记忆须另外开启才参与建议。请勿提供账号密码、密钥等敏感内容。当前阶段不做头像、照片资料、聊天、动态、关注、点赞、评论或社交广场；学习名片只保留文本资料、二维码公开 JSON 和本地学习伙伴列表。
 
 核心展示闭环：
 
@@ -23,10 +23,11 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 
 - 课程阶段版本：`V1.1-stage-15-p0-3`
 - Gradle `versionName`：`1.0`
-- 当前阶段：学习计划 + AI 辅助解析 + 定位天气协同，已合并 WebView 课表导入、任务图片附件、二维码学习名片、天气、LLM API 设置、LLM 学习计划预览确认、首页 AI 建议和 AI 文件整理能力。
+- 当前阶段：学习计划 + AI 辅助解析 + 定位天气协同，已合并 WebView 课表导入、任务图片附件、二维码学习名片、天气、LLM API 设置、LLM 学习计划预览确认、首页 AI 建议、AI 文件整理和本地 RAG 记忆/成长路径能力。
 - 主闭环状态：课程、任务、提醒、导入、专注、记录、统计、设置页已跑通。
 - 当前扩展功能状态：阶段 9-15 基础能力已进入代码；项目展示页、JSON 导出/备份和完整演示数据仍未完成。
-- 数据库版本：`CampusMateDbHelper.DATABASE_VERSION = 5`
+- AI 优化集成基线：`novel`；各功能在独立 `feature/*` 分支实现并分批提交，流程见 `CONTRIBUTING.md`。
+- 数据库版本：`CampusMateDbHelper.DATABASE_VERSION = 6`
 - 数据库名：`campus_mate.db`
 - `applicationId`：`com.example.campusmate`
 - `minSdk`：33
@@ -45,6 +46,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 | --- | --- | --- |
 | 首页 Dashboard | 已完成 / AI 待真实调用验证 | 展示今日课程、待办任务、今日/本周学习时长、计划完成趋势、下一节课（含教室）、天气和开始专注入口；AI 建议卡由用户手动触发，结合三日课程/任务/计划占用、设置城市天气缓存和近期学习进度生成只读建议。 |
 | AI 文件整理 | 基础完成 / 待真实调用验证 | 首页独立入口通过 SAF 一次选择一个文本、图片或 PDF；用户确认后才发送给所选模型，结果按课程、任务、计划和只读要点分组，本地校验后分别进入现有预览确认页，不能直接写库。 |
+| AI 长期记忆与成长路径 | 基础完成 / 待真机验证 | AI 设置提供独立管理页，手动新增/编辑、启停、置顶、删除和确认清理过期记忆；默认关闭 AI 使用。开启后，首页和日/周 AI 计划用本地词法检索相关记忆，并参考最近 56 天的确定性学习统计；不调用 embedding 服务、不保存模型生成的记忆。 |
 | 课程管理 | 已完成 | 支持新增、编辑、详情、软删除、按星期筛选、周课表网格展示和时间冲突提示。 |
 | 任务管理 | 已完成 | 支持新增、编辑、详情、软删除、完成状态切换、类型、优先级、截止时间、提醒时间、网页任务解析预填和多任务导入预览确认；AI 不可用或调用失败时可使用本地规则解析。 |
 | 任务提醒 | 已完成 | `AlarmManager` + `ReminderReceiver` + 通知渠道；开机后通过 `BootReminderReceiver` 恢复未来提醒；接收器在后台线程读取任务状态，任务软删除会同步清理附件。 |
@@ -83,7 +85,9 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 - LLM：当前已有设置、Client、连接测试、课表解析、任务解析、学习计划和首页建议接入。用户配置的 Base URL 只允许 HTTPS；发送给模型的事实会在本机限长并按不可信数据分区。涉及课程、任务、计划等业务写入的结果必须进入预览确认页或回填表单；首页建议只读展示，不执行跳转或写库。
 - AI 文件整理：一次只处理一个文件；文本支持 TXT、Markdown、CSV、JSON、HTML、XML，最多 256 KiB；图片支持 JPEG、PNG、WebP、GIF，PDF 与二进制文件最多 8 MiB。原始字节、Base64、Uri、文件名、Prompt、上下文和原始响应不写入数据库或设置；完成分析后只保留已校验草稿及服务商/模型/Prompt 版本。SAF 提供商兼容性和真实模型调用仍需设备验证。
 - 多模态能力声明：CampusMate 不按模型名猜测能力。切换预设或修改模型会重置为仅文本；只有用户确认当前端点支持后才允许图片或 PDF。OpenAI-Compatible 自定义端点是否接受当前 `image_url` / `file` 结构，以及 Gemini 模型是否支持对应输入，仍以服务商真实接口为准。
-- RAG 记忆：长期记忆、学习成长路径和过期记忆汰换尚未实现，当前 AI 上下文只读取现有课程、任务、计划、天气和学习记录的受限快照。
+- RAG 记忆：采用简单本地词法检索，不是向量数据库或语义 embedding。最多保存 200 条、每条 500 字；每次默认检索最多 4 条，每条上下文最多 300 字、总计 1200 字。置顶及通用偏好/约束可跨主题参考，其余按课程/任务标题相关性选择；记忆是软参考，不能覆盖当前安排或当作指令。
+- 记忆生命周期：全局开关默认关闭；单条停用优先于置顶。未置顶记忆到期后立即排除检索，用户点击并确认后才物理清理；置顶免到期，可手动取消置顶或删除。不会按访问次数或容量静默删除有效内容，查看和检索不写库。
+- 成长路径：原始学习记录继续保留，界面和 AI 上下文只展示最近 56 天的 8 个周片段、活跃天、时长和前后 28 天比较。统计随记录重算，不重复存摘要、不推断成绩或掌握程度；未来计划的成长历史截止到今天。
 - 首页 AI 建议：只在用户点击生成/刷新时发起模型请求，不会在每次进入首页时自动付费调用；仅缓存通过本地校验的建议、证据引用和来源，不保存 Prompt、上下文、原始响应或 API Key。缓存最长 6 小时且仅限当天，回放前会重建当前上下文并比较指纹；任务、课程、计划占用、天气新鲜度或学习进度变化后不再复用旧建议。
 - AI 上下文：课程目前只能按星期匹配，尚未配置学期起始日，无法精确判断目标日期对应的教学周；统一上下文会保留起止周和单双周并附加警告，不会把匹配结果宣称为已确认开课。天气仅使用设置城市的缓存并携带新鲜度，异地、无时间戳或明显未来时间戳的数据会被排除。
 - 数据一致性：课程软删除会解除活动任务的课程关联但保留历史专注/学习记录；任务软删除会清理任务附件，避免残留 Uri 记录。
@@ -117,6 +121,7 @@ app/src/main/java/com/example/campusmate
 │   ├── provider
 │   │   └── CampusMateProvider.kt
 │   └── repository
+│       ├── AiMemoryRepository.kt
 │       ├── CourseRepository.kt
 │       ├── DataMaintenanceRepository.kt
 │       ├── DemoDataRepository.kt
@@ -135,7 +140,8 @@ app/src/main/java/com/example/campusmate
 │   ├── ai
 │   │   ├── advice
 │   │   ├── context
-│   │   └── file
+│   │   ├── file
+│   │   └── memory
 │   ├── focus
 │   ├── import_
 │   ├── llm
@@ -146,6 +152,7 @@ app/src/main/java/com/example/campusmate
 │   └── weather
 ├── ui
 │   ├── ai/file
+│   ├── ai/memory
 │   ├── buddy
 │   ├── common
 │   ├── course
@@ -292,8 +299,9 @@ PlanListFragment
 - `LlmPlanPreviewActivity`：AI 生成计划预览页，调用 LLM 生成计划后展示预览，用户可选择「追加到现有」或「替换当日」；失败时可回退本地规则生成。
 - `LlmWeekPlanPreviewActivity`：本周计划预览页，逐日生成并展示，用户确认后才写入；也可接收文件分析的已校验计划，不再发起第二次模型请求，并在确认时跳过与当前课程或已有计划冲突的条目，不删除旧计划。
 - `LlmPlanGenerateService`：构造 LLM 请求和可用性判断。
-- `LlmPlanValidator`：提取并解析 LLM 返回的 JSON，校验计划时间、时长等合法性；计划类型和 LLM 来源由调用方与本地代码确定，不信任模型字段。
+- `LlmPlanValidator`：提取并解析 LLM 返回的 JSON，校验严格时间、整数时长与区间一致性、课程/已有计划/本次计划内部冲突和可选记忆引用；计划类型和 LLM 来源由调用方与本地代码确定，不信任模型字段。
 - `StudyPlanContextBuilder`：统一构建计划上下文，包含当天课程、课程占用时间、待办任务、天气缓存、近 7 天学习记录、已有计划和每日目标。
+- `buildForAiDate()` 只供用户主动触发的日/周 AI 预览入口使用，按开关调用与首页相同的记忆检索器；普通规则生成和冲突检查仍使用不含记忆的 `buildForDate()`。
 - `AiContextOrchestrator`：通过现有 Repository 一次性构建类型化 AI 上下文快照，按用途限制日期和条目数量，组织课程、任务、计划占用时间、设置城市天气和学习趋势；不读取 API Key，也不写数据库。
 - `AiContextJsonRenderer`：把快照按声明时区渲染为确定性 JSON；文件分析用途默认不读取天气和学习历史，也不输出教师、教室、任务描述或设置城市。
 - `LlmDashboardAdviceService`：在总开关、首页建议独立开关和 API Key 可用时构造版本化请求；模型结果必须经过证据白名单、日期、时间格式和完整占用区间校验。
@@ -397,7 +405,7 @@ SettingsFragment
   -> Dashboard / 任务 / 统计可展示
 ```
 
-- 清空范围：课程、任务、学习计划、任务附件、专注记录、学习统计、导入日志、学习名片、学习伙伴和天气缓存。
+- 清空范围：课程、任务、学习计划、任务附件、专注记录、学习统计、导入日志、学习名片、学习伙伴、天气缓存和 AI 记忆；首页建议缓存也同步清理。
 - 清空和重新生成演示数据都会先取消已调度任务提醒。
 - 清空本地数据不可撤销。
 - 当前演示数据覆盖课程、任务、学习计划、学习记录、热力图、学习名片、二维码伙伴和导入日志；图片附件仍需通过 SAF 选择真实文件。
@@ -428,9 +436,19 @@ SettingsFragment
 - 通用 AI 上下文按用途生成带版本的只读快照，保留可本地校验的 `course:*`、`task:*`、`plan:*` 引用；条目限长后仍单独保留合并后的完整占用时间，过期天气不能用于实时建议。
 - 首页建议额外使用 `settings:daily-goal`、`learning:recent`、`weather:current` 和 `schedule:occupied` 本地证据引用；无合法证据的条目会丢弃，冲突时间会移除，旧请求在 Fragment token 失效后不能覆盖缓存。
 
+### L. AI 记忆闭环
+
+1. 从「设置 → AI 设置 → 管理 AI 记忆」添加目标、偏好、习惯、约束或备注，并选择保留期。
+2. 全局「在 AI 建议和学习计划中使用记忆」默认关闭。开启后，仅首页建议和日/周 AI 计划读取已启用且未过期（或已置顶）的记忆；管理页本身不调用模型。
+3. `AiMemoryRetriever` 在本机做中英文词法匹配和确定性排序，`LearningGrowthSummaryBuilder` 从 `study_records` 重算成长路径；没有后台记忆写入、访问计数或模型摘要回写。
+4. 仅选中记忆进入独立 `memory:*` 白名单。首页建议 Prompt 和计划 Prompt 为 v2；记忆与成长事实参与首页缓存指纹，编辑、停用、删除、到期或记录变化后复验旧缓存。
+5. 课表解析、任务网页解析和文件分析不读取长期记忆；文件上下文既不加载也不渲染记忆，业务 `allowedLocalRefs` 与记忆白名单分离。
+
+只有用户保存表单、启停/置顶、确认删除或确认清理才修改 `ai_memories`。AI 计划仍须进入原有预览确认页，记忆引用不能授权写库。
+
 ## 8. 数据库设计说明
 
-数据库版本以 `CampusMateDbHelper.DATABASE_VERSION` 为准，当前为 5。LLM 设置和首页已校验建议缓存使用 SharedPreferences；文件分析不新增持久化表或文件缓存。
+数据库版本以 `CampusMateDbHelper.DATABASE_VERSION` 为准，当前为 6。v5→v6 仅新增 `ai_memories` 表与检索/到期索引，不删除或重建已有表。LLM 设置、记忆使用开关和首页已校验建议缓存使用 SharedPreferences；文件分析不新增持久化表或文件缓存。
 
 | 表 | 作用 | 关键字段 | 读写 Repository | 关系 |
 | --- | --- | --- | --- | --- |
@@ -444,8 +462,9 @@ SettingsFragment
 | `weather_cache` | 天气缓存 | `city`、`weather_text`、`temperature`、`humidity`、`wind`、`source`、`raw_json`、`updated_at` | `WeatherRepository` | Dashboard 天气卡片读取；只缓存城市天气，不保存经纬度。 |
 | `study_plans` | 学习计划 | `title`、`plan_date`、`planned_minutes`、`actual_minutes`、`start_time`、`end_time`、`type`、`status`、`source_type` | `StudyPlanRepository` | 由本地规则生成器、AI 预览确认或手动添加写入，供计划列表和详情展示。 |
 | `task_attachments` | 任务图片附件 Uri | `task_id`、`uri`、`mime_type`、`title`、`created_at` | `TaskAttachmentRepository` | 按 `task_id` 关联任务详情页。 |
+| `ai_memories` | 用户管理的长期文本记忆 | `category`、`content`、`is_enabled`、`is_pinned`、`expires_at`、`created_at`、`updated_at` | `AiMemoryRepository` | 不保存原始模型响应、Prompt、向量或成长摘要。 |
 
-Provider Uri 均以 `content://com.example.campusmate.provider/` 开头，当前包含：`courses`、`tasks`、`focus_sessions`、`study_records`、`import_logs`、`user_profile`、`study_buddies`、`weather_cache`、`study_plans`、`task_attachments` 及各自 `/#` item Uri。
+Provider Uri 均以 `content://com.example.campusmate.provider/` 开头，当前包含：`courses`、`tasks`、`focus_sessions`、`study_records`、`import_logs`、`user_profile`、`study_buddies`、`weather_cache`、`study_plans`、`task_attachments`、`ai_memories` 及各自 `/#` item Uri。
 
 ## 9. 权限说明
 
@@ -469,6 +488,10 @@ Manifest 当前未声明相册读取权限。图片附件和 AI 文件整理都�
 勿扰模式和通知访问属于系统设置授权：应用只能引导或提示用户授权，不能绕过系统限制；相关功能需要真机验证。
 
 ## 10. 运行方式与测试方式
+
+本轮 AI 优化只做本地编译、JVM 单元测试和 lint；不启动模拟器，不运行 `connectedAndroidTest` 或真实模型请求。记忆检索和成长统计已补充 JVM 测试；v5→v6 迁移及 Repository 仪器测试仅编译源码，设备交互与迁移执行仍未验证。
+
+新增 RAG 覆盖包括 `AiMemoryDraftValidatorTest`、`AiMemoryRetentionPolicyTest`、`AiMemoryRetrieverTest`、`LearningGrowthSummaryBuilderTest`、`AiMemoryContextIntegrationTest`、`LlmPlanPromptFactoryTest`，以及未执行的 `AiMemoryMigrationInstrumentedTest` / `AiMemoryRepositoryInstrumentedTest`。
 
 Android Studio：
 
@@ -508,6 +531,7 @@ app/build/outputs/apk/debug/app-debug.apk
 - 课表导入 AI/本地切换：无 API Key 时回退本地解析，LLM 失败时提示原因并可进入本地解析，最终都必须进入预览页。
 - 首页 AI 建议：使用真实自备 API Key 验证成功/失败/缓存状态、设置开关，以及请求期间天气或任务变化时旧结果不落盘。
 - AI 文件整理：验证 DocumentsUI/不同 SAF 提供商的 MIME 与大小信息、文本/图片/PDF 上限、用户能力声明三档、发送确认、真实 OpenAI-Compatible/Gemini 请求，以及课程/任务/计划分别确认或取消后的状态；当前没有 Android 设备，尚未执行这些验证。
+- AI 记忆：验证管理页新增/编辑、保存期间旋转、全局开关、单条启停/置顶/到期、清理确认、成长路径展示和数据库 v5→v6 升级；当前没有 Android 设备，尚未执行这些验证。
 - Android 粗略定位权限授予/拒绝、天气城市反查、远程天气有网/无网缓存降级。
 
 本 README 只说明可运行命令和验证项；是否已通过以本次实际执行结果为准。
