@@ -20,6 +20,7 @@ import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.domain.reminder.AlarmReminderScheduler
 import com.example.campusmate.domain.weather.WeatherLocationResolver
 import com.example.campusmate.ui.buddy.BuddyListActivity
+import com.example.campusmate.ui.ai.memory.AiMemoryActivity
 import com.example.campusmate.ui.profile.ProfileActivity
 import com.example.campusmate.util.DateTimeUtils
 import com.example.campusmate.util.NotificationUtils
@@ -151,6 +152,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun setupActions(view: View) {
+        view.findViewById<MaterialButton>(R.id.openAiMemoryButton).setOnClickListener {
+            startActivity(Intent(requireContext(), AiMemoryActivity::class.java))
+        }
         view.findViewById<MaterialButton>(R.id.openAiSettingsButton).setOnClickListener {
             startActivity(SettingsSectionActivity.intentFor(requireContext(), SECTION_AI))
         }

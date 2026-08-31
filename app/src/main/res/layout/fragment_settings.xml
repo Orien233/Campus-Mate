@@ -288,6 +288,23 @@
                     android:textColor="@color/campus_text_primary"
                     android:textSize="16sp" />
 
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/openAiMemoryButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:text="@string/ai_memory_manage"
+                    app:icon="@drawable/ic_settings" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_xs"
+                    android:text="@string/ai_memory_settings_body"
+                    android:textColor="@color/campus_text_secondary"
+                    android:textSize="13sp" />
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

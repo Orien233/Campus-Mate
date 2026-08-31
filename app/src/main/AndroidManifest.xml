@@ -92,6 +92,14 @@
             android:exported="false"
             android:theme="@style/Theme.CampusMate" />
         <activity
+            android:name=".ui.ai.memory.AiMemoryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CampusMate" />
+        <activity
+            android:name=".ui.ai.memory.AiMemoryEditActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CampusMate" />
+        <activity
             android:name=".ui.import_.ImportPreviewActivity"
             android:exported="false"
             android:theme="@style/Theme.CampusMate" />
