@@ -11,6 +11,10 @@ import com.example.campusmate.data.repository.StudyPlanRepository
 import com.example.campusmate.data.repository.StudyRecordRepository
 import com.example.campusmate.data.repository.TaskRepository
 import com.example.campusmate.data.repository.WeatherRepository
+import com.example.campusmate.domain.ai.context.AiContextPurpose
+import com.example.campusmate.domain.ai.memory.AiMemoryContext
+import com.example.campusmate.domain.ai.memory.AiMemoryContextProvider
+import com.example.campusmate.domain.ai.memory.AiMemoryContextRenderer
 import com.example.campusmate.domain.schedule.CourseTimeResolver
 import com.example.campusmate.domain.weather.WeatherResult
 import com.example.campusmate.util.DateTimeUtils
@@ -29,11 +33,29 @@ data class StudyPlanContext(
     val courseTimeRanges: Map<Long, String>,
     val planEarliestTime: String,
     val planLatestTime: String,
-    val generationStartTime: String
+    val generationStartTime: String,
+    val memoryContext: AiMemoryContext = AiMemoryContext()
 ) {
+    val allowedMemoryRefs: Set<String>
+        get() = memoryContext.allowedMemoryRefs
+
+    /** Retrieval uses titles and task types, never the full, potentially private prompt. */
+    fun memoryQueryTerms(maxTasks: Int = 12): List<String> {
+        require(maxTasks >= 0) { "maxTasks must not be negative" }
+        return buildList {
+            courses.forEach { add(it.name) }
+            tasks.take(maxTasks).forEach { task ->
+                add(task.title)
+                add(taskTypeName(task.type))
+            }
+        }.map(String::trim).filter(String::isNotBlank).distinct()
+    }
+
     fun toPromptText(maxTasks: Int = 12): String {
         return """
 请根据以下上下文为 $date（$weekdayName）生成学习计划。
+
+${memoryPromptText()}
 
 ## 当天课程
 ${coursesPromptText()}
@@ -68,6 +90,11 @@ ${existingPlansPromptText()}
 
     fun courseNameForTask(task: StudyTask): String? {
         return task.courseId?.let(coursesById::get)?.name
+    }
+
+    private fun memoryPromptText(): String {
+        if (memoryContext.memories.isEmpty() && memoryContext.growth == null) return ""
+        return "## 用户启用的记忆和学习成长参考\n${AiMemoryContextRenderer.render(memoryContext)}"
     }
 
     private fun generationWindowPromptText(): String {
@@ -220,6 +247,27 @@ class StudyPlanContextBuilder(context: Context) {
     private val studyPlanRepository = StudyPlanRepository(context)
     private val settingsRepository = SettingsRepository(context)
     private val weatherRepository = WeatherRepository(context)
+    private val memoryContextProvider by lazy { AiMemoryContextProvider(context.applicationContext) }
+
+    /** Only explicit AI generation opts into the shared, read-only memory provider. */
+    fun buildForAiDate(
+        date: String,
+        purpose: AiContextPurpose = AiContextPurpose.PLAN_DAY,
+        maxTasks: Int = 12
+    ): StudyPlanContext {
+        require(purpose == AiContextPurpose.PLAN_DAY || purpose == AiContextPurpose.PLAN_WEEK) {
+            "Study plans require a plan context purpose"
+        }
+        val planContext = buildForDate(date)
+        return planContext.copy(
+            memoryContext = memoryContextProvider.build(
+                purpose = purpose,
+                queryTerms = planContext.memoryQueryTerms(maxTasks),
+                anchorDate = planContext.date,
+                dailyGoalMinutes = planContext.dailyGoalMinutes
+            )
+        )
+    }
 
     fun buildForDate(date: String): StudyPlanContext {
         val normalizedDate = normalizeDate(date)

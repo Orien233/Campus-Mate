@@ -71,11 +71,11 @@ class LlmPromptContractTest {
     fun promptFactories_useVersionedContractsAndBoundedInputs() {
         val schedule = LlmSchedulePromptFactory.buildRequest("<table>课程</table>")
         val task = LlmTaskPromptFactory.buildRequest("明天交作业", "2026-08-29 10:00")
-        val plan = LlmPlanPromptFactory.buildRequest("课程占用时间 10:00-12:00")
+        val plan = LlmPlanPromptFactory.buildRequest(planRagContext())
 
         assertEquals("campusmate.schedule.parse@v1", schedule.promptTag)
         assertEquals("campusmate.task.parse@v1", task.promptTag)
-        assertEquals("campusmate.plan.generate@v1", plan.promptTag)
+        assertEquals("campusmate.plan.generate@v2", plan.promptTag)
         assertTrue(schedule.userPrompt.contains("""label="SCHEDULE_HTML""""))
         assertTrue(task.userPrompt.contains("""label="TASK_PAGE_CONTENT""""))
         assertTrue(task.systemPrompt.contains("2026-08-29 10:00"))

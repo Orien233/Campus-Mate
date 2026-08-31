@@ -13,6 +13,7 @@ import com.example.campusmate.R
 import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.data.repository.LlmSettingsRepository
 import com.example.campusmate.data.repository.StudyPlanRepository
+import com.example.campusmate.domain.ai.context.AiContextPurpose
 import com.example.campusmate.domain.llm.LlmClientFactory
 import com.example.campusmate.domain.plan.LlmPlanGenerateService
 import com.example.campusmate.domain.plan.LlmPlanValidator
@@ -153,9 +154,11 @@ class LlmPlanPreviewActivity : AppCompatActivity() {
 
     private suspend fun generatePlanWithLlm(): Result<List<StudyPlan>> {
         return try {
-            val planContext = StudyPlanContextBuilder(this).buildForDate(planDate)
+            val planContext = StudyPlanContextBuilder(this).buildForAiDate(
+                planDate, AiContextPurpose.PLAN_DAY, maxTasks = 12
+            )
             val request = llmPlanGenerateService.buildPrompt(
-                planContext.toPromptText(maxTasks = 12)
+                planContext, maxTasks = 12
             )
             val config = llmSettingsRepository.getConfig()
             val apiKey = llmSettingsRepository.getApiKey() ?: return Result.failure(Exception("No API Key"))

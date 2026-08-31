@@ -13,6 +13,7 @@ import com.example.campusmate.R
 import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.data.repository.LlmSettingsRepository
 import com.example.campusmate.data.repository.StudyPlanRepository
+import com.example.campusmate.domain.ai.context.AiContextPurpose
 import com.example.campusmate.domain.llm.LlmClientFactory
 import com.example.campusmate.domain.llm.LlmGenerateResult
 import com.example.campusmate.domain.plan.LlmPlanGenerateService
@@ -258,9 +259,11 @@ class LlmWeekPlanPreviewActivity : AppCompatActivity() {
 
         selectableDates().forEach { dayDate ->
             if (aiAvailable) {
-                val dayContext = planContextBuilder.buildForDate(dayDate)
+                val dayContext = planContextBuilder.buildForAiDate(
+                    dayDate, AiContextPurpose.PLAN_WEEK, maxTasks = 8
+                )
                 val request = llmPlanGenerateService.buildPrompt(
-                    dayContext.toPromptText(maxTasks = 8)
+                    dayContext, maxTasks = 8
                 )
                 val config = llmSettingsRepository.getConfig()
                 val apiKey = llmSettingsRepository.getApiKey() ?: return linkedMapOf()

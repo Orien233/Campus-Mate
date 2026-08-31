@@ -3,8 +3,6 @@ package com.example.campusmate.domain.plan
 import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.domain.llm.LlmJsonPayloadExtractor
 import org.json.JSONObject
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class LlmPlanValidator {
 
@@ -50,6 +48,10 @@ class LlmPlanValidator {
 
             for (i in 0 until plansArray.length()) {
                 val planJson = plansArray.optJSONObject(i) ?: continue
+                if (!hasValidMemoryRefs(planJson, planContext?.allowedMemoryRefs.orEmpty())) {
+                    warnings.add("第 ${i + 1} 个计划包含无效或未检索的记忆引用，已跳过")
+                    continue
+                }
 
                 val title = planJson.optString("title", "").takeIf { it.isNotBlank() }
                 if (title == null) {
@@ -57,22 +59,31 @@ class LlmPlanValidator {
                     continue
                 }
 
-                val plannedMinutes = planJson.optInt("plannedMinutes", 0).takeIf { it in 5..240 }
+                val plannedMinutes = (planJson.opt("plannedMinutes") as? Number)
+                    ?.toDouble()
+                    ?.takeIf { it in 5.0..240.0 && it % 1.0 == 0.0 }
+                    ?.toInt()
                 if (plannedMinutes == null) {
                     warnings.add("\"$title\" 时长不在合理范围(5-240分钟)")
                     continue
                 }
 
-                val startTime = planJson.optString("startTime", "").takeIf { isValidTimeFormat(it) }
-                val endTime = planJson.optString("endTime", "").takeIf { isValidTimeFormat(it) }
+                val startTime = planJson.optString("startTime", "").trim()
+                val endTime = planJson.optString("endTime", "").trim()
+                val start = parseMinutes(startTime)
+                val end = parseMinutes(endTime)
 
-                if (startTime == null || endTime == null) {
+                if (start == null || end == null) {
                     warnings.add("\"$title\" 缺少有效开始/结束时间，已跳过")
                     continue
                 }
 
-                if (!isEndAfterStart(startTime, endTime)) {
+                if (end <= start) {
                     warnings.add("\"$title\" 结束时间早于开始时间")
+                    continue
+                }
+                if (plannedMinutes != end - start) {
+                    warnings.add("\"$title\" 时长与开始结束时间不一致，已跳过")
                     continue
                 }
 
@@ -88,6 +99,10 @@ class LlmPlanValidator {
                 val localWarning = planContext?.let { validateAgainstContext(plan, it) }
                 if (localWarning != null) {
                     warnings.add(localWarning)
+                    continue
+                }
+                if (plans.any { overlaps(it, start, end) }) {
+                    warnings.add("\"$title\" 与本次其他计划时间冲突，已跳过")
                     continue
                 }
                 plans.add(plan)
@@ -113,15 +128,12 @@ class LlmPlanValidator {
             .distinct()
     }
 
-    private fun isValidTimeFormat(time: String): Boolean {
-        if (time.isBlank()) return false
-        return try {
-            val sdf = SimpleDateFormat("HH:mm", Locale.US)
-            sdf.isLenient = false
-            sdf.parse(time)
-            true
-        } catch (e: Exception) {
-            false
+    private fun hasValidMemoryRefs(plan: JSONObject, allowedRefs: Set<String>): Boolean {
+        if (!plan.has("memoryRefs")) return true
+        val refs = plan.optJSONArray("memoryRefs") ?: return false
+        return (0 until refs.length()).all { index ->
+            val ref = refs.opt(index)
+            ref is String && ref in allowedRefs
         }
     }
 
@@ -146,7 +158,16 @@ class LlmPlanValidator {
                 return "\"${plan.title}\" 与课程“${course.name}”时间 $range 冲突，已跳过"
             }
         }
+        if (context.existingPlans.any { it.planDate == context.date && overlaps(it, start, end) }) {
+            return "\"${plan.title}\" 与已有计划时间冲突，已跳过"
+        }
         return null
+    }
+
+    private fun overlaps(plan: StudyPlan, start: Int, end: Int): Boolean {
+        val occupiedStart = parseMinutes(plan.startTime) ?: return false
+        val occupiedEnd = parseMinutes(plan.endTime) ?: return false
+        return occupiedEnd > occupiedStart && start < occupiedEnd && end > occupiedStart
     }
 
     private fun isCourseLearningPlan(title: String, courseName: String): Boolean {
@@ -163,7 +184,7 @@ class LlmPlanValidator {
     }
 
     private fun parseMinutes(value: String?): Int? {
-        val match = Regex("""^(\d{1,2}):(\d{2})$""").find(value?.trim().orEmpty()) ?: return null
+        val match = TIME_PATTERN.matchEntire(value?.trim().orEmpty()) ?: return null
         return toMinutes(match.groupValues[1], match.groupValues[2])
     }
 
@@ -173,18 +194,8 @@ class LlmPlanValidator {
         return hour * 60 + minute
     }
 
-    private fun isEndAfterStart(start: String, end: String): Boolean {
-        return try {
-            val sdf = SimpleDateFormat("HH:mm", Locale.US)
-            val startTime = sdf.parse(start)?.time ?: return true
-            val endTime = sdf.parse(end)?.time ?: return true
-            endTime > startTime
-        } catch (e: Exception) {
-            true
-        }
-    }
-
     companion object {
+        private val TIME_PATTERN = Regex("""^([01]\d|2[0-3]):([0-5]\d)$""")
         private val COURSE_LEARNING_KEYWORDS = listOf("上课", "课程学习", "完成课程学习", "课堂", "听课")
         private const val MAX_MODEL_WARNINGS = 8
         private const val MAX_WARNING_CHARS = 240

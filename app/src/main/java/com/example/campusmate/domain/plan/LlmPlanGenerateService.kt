@@ -13,8 +13,8 @@ class LlmPlanGenerateService(
         return config.enabled && config.planGenerateEnabled && llmSettingsRepository.hasApiKey()
     }
 
-    fun buildPrompt(input: String): LlmGenerateRequest {
-        return LlmPlanPromptFactory.buildRequest(input)
+    fun buildPrompt(context: StudyPlanContext, maxTasks: Int = 12): LlmGenerateRequest {
+        return LlmPlanPromptFactory.buildRequest(context, maxTasks)
     }
 
     @Suppress("unused")

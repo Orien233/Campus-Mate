@@ -1,5 +1,6 @@
 package com.example.campusmate
 
+import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.model.StudyTask
 import com.example.campusmate.data.repository.WeatherRepository
 import com.example.campusmate.domain.plan.StudyPlanContext
@@ -8,6 +9,7 @@ import com.example.campusmate.domain.weather.WeatherResult
 import java.text.SimpleDateFormat
 import java.util.Locale
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -115,6 +117,35 @@ class StudyPlanContextBuilderTest {
         )
 
         assertTrue(context.toPromptText().contains("缓存已过期，只能作为历史参考"))
+    }
+
+    @Test
+    fun memoryQueryTerms_usesOnlyCourseAndLimitedTaskTitlesAndTypes() {
+        val course = Course(
+            id = 9L, name = "线性代数", weekday = 5, startSection = 1, endSection = 2,
+            teacher = "不应检索的教师", classroom = "不应检索的教室", note = "不应检索的备注"
+        )
+        val context = planRagContext().copy(
+            courses = listOf(course),
+            tasks = listOf(
+                StudyTask(title = "矩阵练习", type = StudyTask.TYPE_HOMEWORK, description = "不应检索的描述"),
+                StudyTask(title = "不应检索的第二项", type = StudyTask.TYPE_EXAM)
+            )
+        )
+
+        assertEquals(listOf("线性代数", "矩阵练习", "作业"), context.memoryQueryTerms(maxTasks = 1))
+        assertEquals(listOf("线性代数"), context.memoryQueryTerms(maxTasks = 0))
+        assertTrue(context.memoryContext.memories.isEmpty())
+        assertFalse(context.toPromptText().contains("userManagedUntrustedMemories"))
+    }
+
+    @Test
+    fun memoryQueryTerms_andRefsDoNotIncludeMemoryContentOrGrowthRefs() {
+        val context = planRagContext(planRagMemoryContext("不应参与检索的记忆正文"))
+
+        assertTrue(context.memoryQueryTerms().isEmpty())
+        assertEquals(setOf("memory:7"), context.allowedMemoryRefs)
+        assertFalse(context.allowedMemoryRefs.contains("learning:growth"))
     }
 
     private fun task(
