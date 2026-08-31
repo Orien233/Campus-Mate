@@ -1,6 +1,9 @@
 package com.example.campusmate.domain.ai.context
 
 import android.content.Context
+import com.example.campusmate.domain.ai.memory.AiMemoryContext
+import com.example.campusmate.domain.ai.memory.AiMemoryRetriever
+import com.example.campusmate.domain.ai.memory.LearningGrowthSummaryBuilder
 import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.data.model.StudyRecord
@@ -26,6 +29,12 @@ class AiContextOrchestrator internal constructor(
         val recentStart = DateTimeUtils.datePlusDays(historyEnd, -(request.recentStudyDays - 1))
 
         val settingsSource = source.loadSettings()
+        val memoryEnabled = policy.includeMemories && settingsSource.memoryEnabled
+        val recordStart = if (memoryEnabled) {
+            minOf(recentStart, DateTimeUtils.datePlusDays(historyEnd, -(LearningGrowthSummaryBuilder.WINDOW_DAYS - 1)))
+        } else {
+            recentStart
+        }
         val courses = source.loadCourses().filterNot { it.isDeleted }
         val tasks = source.loadTasks()
         val plans = if (policy.includePlans) {
@@ -34,7 +43,7 @@ class AiContextOrchestrator internal constructor(
             emptyList()
         }
         val records = if (policy.includeLearningProgress) {
-            source.loadStudyRecords(recentStart, historyEnd)
+            source.loadStudyRecords(recordStart, historyEnd)
         } else {
             emptyList()
         }
@@ -107,6 +116,19 @@ class AiContextOrchestrator internal constructor(
         val taskFacts = selectedTasks.items.map { task ->
             task.toAiFact(task.courseId?.let(courseById::get), selectedTasks.referenceMillis, policy)
         }
+        val memoryContext = if (memoryEnabled) {
+            val queryTerms = days.flatMap { day -> day.courses.map(AiCourseFact::name) } +
+                taskFacts.flatMap { listOf(it.title, it.courseName.orEmpty(), it.type) }
+            val growth = LearningGrowthSummaryBuilder.build(records, historyEnd, settingsSource.dailyGoalMinutes)
+            AiMemoryContext(
+                memories = AiMemoryRetriever.retrieve(
+                    source.loadMemories(generatedAt), request.purpose, queryTerms, generatedAt
+                ),
+                growth = growth.takeIf { it.sessionCount > 0 }
+            )
+        } else {
+            AiMemoryContext()
+        }
         val learningProgress = if (policy.includeLearningProgress) {
             buildLearningProgress(
                 records = records,
@@ -177,7 +199,8 @@ class AiContextOrchestrator internal constructor(
             learningProgress = learningProgress,
             weather = weatherSelection.fact,
             warnings = warnings,
-            omitted = omissions
+            omitted = omissions,
+            memoryContext = memoryContext
         )
     }
 
@@ -549,7 +572,8 @@ class AiContextOrchestrator internal constructor(
         val includeWeather: Boolean = true,
         val includePlans: Boolean = true,
         val includeCourseDetails: Boolean = true,
-        val includeTaskDetails: Boolean = true
+        val includeTaskDetails: Boolean = true,
+        val includeMemories: Boolean = true
     ) {
         companion object {
             fun forPurpose(purpose: AiContextPurpose): AiContextPolicy {
@@ -566,7 +590,8 @@ class AiContextOrchestrator internal constructor(
                         includeWeather = false,
                         includePlans = false,
                         includeCourseDetails = false,
-                        includeTaskDetails = false
+                        includeTaskDetails = false,
+                        includeMemories = false
                     )
                 }
             }

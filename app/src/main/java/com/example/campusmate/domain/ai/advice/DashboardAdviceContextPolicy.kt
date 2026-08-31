@@ -3,6 +3,7 @@ package com.example.campusmate.domain.ai.advice
 import com.example.campusmate.domain.ai.context.AiContextJsonRenderer
 import com.example.campusmate.domain.ai.context.AiContextSnapshot
 import java.security.MessageDigest
+import com.example.campusmate.domain.ai.memory.AiMemoryContextRenderer
 
 object DashboardAdviceContextPolicy {
     const val DAILY_GOAL_REF = "settings:daily-goal"
@@ -13,6 +14,10 @@ object DashboardAdviceContextPolicy {
     fun allowedEvidenceRefs(snapshot: AiContextSnapshot): Set<String> {
         return linkedSetOf<String>().apply {
             addAll(snapshot.allowedLocalRefs.sorted())
+            addAll(snapshot.allowedMemoryRefs.sorted())
+            if (snapshot.memoryContext.growth?.sessionCount?.let { it > 0 } == true) {
+                add(AiMemoryContextRenderer.GROWTH_REF)
+            }
             add(DAILY_GOAL_REF)
             if (snapshot.learningProgress.activeDays > 0) {
                 add(RECENT_LEARNING_REF)

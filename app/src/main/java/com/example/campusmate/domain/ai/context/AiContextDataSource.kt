@@ -1,6 +1,8 @@
 package com.example.campusmate.domain.ai.context
 
 import android.content.Context
+import com.example.campusmate.data.model.AiMemory
+import com.example.campusmate.data.repository.AiMemoryRepository
 import com.example.campusmate.data.model.Course
 import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.data.model.StudyRecord
@@ -22,6 +24,7 @@ internal interface AiContextDataSource {
     fun loadStudyRecords(startDate: String, endDate: String): List<StudyRecord>
     fun loadCachedWeather(city: String): WeatherResult?
     fun loadSettings(): AiContextSettingsSource
+    fun loadMemories(nowMillis: Long): List<AiMemory>
 }
 
 internal data class AiContextSettingsSource(
@@ -30,7 +33,8 @@ internal data class AiContextSettingsSource(
     val latestPlanTime: String,
     val weatherCity: String,
     val sectionTimeSlots: List<SettingsSectionTimeSlot>,
-    val zoneId: String
+    val zoneId: String,
+    val memoryEnabled: Boolean = false
 )
 
 internal class RepositoryAiContextDataSource(context: Context) : AiContextDataSource {
@@ -41,6 +45,11 @@ internal class RepositoryAiContextDataSource(context: Context) : AiContextDataSo
     private val recordRepository = StudyRecordRepository(appContext)
     private val weatherRepository = WeatherRepository(appContext)
     private val settingsRepository = SettingsRepository(appContext)
+    private val memoryRepository = AiMemoryRepository(appContext)
+
+    override fun loadMemories(nowMillis: Long): List<AiMemory> {
+        return memoryRepository.getActiveMemories(nowMillis)
+    }
 
     override fun loadCourses(): List<Course> = courseRepository.getAllCourses()
 
@@ -65,7 +74,8 @@ internal class RepositoryAiContextDataSource(context: Context) : AiContextDataSo
             latestPlanTime = settingsRepository.getPlanLatestTime(),
             weatherCity = settingsRepository.getWeatherCity(),
             sectionTimeSlots = settingsRepository.getSectionTimeSlots(),
-            zoneId = TimeZone.getDefault().id
+            zoneId = TimeZone.getDefault().id,
+            memoryEnabled = settingsRepository.isAiMemoryEnabled()
         )
     }
 }

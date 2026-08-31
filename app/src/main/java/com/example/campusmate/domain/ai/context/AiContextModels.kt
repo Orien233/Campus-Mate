@@ -1,8 +1,9 @@
 package com.example.campusmate.domain.ai.context
 
 import com.example.campusmate.util.DateTimeUtils
+import com.example.campusmate.domain.ai.memory.AiMemoryContext
 
-const val AI_CONTEXT_SCHEMA_VERSION = 1
+const val AI_CONTEXT_SCHEMA_VERSION = 2
 
 enum class AiContextPurpose {
     DASHBOARD_ADVICE,
@@ -62,8 +63,12 @@ data class AiContextSnapshot(
     val learningProgress: AiLearningProgress,
     val weather: AiWeatherFact?,
     val warnings: List<AiContextWarning>,
-    val omitted: AiContextOmissions
+    val omitted: AiContextOmissions,
+    val memoryContext: AiMemoryContext = AiMemoryContext()
 ) {
+    val allowedMemoryRefs: Set<String>
+        get() = if (purpose == AiContextPurpose.FILE_ANALYSIS) emptySet() else memoryContext.allowedMemoryRefs
+
     val allowedLocalRefs: Set<String>
         get() = buildSet {
             days.forEach { day ->

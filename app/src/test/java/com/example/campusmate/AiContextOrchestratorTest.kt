@@ -1,6 +1,7 @@
 package com.example.campusmate
 
 import com.example.campusmate.data.model.Course
+import com.example.campusmate.data.model.AiMemory
 import com.example.campusmate.data.model.StudyPlan
 import com.example.campusmate.data.model.StudyRecord
 import com.example.campusmate.data.model.StudyTask
@@ -103,7 +104,7 @@ class AiContextOrchestratorTest {
 
         val rendered = AiContextJsonRenderer.render(snapshot)
         val json = JSONObject(rendered)
-        assertEquals(1, json.getInt("schemaVersion"))
+        assertEquals(2, json.getInt("schemaVersion"))
         assertEquals("2026-06-08 10:00", json.getString("generatedAt"))
         assertEquals(4, json.getJSONArray("pendingTasks").length())
         assertTrue(json.getJSONObject("weather").getBoolean("usableForRealtimeAdvice"))
@@ -401,7 +402,8 @@ class AiContextOrchestratorTest {
         private val plans: List<StudyPlan> = emptyList(),
         private val records: List<StudyRecord> = emptyList(),
         private val weather: WeatherResult? = null,
-        private val settings: AiContextSettingsSource = contextSettings()
+        private val settings: AiContextSettingsSource = contextSettings(),
+        private val memories: List<AiMemory> = emptyList()
     ) : AiContextDataSource {
         var courseReads = 0
         var taskReads = 0
@@ -409,6 +411,12 @@ class AiContextOrchestratorTest {
         var recordReads = 0
         var weatherReads = 0
         var settingsReads = 0
+        var memoryReads = 0
+
+        override fun loadMemories(nowMillis: Long): List<AiMemory> {
+            memoryReads += 1
+            return memories
+        }
         var planRange: Pair<String, String>? = null
         var recordRange: Pair<String, String>? = null
         var weatherCity: String? = null

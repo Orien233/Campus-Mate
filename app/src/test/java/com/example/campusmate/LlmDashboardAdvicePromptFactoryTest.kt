@@ -11,7 +11,7 @@ class LlmDashboardAdvicePromptFactoryTest {
     fun buildRequest_usesVersionedBoundaryAndLocalEvidenceAllowlist() {
         val request = LlmDashboardAdvicePromptFactory.buildRequest(dashboardAdviceSnapshot())
 
-        assertEquals("campusmate.dashboard.advice@v1", request.promptTag)
+        assertEquals("campusmate.dashboard.advice@v2", request.promptTag)
         assertTrue(request.responseJsonOnly)
         assertTrue(
             request.userPrompt.contains(

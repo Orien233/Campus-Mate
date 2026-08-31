@@ -82,7 +82,7 @@ class LlmDashboardAdviceServiceTest {
         assertEquals(1, contextReads)
         assertEquals(1, client.generateCalls)
         assertEquals("private-api-key", client.receivedApiKey)
-        assertEquals("campusmate.dashboard.advice@v1", client.receivedRequest?.promptTag)
+        assertEquals("campusmate.dashboard.advice@v2", client.receivedRequest?.promptTag)
         assertEquals("2026-06-08", result.envelope.targetDate)
         assertEquals(now, result.envelope.generatedAt)
         assertEquals(now + LlmDashboardAdviceService.CACHE_TTL_MILLIS, result.envelope.expiresAt)

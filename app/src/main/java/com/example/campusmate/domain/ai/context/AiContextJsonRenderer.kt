@@ -5,6 +5,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import org.json.JSONArray
 import org.json.JSONObject
+import com.example.campusmate.domain.ai.memory.AiMemoryContextRenderer
 
 object AiContextJsonRenderer {
     fun render(snapshot: AiContextSnapshot): String {
@@ -43,6 +44,9 @@ object AiContextJsonRenderer {
             root.put("settings", snapshot.settings.toJson())
             root.put("weather", snapshot.weather?.toJson(snapshot.zoneId) ?: JSONObject.NULL)
             root.put("learningProgress", snapshot.learningProgress.toJson())
+            if (snapshot.memoryContext.memories.isNotEmpty() || snapshot.memoryContext.growth != null) {
+                root.put("memoryContext", AiMemoryContextRenderer.toJson(snapshot.memoryContext))
+            }
         }
         return root.toString(2)
     }

@@ -15,6 +15,12 @@ class SettingsRepository(context: Context) {
 
     fun isReminderEnabled(): Boolean = preferences.getBoolean(KEY_REMINDER_ENABLED, true)
 
+    fun isAiMemoryEnabled(): Boolean = preferences.getBoolean(KEY_AI_MEMORY_ENABLED, false)
+
+    fun setAiMemoryEnabled(value: Boolean) {
+        preferences.edit().putBoolean(KEY_AI_MEMORY_ENABLED, value).apply()
+    }
+
     fun setReminderEnabled(value: Boolean) {
         preferences.edit().putBoolean(KEY_REMINDER_ENABLED, value).apply()
     }
@@ -147,6 +153,7 @@ class SettingsRepository(context: Context) {
         private const val PREFS_NAME = "campusmate_settings"
         private const val KEY_DAILY_GOAL_MINUTES = "daily_goal_minutes"
         private const val KEY_REMINDER_ENABLED = "reminder_enabled"
+        private const val KEY_AI_MEMORY_ENABLED = "ai_memory_enabled"
         private const val KEY_IMMERSIVE_MODE_ENABLED = "immersive_mode_enabled"
         private const val KEY_WEATHER_CITY = "weather_city"
         private const val KEY_WEATHER_CITY_SOURCE = "weather_city_source"
