@@ -20,6 +20,7 @@ class CampusMateDbHelper(context: Context) :
         db.execSQL(SQL_CREATE_WEATHER_CACHE)
         db.execSQL(SQL_CREATE_STUDY_PLANS)
         db.execSQL(SQL_CREATE_TASK_ATTACHMENTS)
+        db.execSQL(SQL_CREATE_AI_MEMORIES)
         db.execSQL(SQL_INDEX_COURSES_TIME)
         db.execSQL(SQL_INDEX_TASKS_COURSE)
         db.execSQL(SQL_INDEX_TASKS_DUE)
@@ -30,6 +31,7 @@ class CampusMateDbHelper(context: Context) :
         db.execSQL(SQL_INDEX_PLANS_DATE)
         db.execSQL(SQL_INDEX_PLANS_STATUS)
         db.execSQL(SQL_INDEX_ATTACHMENTS_TASK)
+        db.execSQL(SQL_INDEX_AI_MEMORIES_ACTIVE)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -50,11 +52,15 @@ class CampusMateDbHelper(context: Context) :
             db.execSQL(SQL_INDEX_PLANS_STATUS)
             db.execSQL(SQL_INDEX_ATTACHMENTS_TASK)
         }
+        if (oldVersion < 6) {
+            db.execSQL(SQL_CREATE_AI_MEMORIES)
+            db.execSQL(SQL_INDEX_AI_MEMORIES_ACTIVE)
+        }
     }
 
     companion object {
         const val DATABASE_NAME = "campus_mate.db"
-        const val DATABASE_VERSION = 5
+        const val DATABASE_VERSION = 6
 
         private const val SQL_CREATE_COURSES = """
             CREATE TABLE courses (
@@ -216,6 +222,19 @@ class CampusMateDbHelper(context: Context) :
             )
         """
 
+        private const val SQL_CREATE_AI_MEMORIES = """
+            CREATE TABLE IF NOT EXISTS ai_memories (
+                _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category INTEGER NOT NULL DEFAULT 4,
+                content TEXT NOT NULL,
+                is_enabled INTEGER NOT NULL DEFAULT 1,
+                is_pinned INTEGER NOT NULL DEFAULT 0,
+                expires_at INTEGER,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            )
+        """
+
         private const val SQL_INDEX_COURSES_TIME =
             "CREATE INDEX idx_courses_time ON courses(weekday, start_section, end_section, start_week, end_week, is_deleted)"
         private const val SQL_INDEX_TASKS_COURSE =
@@ -236,5 +255,7 @@ class CampusMateDbHelper(context: Context) :
             "CREATE INDEX IF NOT EXISTS idx_plans_status ON study_plans(status)"
         private const val SQL_INDEX_ATTACHMENTS_TASK =
             "CREATE INDEX IF NOT EXISTS idx_attachments_task ON task_attachments(task_id, created_at)"
+        private const val SQL_INDEX_AI_MEMORIES_ACTIVE =
+            "CREATE INDEX IF NOT EXISTS idx_ai_memories_active ON ai_memories(is_enabled, is_pinned, expires_at, updated_at)"
     }
 }

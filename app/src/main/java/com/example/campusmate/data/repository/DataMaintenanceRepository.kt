@@ -8,6 +8,7 @@ class DataMaintenanceRepository(context: Context) {
     private val resolver = context.applicationContext.contentResolver
 
     fun clearAllData(): DataClearResult {
+        val memoryCount = resolver.delete(CampusMateContract.AiMemories.CONTENT_URI, null, null)
         val planCount = resolver.delete(CampusMateContract.StudyPlans.CONTENT_URI, null, null)
         val attachmentCount = resolver.delete(CampusMateContract.TaskAttachments.CONTENT_URI, null, null)
         val weatherCount = resolver.delete(CampusMateContract.WeatherCache.CONTENT_URI, null, null)
@@ -28,7 +29,8 @@ class DataMaintenanceRepository(context: Context) {
             buddyCount = buddyCount,
             weatherCount = weatherCount,
             planCount = planCount,
-            attachmentCount = attachmentCount
+            attachmentCount = attachmentCount,
+            memoryCount = memoryCount
         )
     }
 }
@@ -43,8 +45,9 @@ data class DataClearResult(
     val buddyCount: Int = 0,
     val weatherCount: Int = 0,
     val planCount: Int = 0,
-    val attachmentCount: Int = 0
+    val attachmentCount: Int = 0,
+    val memoryCount: Int = 0
 ) {
     val totalCount: Int
-        get() = courseCount + taskCount + focusSessionCount + studyRecordCount + importLogCount + profileCount + buddyCount + weatherCount + planCount + attachmentCount
+        get() = courseCount + taskCount + focusSessionCount + studyRecordCount + importLogCount + profileCount + buddyCount + weatherCount + planCount + attachmentCount + memoryCount
 }

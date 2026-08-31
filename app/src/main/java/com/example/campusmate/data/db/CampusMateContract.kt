@@ -19,6 +19,7 @@ object CampusMateContract {
     const val PATH_WEATHER_CACHE = "weather_cache"
     const val PATH_STUDY_PLANS = "study_plans"
     const val PATH_TASK_ATTACHMENTS = "task_attachments"
+    const val PATH_AI_MEMORIES = "ai_memories"
 
     object Courses : BaseColumns {
         const val TABLE_NAME = "courses"
@@ -259,6 +260,29 @@ object CampusMateContract {
         const val COLUMN_MIME_TYPE = "mime_type"
         const val COLUMN_TITLE = "title"
         const val COLUMN_CREATED_AT = "created_at"
+
+        fun buildItemUri(id: Long): Uri = CONTENT_URI.buildUpon().appendPath(id.toString()).build()
+    }
+
+    object AiMemories : BaseColumns {
+        const val TABLE_NAME = "ai_memories"
+        val CONTENT_URI: Uri = BASE_CONTENT_URI.buildUpon().appendPath(PATH_AI_MEMORIES).build()
+        const val CONTENT_TYPE = "vnd.android.cursor.dir/vnd.$AUTHORITY.$PATH_AI_MEMORIES"
+        const val CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.$AUTHORITY.$PATH_AI_MEMORIES"
+
+        const val COLUMN_CATEGORY = "category"
+        const val COLUMN_CONTENT = "content"
+        const val COLUMN_IS_ENABLED = "is_enabled"
+        const val COLUMN_IS_PINNED = "is_pinned"
+        const val COLUMN_EXPIRES_AT = "expires_at"
+        const val COLUMN_CREATED_AT = "created_at"
+        const val COLUMN_UPDATED_AT = "updated_at"
+
+        const val CATEGORY_GOAL = 0
+        const val CATEGORY_PREFERENCE = 1
+        const val CATEGORY_HABIT = 2
+        const val CATEGORY_CONSTRAINT = 3
+        const val CATEGORY_OTHER = 4
 
         fun buildItemUri(id: Long): Uri = CONTENT_URI.buildUpon().appendPath(id.toString()).build()
     }
