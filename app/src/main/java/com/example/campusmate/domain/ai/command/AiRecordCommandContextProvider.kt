@@ -82,5 +82,6 @@ internal fun StudyTask.toAiSnapshot() = AiTaskSnapshot(
     id, courseId, title, description, type, priority, dueAt, remindAt, status, updatedAt
 )
 internal fun StudyPlan.toAiSnapshot() = AiPlanSnapshot(
-    id, title, planDate, plannedMinutes, startTime, endTime, type, status, updatedAt
+    id, title, planDate, plannedMinutes, startTime, endTime, type, status,
+    actualMinutes, sourceType, updatedAt
 )

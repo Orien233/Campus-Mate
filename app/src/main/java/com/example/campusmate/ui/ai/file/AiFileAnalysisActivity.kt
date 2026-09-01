@@ -3,6 +3,8 @@ package com.example.campusmate.ui.ai.file
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -17,6 +19,9 @@ import com.example.campusmate.data.repository.LlmSettingsRepository
 import com.example.campusmate.domain.ai.context.AiContextBuildRequest
 import com.example.campusmate.domain.ai.context.AiContextOrchestrator
 import com.example.campusmate.domain.ai.context.AiContextPurpose
+import com.example.campusmate.domain.ai.command.AiRecordCommandContextProvider
+import com.example.campusmate.domain.ai.command.AiRecordCommandResult
+import com.example.campusmate.domain.ai.command.AiRecordCommandService
 import com.example.campusmate.domain.ai.file.AiFileAnalysisEnvelope
 import com.example.campusmate.domain.ai.file.AiFileAnalysisError
 import com.example.campusmate.domain.ai.file.AiFileAnalysisResult
@@ -34,6 +39,7 @@ import com.example.campusmate.ui.task.TaskImportPreviewActivity
 import com.example.campusmate.util.DateTimeUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -43,7 +49,10 @@ class AiFileAnalysisActivity : AppCompatActivity() {
     private lateinit var contentReader: AiFileContentReader
     private lateinit var contextOrchestrator: AiContextOrchestrator
     private lateinit var analysisService: LlmFileAnalysisService
+    private lateinit var commandContextProvider: AiRecordCommandContextProvider
+    private lateinit var commandService: AiRecordCommandService
 
+    private lateinit var commandInput: TextInputEditText
     private lateinit var supportText: TextView
     private lateinit var selectedNameText: TextView
     private lateinit var selectedMetaText: TextView
@@ -75,6 +84,7 @@ class AiFileAnalysisActivity : AppCompatActivity() {
     private var coursePreviewInFlight = false
     private var taskPreviewInFlight = false
     private var planPreviewInFlight = false
+    private var commandRequestInFlight = false
 
     private val filePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(::inspectSelection)
@@ -103,6 +113,10 @@ class AiFileAnalysisActivity : AppCompatActivity() {
             }
             bindCategoryActions()
         }
+    private val commandPreviewLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) commandInput.text?.clear()
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -126,11 +140,14 @@ class AiFileAnalysisActivity : AppCompatActivity() {
         contentReader = AiFileContentReader(contentResolver)
         contextOrchestrator = AiContextOrchestrator(applicationContext)
         analysisService = LlmFileAnalysisService(settingsRepository)
+        commandContextProvider = AiRecordCommandContextProvider(applicationContext)
+        commandService = AiRecordCommandService(settingsRepository)
     }
 
     private fun initViews() {
         findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.fileAnalysisToolbar)
             .setNavigationOnClickListener { finish() }
+        commandInput = findViewById(R.id.recordCommandInput)
         supportText = findViewById(R.id.fileAnalysisSupportText)
         selectedNameText = findViewById(R.id.fileAnalysisSelectedNameText)
         selectedMetaText = findViewById(R.id.fileAnalysisSelectedMetaText)
@@ -159,6 +176,49 @@ class AiFileAnalysisActivity : AppCompatActivity() {
         coursesButton.setOnClickListener { openCoursePreview() }
         tasksButton.setOnClickListener { openTaskPreview() }
         plansButton.setOnClickListener { openPlanPreview() }
+        commandInput.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEND) {
+                runTextCommand()
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    private fun runTextCommand() {
+        if (commandRequestInFlight) return
+        val input = commandInput.text?.toString()?.trim().orEmpty()
+        if (input.isBlank()) {
+            showError(getString(R.string.ai_record_input_required))
+            return
+        }
+        commandRequestInFlight = true
+        commandInput.isEnabled = false
+        selectButton.isEnabled = false
+        analyzeButton.isEnabled = false
+        showBusy(R.string.ai_record_analyzing)
+        (getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager)
+            ?.hideSoftInputFromWindow(commandInput.windowToken, 0)
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                commandService.generate(input) { commandContextProvider.build(input) }
+            }
+            commandRequestInFlight = false
+            commandInput.isEnabled = true
+            selectButton.isEnabled = true
+            revalidateSelection()
+            showIdle()
+            when (result) {
+                is AiRecordCommandResult.Success -> {
+                    errorText.visibility = View.GONE
+                    commandPreviewLauncher.launch(
+                        AiRecordChangePreviewActivity.intentFor(this@AiFileAnalysisActivity, result.envelope)
+                    )
+                }
+                is AiRecordCommandResult.Failure -> showError(result.message)
+            }
+        }
     }
 
     private fun chooseFile() {

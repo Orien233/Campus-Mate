@@ -49,6 +49,8 @@ data class AiPlanSnapshot(
     val endTime: String?,
     val type: Int,
     val status: Int,
+    val actualMinutes: Int,
+    val sourceType: Int,
     override val updatedAt: Long
 ) : AiRecordSnapshot { override val displayName: String get() = title }
 

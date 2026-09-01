@@ -194,7 +194,10 @@ class AiRecordCommandValidator {
         if (type !in 0..1 || status !in 0..2) invalid("计划枚举字段无效")
         return AiPlanSnapshot(
             before?.id ?: 0L, title, planDate, plannedMinutes,
-            startTime, endTime, type, status, before?.updatedAt ?: 0L
+            startTime, endTime, type, status,
+            before?.actualMinutes ?: 0,
+            before?.sourceType ?: StudyPlan.SOURCE_LLM,
+            before?.updatedAt ?: 0L
         )
     }
 
