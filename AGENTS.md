@@ -17,10 +17,11 @@ Agent 必须以真实文件为准，不得假设不存在的模块已经完成�
 - `CampusMateDbHelper.DATABASE_NAME = "campus_mate.db"`，`DATABASE_VERSION = 6`。
 - Manifest 当前声明 `POST_NOTIFICATIONS`、`FOREGROUND_SERVICE`、`FOREGROUND_SERVICE_DATA_SYNC`、`RECEIVE_BOOT_COMPLETED`、`SCHEDULE_EXACT_ALARM`、`CAMERA`、`ACCESS_NOTIFICATION_POLICY`、`INTERNET`、`ACCESS_COARSE_LOCATION`；相机硬件为 `required=false`；`allowBackup=false`。
 - 已使用 Jsoup 做课表 HTML 解析，ZXing 做二维码生成和扫码，AndroidX Security Crypto 做 LLM API Key 加密存储。
-- 已存在模块：Dashboard、首页 AI 建议、AI 文件整理、本地 RAG 记忆管理与成长路径、课程管理、任务管理、任务提醒、任务 AI 网页解析预填、课表导入、WebView 课表导入基础页、专注计时、翻转检测、前台服务、学习记录、热力图统计、设置页、学习计划、任务图片附件、学习名片、二维码、学习伙伴、天气定位、通知弱化/勿扰增强、LLM API 设置与 Client 基础设施、LLM 课表解析和 LLM 学习计划预览确认。
+- 已存在模块：Dashboard、首页 AI 建议、AI 内容整理（自然语言记录指令与单文件分析）、本地 RAG 记忆管理与成长路径、课程管理、任务管理、任务提醒、任务 AI 网页解析预填、课表导入、WebView 课表导入基础页、专注计时、翻转检测、前台服务、学习记录、热力图统计、设置页、学习计划、任务图片附件、学习名片、二维码、学习伙伴、天气定位、通知弱化/勿扰增强、LLM API 设置与 Client 基础设施、LLM 课表解析和 LLM 学习计划预览确认。
 - 待实现或待增强模块：RAG 语义检索增强、项目展示页/技术点展示页、JSON 导出/备份、完整演示数据覆盖、真实教务系统 WebView 适配增强、学习计划按课程/考试生成和提醒、真实 AI 调用效果验证。
 - 当前不做登录、云同步、后端服务、头像/照片资料、聊天、动态、关注、点赞、评论或社交广场。
-- LLM 当前状态：设置页、预设、加密 Key 存储、连接测试、OpenAI-Compatible/Gemini Client、文本/图片/PDF 临时输入、`LlmScheduleParseService`、`LlmTaskParseService`、`LlmPlanGenerateService`、`LlmDashboardAdviceService` 和 `LlmFileAnalysisService` 已存在；课表导入已按设置接入 AI 优先/本地回退，解析结果通过 `ScheduleParseResult` 携带 drafts、warnings、parserLabel、fallbackReason 和 sectionTimeSlots；任务网页解析只回填 `TaskEditActivity`；学习计划主流程已通过 `LlmPlanPreviewActivity` / `LlmWeekPlanPreviewActivity` 接入预览确认和本地规则回退；首页建议由用户手动触发，只读展示并缓存已校验结果；文件整理由用户选择一个文件并确认发送，已校验结果分别进入课程、任务和计划预览页；现有能力已使用版本化 Prompt 契约、统一 JSON 提取和本地 Validator，`domain/ai/context` 已提供按用途裁剪的只读上下文快照。
+- LLM 当前状态：设置页、预设、加密 Key 存储、连接测试、OpenAI-Compatible/Gemini Client、文本/图片/PDF 临时输入、`LlmScheduleParseService`、`LlmTaskParseService`、`LlmPlanGenerateService`、`LlmDashboardAdviceService`、`LlmFileAnalysisService` 和 `AiRecordCommandService` 已存在；课表、任务、计划和文件保持各自预览确认流程；自然语言记录指令统一进入 `AiRecordChangePreviewActivity`，确认后由 Repository 逐项应用。
+- 根目录 `icon.png` 是应用图标原始设计源，必须保持 Git 跟踪；launcher 密度资源可由该原图确定性再生成，不得重新加入忽略规则。
 - 当前工作目录未检测到 `.git` 元数据时，Agent 不得声称已创建分支、提交或推送。
 - 根目录存在 `local.properties`，但 `.gitignore` 已排除；Agent 不得提交或要求提交该文件。
 - 创建分支必须遵循 `CONTRIBUTING.md` 的命名格式，例如 `feature/xxx`、`fix/xxx`、`docs/xxx`；不要自行添加 `codex/` 等额外前缀，除非用户明确要求。
@@ -214,6 +215,10 @@ Agent 必须以真实文件为准，不得假设不存在的模块已经完成�
 - 当前模型的多模态能力只能由用户声明，默认仅文本；切换服务商预设或修改模型后必须重置为仅文本。不得根据模型名自动开启图片/PDF，也不得宣称自定义 OpenAI-Compatible 端点已经验证兼容。
 - `LlmFileAnalysisValidator` 必须清空 `CourseDraft.sourceText` / `TaskDraft.sourceText`，课程、任务、计划和只读要点都需要 `file:selection:1` 证据；计划还要校验日期、时长、时间范围、课程占用及本次结果内部冲突。
 - 文件课程必须进入 `ImportPreviewActivity`，任务必须进入 `TaskImportPreviewActivity`，计划必须进入 `LlmWeekPlanPreviewActivity` 的预计算模式；计划预计算模式不得再次调用模型，确认时应跳过当前课程或已有计划冲突且不得删除旧计划。
+- 自然语言记录输入最多 4000 字，原文、Prompt、上下文和原始响应只允许存在于当前请求内存，不得进入数据库、SharedPreferences、Intent、缓存或日志。
+- `AiRecordCommandContextProvider` 只通过 Repository 读取未删除记录，最多课程 40、任务 60、计划 60；不得读取天气、AI 记忆、学习历史或 API 配置。
+- `AiRecordCommandValidator` 必须限制为 30 项，UPDATE/DELETE 只能使用上下文精确 `course:*` / `task:*` / `plan:*` 引用并验证输入原文证据；缺失字段保留旧值，JSON null 只能清空可空字段，ID、来源、时间戳和实际学习时长不得由模型修改。
+- 自然语言记录的新增、修改、状态和删除都必须进入统一批量预览；删除和时间冲突默认不选中，选择删除后必须二次确认。应用前逐项重读并比较 `updatedAt`，单项失败不得阻断其它项；写入继续走 Repository，任务提醒随新增、修改、完成、归档和删除同步。
 
 ### AI 记忆与成长路径
 
@@ -285,7 +290,7 @@ Agent 必须以真实文件为准，不得假设不存在的模块已经完成�
 - WebView 导入 Cookie/会话清理，退出后再次进入必须重新登录。
 - 课表导入 AI/本地切换和 LLM 失败回退。
 - 首页 AI 建议真实模型调用、设置开关、加载/失败/缓存状态切换和天气刷新期间的上下文失效。
-- AI 文件整理 SAF MIME/大小读取、用户能力三档、发送确认、真实 OpenAI-Compatible/Gemini 图片/PDF请求、三个板块分别确认/取消及计划冲突复验。
+- AI 内容整理自然语言增改/状态/删除、统一批量预览、二次删除确认、并发修改失败明细；以及 SAF MIME/大小读取、用户能力三档、真实 OpenAI-Compatible/Gemini 文件请求和三个板块确认。
 - AI 记忆管理页保存期间旋转、启停/置顶/到期和清理确认、成长路径展示以及 v5→v6 迁移执行。
 
 无法运行时必须在最终回复和 PR 中写明原因，例如“本地 SDK 缺失”“没有连接 Android 设备”“未提供真实教务系统页面”。未运行的命令不得写成通过。

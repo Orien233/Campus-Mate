@@ -19,3 +19,13 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Local one-off tools and generated working files
+/tools/
+/outputs/
+/tmp/
+/plan.md
+
+# Android Studio template tests only; keep real test suites tracked
+/app/src/test/**/ExampleUnitTest.kt
+/app/src/androidTest/**/ExampleInstrumentedTest.kt
