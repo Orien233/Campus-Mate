@@ -23,7 +23,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 
 - 课程阶段版本：`V1.1-stage-15-p0-3`
 - Gradle `versionName`：`1.0`
-- 当前阶段：学习计划 + AI 辅助解析 + 定位天气协同，已合并 WebView 课表导入、任务图片附件、二维码学习名片、天气、LLM API 设置、LLM 学习计划预览确认、首页 AI 建议、AI 文件整理和本地 RAG 记忆/成长路径能力。
+- 当前阶段：学习计划 + AI 辅助解析 + 定位天气协同，已合并 WebView 课表导入、任务图片附件、二维码学习名片、天气、LLM API 设置、LLM 学习计划预览确认、首页 AI 建议、AI 内容整理和本地 RAG 记忆/成长路径能力。
 - 主闭环状态：课程、任务、提醒、导入、专注、记录、统计、设置页已跑通。
 - 当前扩展功能状态：阶段 9-15 基础能力已进入代码；项目展示页、JSON 导出/备份和完整演示数据仍未完成。
 - AI 优化集成基线：`novel`；各功能在独立 `feature/*` 分支实现并分批提交，流程见 `CONTRIBUTING.md`。
@@ -45,7 +45,7 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 | 模块 | 状态 | 真实实现说明 |
 | --- | --- | --- |
 | 首页 Dashboard | 已完成 / AI 待真实调用验证 | 展示今日课程、待办任务、今日/本周学习时长、计划完成趋势、下一节课（含教室）、天气和开始专注入口；AI 建议卡由用户手动触发，结合三日课程/任务/计划占用、设置城市天气缓存和近期学习进度生成只读建议。 |
-| AI 文件整理 | 基础完成 / 待真实调用验证 | 首页独立入口通过 SAF 一次选择一个文本、图片或 PDF；用户确认后才发送给所选模型，结果按课程、任务、计划和只读要点分组，本地校验后分别进入现有预览确认页，不能直接写库。 |
+| AI 内容整理 | 基础完成 / 待真实调用验证 | 首页独立入口支持最多 4000 字自然语言和 SAF 单文件。文字可生成课程、任务、计划的新增、字段/状态修改和删除候选，统一进入批量预览；删除与时间冲突默认不选中，删除需二次确认。文件分析流程保持按板块预览，任何结果都不能绕过确认直接写库。 |
 | AI 长期记忆与成长路径 | 基础完成 / 待真机验证 | AI 设置提供独立管理页，手动新增/编辑、启停、置顶、删除和确认清理过期记忆；默认关闭 AI 使用。开启后，首页和日/周 AI 计划用本地词法检索相关记忆，并参考最近 56 天的确定性学习统计；不调用 embedding 服务、不保存模型生成的记忆。 |
 | 课程管理 | 已完成 | 支持新增、编辑、详情、软删除、按星期筛选、周课表网格展示和时间冲突提示。 |
 | 任务管理 | 已完成 | 支持新增、编辑、详情、软删除、完成状态切换、类型、优先级、截止时间、提醒时间、网页任务解析预填和多任务导入预览确认；AI 不可用或调用失败时可使用本地规则解析。 |
@@ -83,7 +83,9 @@ CampusMate 是一个 Android 移动应用开发课程项目，定位为本地单
 - 图片附件：当前只通过 Storage Access Framework 选择图片并持久化 Uri；不申请相册读取权限，不支持拍照、裁剪、压缩或内置大图预览。
 - 学习计划：已有手动添加、本地规则生成、AI 今日/本周计划预览、状态切换和详情页；按课程/考试细分生成、计划提醒和复杂编辑尚未接入。
 - LLM：当前已有设置、Client、连接测试、课表解析、任务解析、学习计划和首页建议接入。用户配置的 Base URL 只允许 HTTPS；发送给模型的事实会在本机限长并按不可信数据分区。涉及课程、任务、计划等业务写入的结果必须进入预览确认页或回填表单；首页建议只读展示，不执行跳转或写库。
+- AI 文字整理：输入最多 4000 字，按键盘“发送”立即请求用户配置的模型。原文只存在于当前页面内存；请求上下文最多包含 40 门课程、60 个任务和 60 个计划，不读取天气、长期记忆、学习历史或 API 配置。UPDATE/DELETE 必须命中上下文中的精确本地引用并带原文证据；每次最多 30 项，应用前会复验 `updatedAt`，单项失效不阻断其余项。
 - AI 文件整理：一次只处理一个文件；文本支持 TXT、Markdown、CSV、JSON、HTML、XML，最多 256 KiB；图片支持 JPEG、PNG、WebP、GIF，PDF 与二进制文件最多 8 MiB。原始字节、Base64、Uri、文件名、Prompt、上下文和原始响应不写入数据库或设置；完成分析后只保留已校验草稿及服务商/模型/Prompt 版本。SAF 提供商兼容性和真实模型调用仍需设备验证。
+- 应用图标：根目录 `icon.png` 是受 Git 跟踪的原始设计源；Android 五档普通/圆形 launcher PNG 和 adaptive icon 已替换为校园图案，未提供自动描摹的 monochrome themed icon。
 - 多模态能力声明：CampusMate 不按模型名猜测能力。切换预设或修改模型会重置为仅文本；只有用户确认当前端点支持后才允许图片或 PDF。OpenAI-Compatible 自定义端点是否接受当前 `image_url` / `file` 结构，以及 Gemini 模型是否支持对应输入，仍以服务商真实接口为准。
 - RAG 记忆：采用简单本地词法检索，不是向量数据库或语义 embedding。最多保存 200 条、每条 500 字；每次默认检索最多 4 条，每条上下文最多 300 字、总计 1200 字。置顶及通用偏好/约束可跨主题参考，其余按课程/任务标题相关性选择；记忆是软参考，不能覆盖当前安排或当作指令。
 - 记忆生命周期：全局开关默认关闭；单条停用优先于置顶。未置顶记忆到期后立即排除检索，用户点击并确认后才物理清理；置顶免到期，可手动取消置顶或删除。不会按访问次数或容量静默删除有效内容，查看和检索不写库。
@@ -429,7 +431,7 @@ SettingsFragment
 - 错误详情会通过 `LlmHttpUtils` 屏蔽当前 API Key，避免完整密钥出现在 UI 或测试输出中。
 - 当前支持 OpenAI-Compatible 和 Gemini 两类客户端；预设只用于填表，用户可以按控制台实际配置修改。
 - 当前已把 LLM 接入首页建议、课表导入、任务网页解析和学习计划主流程：首页建议只读展示，课表进入导入预览，任务可回填编辑表单或进入多任务导入预览，计划进入预览确认；课表与任务在 AI 不可用时会改用本地规则，AI 请求失败时用户也可选择本地回退，业务结果仍需确认后保存。
-- 文件分析从 `AiFileAnalysisActivity` 使用 SAF 选择一个文件；`AiFileContentReader` 只在本次请求内有界读取，`LlmFileAnalysisPromptFactory` 使用 `campusmate.file.analysis@v1` 和文件专用最小上下文，`LlmFileAnalysisValidator` 对证据引用、字段、日期、时长和占用冲突做本地校验。课程进入 `ImportPreviewActivity`，任务进入 `TaskImportPreviewActivity`，计划进入 `LlmWeekPlanPreviewActivity` 的预计算模式；三个板块都必须再次由用户选择确认。
+- `AiFileAnalysisActivity` 已扩展为 AI 内容整理入口：文字走 `AiRecordCommandService`、`campusmate.record.command@v1` 和 `AiRecordCommandValidator`，只读取候选课程/任务/计划，统一进入 `AiRecordChangePreviewActivity`；确认后由 `AiRecordChangeApplier` 通过现有 Repository 逐项执行并同步任务提醒。文件仍通过 SAF 选择并走 `campusmate.file.analysis@v1`，课程、任务、计划分别进入原有预览页。
 - 文件用途的上下文不读取天气、学习历史和已有计划详情，不输出教师、教室、任务描述或设置城市；模型提供的 `course:*` / `task:*` 等本地引用必须与当前快照 allowlist 精确相交。文件内容、原始响应和请求对象不缓存。
 - AI 解析字段已拓展到地点别名（`location`、`venue`、`campus`、`building`、`room` 等）、教师别名、周次和单双周；仍需用户在预览页或表单里确认。
 - 课表、任务和计划 Prompt 通过 `promptId@vN` 标识版本；事实输入被视为不可信资料并单独包裹，响应先提取有边界的 JSON，再交给各业务 Validator 校验，不能绕过用户预览直接写库。
@@ -448,7 +450,7 @@ SettingsFragment
 
 ## 8. 数据库设计说明
 
-数据库版本以 `CampusMateDbHelper.DATABASE_VERSION` 为准，当前为 6。v5→v6 仅新增 `ai_memories` 表与检索/到期索引，不删除或重建已有表。LLM 设置、记忆使用开关和首页已校验建议缓存使用 SharedPreferences；文件分析不新增持久化表或文件缓存。
+数据库版本以 `CampusMateDbHelper.DATABASE_VERSION` 为准，当前为 6。v5→v6 仅新增 `ai_memories` 表与检索/到期索引，不删除或重建已有表。LLM 设置、记忆使用开关和首页已校验建议缓存使用 SharedPreferences；文字指令和文件分析都不新增持久化表或请求缓存。
 
 | 表 | 作用 | 关键字段 | 读写 Repository | 关系 |
 | --- | --- | --- | --- | --- |
@@ -483,13 +485,13 @@ Manifest 当前声明：
 | `ACCESS_COARSE_LOCATION` | 根据粗略位置辅助判断天气城市 | 运行时授权；拒绝后继续使用手动城市和天气缓存。 |
 | `android.hardware.camera required=false` | 相机硬件声明 | 没有相机时扫码不可用。 |
 
-Manifest 当前未声明相册读取权限。图片附件和 AI 文件整理都通过 SAF 选择内容，不需要 `READ_MEDIA_IMAGES` 或 `READ_EXTERNAL_STORAGE`；文件分析不持久化所选 Uri。定位仅用于反查天气城市，代码不保存经纬度。
+Manifest 当前未声明相册读取权限。图片附件和 AI 文件整理都通过 SAF 选择内容，不需要 `READ_MEDIA_IMAGES` 或 `READ_EXTERNAL_STORAGE`；文件分析不持久化所选 Uri，文字整理不新增权限。定位仅用于反查天气城市，代码不保存经纬度。
 
 勿扰模式和通知访问属于系统设置授权：应用只能引导或提示用户授权，不能绕过系统限制；相关功能需要真机验证。
 
 ## 10. 运行方式与测试方式
 
-本轮 AI 优化只做本地编译、JVM 单元测试和 lint；不启动模拟器，不运行 `connectedAndroidTest` 或真实模型请求。记忆检索和成长统计已补充 JVM 测试；v5→v6 迁移及 Repository 仪器测试仅编译源码，设备交互与迁移执行仍未验证。
+本轮 AI 优化只做本地编译、JVM 单元测试、lint 和 AndroidTest 源码编译；不启动模拟器，不运行 `connectedAndroidTest`、SAF 或真实模型请求。自然语言指令已补充候选筛选、Prompt、校验、冲突、部分失败和提醒联动 JVM 测试；设备交互与真实模型效果仍未验证。
 
 新增 RAG 覆盖包括 `AiMemoryDraftValidatorTest`、`AiMemoryRetentionPolicyTest`、`AiMemoryRetrieverTest`、`LearningGrowthSummaryBuilderTest`、`AiMemoryContextIntegrationTest`、`LlmPlanPromptFactoryTest`，以及未执行的 `AiMemoryMigrationInstrumentedTest` / `AiMemoryRepositoryInstrumentedTest`。
 
@@ -506,7 +508,7 @@ Windows PowerShell：
 .\gradlew.bat :app:assembleDebug
 .\gradlew.bat :app:testDebugUnitTest
 .\gradlew.bat :app:lintDebug
-.\gradlew.bat connectedAndroidTest
+.\gradlew.bat :app:compileDebugAndroidTestKotlin
 ```
 
 Debug APK 输出路径：
@@ -530,7 +532,7 @@ app/build/outputs/apk/debug/app-debug.apk
 - WebView 导入离开后再次进入必须重新登录，验证未持久化 Cookie/会话；BJTU 场景需从 MIS 门户登录后进入课表页再提取。
 - 课表导入 AI/本地切换：无 API Key 时回退本地解析，LLM 失败时提示原因并可进入本地解析，最终都必须进入预览页。
 - 首页 AI 建议：使用真实自备 API Key 验证成功/失败/缓存状态、设置开关，以及请求期间天气或任务变化时旧结果不落盘。
-- AI 文件整理：验证 DocumentsUI/不同 SAF 提供商的 MIME 与大小信息、文本/图片/PDF 上限、用户能力声明三档、发送确认、真实 OpenAI-Compatible/Gemini 请求，以及课程/任务/计划分别确认或取消后的状态；当前没有 Android 设备，尚未执行这些验证。
+- AI 内容整理：使用真实模型验证中文自然语言的增改、状态、删除解析，键盘发送、统一勾选预览、删除二次确认、冲突默认不选和并发修改失败明细；同时验证 DocumentsUI/不同 SAF 提供商、文本/图片/PDF 上限与分板块预览。当前没有 Android 设备，尚未执行这些验证。
 - AI 记忆：验证管理页新增/编辑、保存期间旋转、全局开关、单条启停/置顶/到期、清理确认、成长路径展示和数据库 v5→v6 升级；当前没有 Android 设备，尚未执行这些验证。
 - Android 粗略定位权限授予/拒绝、天气城市反查、远程天气有网/无网缓存降级。
 
